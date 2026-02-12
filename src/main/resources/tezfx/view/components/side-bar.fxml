@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+
+<VBox spacing="6" fx:controller="tezfx.controller.SidebarController" xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      prefWidth="260"
+      styleClass="sidebar-root">
+
+    <!-- LOGO -->
+    <HBox spacing="10" alignment="CENTER_LEFT" >
+        <padding>
+            <Insets top="20" right="20" bottom="20" left="0"/>
+        </padding>
+        <ImageView fx:id="logoImage"
+                   fitHeight="32.0"
+                   fitWidth="32.0"
+                   pickOnBounds="true"
+                   preserveRatio="true">
+            <image>
+                <Image url="@../../images/logo.png" />
+            </image>
+        </ImageView>
+        <Label text="Nexum" styleClass="logo-text"/>
+    </HBox>
+
+
+    <!-- NAV ITEMS -->
+
+        <fx:define>
+            <ToggleGroup fx:id="navGroup" />
+        </fx:define>
+        <ToggleButton styleClass="nav-item" toggleGroup="$navGroup" selected="true" onAction="#onDashboardClicked" >
+            <graphic>
+                <FontIcon iconLiteral="mdi2v-view-dashboard-outline"/>
+            </graphic>
+            <text>Dashboard</text>
+        </ToggleButton>
+
+        <ToggleButton styleClass="nav-item" onAction="#onProjectsClicked" toggleGroup="$navGroup">
+            <graphic>
+                <FontIcon iconLiteral="mdi2f-folder-outline"/>
+            </graphic>
+            <text>Projects</text>
+        </ToggleButton>
+
+        <ToggleButton styleClass="nav-item" toggleGroup="$navGroup">
+            <graphic>
+                <FontIcon iconLiteral="mdi2c-checkbox-marked-outline"/>
+            </graphic>
+            <text>Tasks</text>
+        </ToggleButton>
+
+        <ToggleButton styleClass="nav-item" toggleGroup="$navGroup">
+            <graphic>
+                <FontIcon iconLiteral="mdi2s-school-outline"/>
+            </graphic>
+            <text>Trainings</text>
+        </ToggleButton>
+
+        <ToggleButton styleClass="nav-item" toggleGroup="$navGroup">
+            <graphic>
+                <FontIcon iconLiteral="mdi2c-chat-outline"/>
+            </graphic>
+            <text>Communication</text>
+        </ToggleButton>
+
+        <ToggleButton styleClass="nav-item" toggleGroup="$navGroup">
+            <graphic>
+                <FontIcon iconLiteral="mdi2c-cube-outline"/>
+            </graphic>
+            <text>Resources</text>
+        </ToggleButton>
+
+        <ToggleButton styleClass="nav-item" toggleGroup="$navGroup">
+            <graphic>
+                <FontIcon iconLiteral="mdi2c-currency-usd"/>
+            </graphic>
+            <text>Financial Analysis</text>
+        </ToggleButton>
+
+
+
+    <!-- PUSH LOGOUT TO BOTTOM -->
+    <Region VBox.vgrow="ALWAYS"/>
+
+    <Button styleClass="logout-item">
+        <graphic>
+            <FontIcon iconLiteral="mdi2l-logout"/>
+        </graphic>
+        <text>Log out</text>
+    </Button>
+</VBox>

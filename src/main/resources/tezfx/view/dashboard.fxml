@@ -1,0 +1,140 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+
+<VBox spacing="25"
+      xmlns="http://javafx.com/javafx/21"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="tezfx.controller.HelloController">
+
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20"/>
+    </padding>
+
+    <!-- Welcome -->
+    <HBox spacing="20" alignment="CENTER_LEFT">
+        <VBox spacing="5">
+            <Label text="Welcome back, Alex 👋" styleClass="title"/>
+            <Label text="Here's what's happening with your projects today."
+                   styleClass="subtitle"/>
+        </VBox>
+
+        <Region HBox.hgrow="ALWAYS" />
+
+        <HBox spacing="10" alignment="CENTER_RIGHT">
+            <Button text="Download Report" styleClass="btn-secondary">
+                <graphic>
+                    <FontIcon iconLiteral="mdi2f-file-download-outline" iconSize="16" />
+                </graphic>
+            </Button>
+
+            <Button text="New Project" styleClass="btn-primary" onAction="#openAddProjectPopup">
+                <graphic>
+                    <FontIcon iconLiteral="mdi2p-plus" iconSize="16" styleClass="white-icon"/>
+                </graphic>
+            </Button>
+        </HBox>
+    </HBox>
+    <!-- ================= KPI CARDS ================= -->
+    <HBox spacing="16">
+
+        <VBox styleClass="kpi-card">
+            <HBox>
+                <StackPane styleClass="kpi-icon purple">
+                    <FontIcon iconLiteral="mdi2c-clock-outline" iconSize="16" styleClass="orange-icon"/>
+                </StackPane>
+            </HBox>
+            <Label text="24" styleClass="kpi-value"/>
+            <Label text="Tasks In Progress" styleClass="kpi-label"/>
+        </VBox>
+
+        <VBox styleClass="kpi-card">
+            <HBox>
+                <StackPane styleClass="kpi-icon green">
+                    <FontIcon iconLiteral="mdi2c-check-circle-outline" iconSize="16" styleClass="green-icon"/>
+                </StackPane>
+            </HBox>
+            <Label text="148" styleClass="kpi-value"/>
+            <Label text="Completed Tasks" styleClass="kpi-label"/>
+        </VBox>
+
+        <VBox styleClass="kpi-card">
+            <HBox>
+                <StackPane styleClass="kpi-icon blue">
+                    <FontIcon iconLiteral="mdi2f-folder-outline" iconSize="16" styleClass="blue-icon" />
+                </StackPane>
+            </HBox>
+            <Label text="12" styleClass="kpi-value"/>
+            <Label text="Total Projects" styleClass="kpi-label"/>
+        </VBox>
+
+        <VBox styleClass="kpi-card-urgent">
+            <HBox>
+                <StackPane styleClass="kpi-icon orange">
+                    <FontIcon iconLiteral="mdi2a-alert-outline" iconSize="16" styleClass="red-icon"/>
+                </StackPane>
+            </HBox>
+            <Label text="3" styleClass="kpi-value"/>
+            <Label text="Upcoming Deadlines" styleClass="kpi-label"/>
+        </VBox>
+
+    </HBox>
+
+    <!-- Content row -->
+    <HBox spacing="20">
+
+        <!-- Recent Projects -->
+        <VBox spacing="20" HBox.hgrow="ALWAYS" styleClass="table-container">
+            <HBox alignment="CENTER_LEFT" spacing="20">
+                <Label text="Recent Projects" styleClass="card-title" />
+                <Region HBox.hgrow="ALWAYS"/>
+                <ToggleButton text="View All" styleClass="btn-tertiary"/>
+            </HBox>
+
+            <TableView fx:id="projectsTable" prefHeight="300" styleClass="modern-table">
+
+                <columns>
+                    <TableColumn fx:id="nameCol" text="Project Name" prefWidth="200"/>
+                    <TableColumn fx:id="progressCol" text="Progress" prefWidth="180"/>
+                    <TableColumn fx:id="teamCol" text="Team" prefWidth="160"/>
+                    <TableColumn fx:id="statusCol" text="Status" prefWidth="120"/>
+                    <TableColumn fx:id="startDateCol" text="start Date" prefWidth="120"/>
+                    <TableColumn fx:id="endDateCol" text="End Date" prefWidth="120"/>
+                </columns>
+
+            </TableView>
+
+        </VBox>
+
+        <!-- Today's Tasks -->
+        <VBox spacing="15" styleClass="task-card">
+            <HBox alignment="CENTER_LEFT">
+                <Label text="Today's Tasks" styleClass="card-title" />
+                <Region HBox.hgrow="ALWAYS" />
+                <Button styleClass="small-fab">
+                    <graphic><FontIcon iconLiteral="mdi2p-plus" iconSize="14" iconColor="#7C3AED"/></graphic>
+                </Button>
+            </HBox>
+
+            <VBox spacing="10">
+                <HBox styleClass="task-item" spacing="15" alignment="CENTER_LEFT">
+                    <RadioButton /> <VBox>
+                    <Label text="Review homepage wireframes" styleClass="task-text" />
+                    <HBox spacing="5" alignment="CENTER_LEFT">
+                        <FontIcon iconLiteral="mdi2c-clock-outline" iconSize="12" iconColor="GRAY"/>
+                        <Label text="10:00 AM" styleClass="task-time" />
+                    </HBox>
+                </VBox>
+                </HBox>
+
+            </VBox>
+
+
+        </VBox>
+
+    </HBox>
+</VBox>

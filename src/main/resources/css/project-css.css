@@ -1,0 +1,53 @@
+.project-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #F3F4F6;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.02), 10, 0, 0, 5);
+}
+
+.tag-label {
+    -fx-background-color: #F9FAFB;
+    -fx-text-fill: #6B7280;
+    -fx-padding: 4 8;
+    -fx-background-radius: 4;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
+
+
+.card-description {
+    -fx-text-fill: #6B7280;
+    -fx-line-spacing: 1.5;
+}
+
+/* Card Container */
+.project-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #F3F4F6;
+    -fx-border-width: 1;
+    /* Subtle shadow to match your reference image */
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.03), 10, 0, 0, 5);
+}
+
+/* Tag labels (DESIGN, DEV) */
+.tag-label {
+    -fx-background-color: #F9FAFB;
+    -fx-text-fill: #6B7280;
+    -fx-padding: 3 8;
+    -fx-background-radius: 5;
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+}
+
+/* Custom Purple Progress Bar */
+.project-progress-bar .bar {
+    -fx-background-color: #7C3AED; /* This is the Nexum Purple */
+    -fx-background-radius: 5;
+}
+.project-progress-bar .track {
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 5;
+}
