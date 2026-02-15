@@ -46,7 +46,6 @@ public class AddProjectController {
         });
         assignedUsersCombo.getCheckModel().getCheckedItems().addListener((ListChangeListener<User>) c -> refreshAssignedUsersTitle());
         refreshAssignedUsersTitle();
-        clearErrors();
     }
 
     @FXML
@@ -69,7 +68,7 @@ public class AddProjectController {
             Project newProject = new Project(name, desc, progress, 0.0, startStr, dueStr, selectedUsers.get(0).getId(), 1);
 
             // 3. Save and Refresh
-            int projectId = dao.addProjectAndReturnId(newProject);
+            int projectId = dao.ReturnPrID(newProject);
             if (projectId > 0) {
                 List<Integer> userIds = selectedUsers.stream().map(User::getId).collect(Collectors.toList());
                 dao.replaceProjectAssignments(projectId, userIds);
@@ -118,7 +117,6 @@ public class AddProjectController {
     }
 
     private boolean validateInputs(String name, String desc, LocalDate startDate, LocalDate dueDate, List<User> selectedUsers) {
-        clearErrors();
         boolean valid = true;
 
         if (name.isBlank()) {
@@ -126,9 +124,6 @@ public class AddProjectController {
             valid = false;
         } else if (name.length() < 3) {
             setError(nameErrorLabel, "Minimum 3 characters.");
-            valid = false;
-        } else if (name.length() > 100) {
-            setError(nameErrorLabel, "Maximum 100 characters.");
             valid = false;
         }
 

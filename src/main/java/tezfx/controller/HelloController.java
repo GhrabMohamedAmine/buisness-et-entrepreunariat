@@ -17,6 +17,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.time.LocalDate;
@@ -42,6 +43,7 @@ public class HelloController {
     @FXML private Label completedTasksKpiLabel;
     @FXML private Label totalProjectsKpiLabel;
     @FXML private Label upcomingDeadlinesKpiLabel;
+    @FXML private Label overdueUndoneKpiLabel;
     @FXML private VBox tasksListContainer;
 
     private final sql projectDAO = new sql();
@@ -52,6 +54,8 @@ public class HelloController {
 
     @FXML
     public void initialize() {
+        projectsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
         // 1. Basic Column Mapping
         nameCol.setCellValueFactory(data -> data.getValue().nameProperty());
         startDateCol.setCellValueFactory(cellData -> cellData.getValue().startDateProperty());
@@ -166,7 +170,10 @@ public class HelloController {
 
     public void loadData() {
         assigneesByProject = projectDAO.getProjectAssigneesMap();
-        List<Project> projectsFromDB = projectDAO.getAllProjects();
+        List<Project> projectsFromDB = projectDAO.getAllProjects().stream()
+                .filter(project -> projectDAO.getTaskCount(project.getId()) > 0)
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+        projectsFromDB.sort(Comparator.comparingInt(Project::getId).reversed());
         int visibleCount = Math.min(projectsFromDB.size(), RECENT_PROJECTS_LIMIT);
         List<Project> recentProjects = projectsFromDB.subList(0, visibleCount);
         ObservableList<Project> observableList = FXCollections.observableArrayList(recentProjects);
@@ -183,6 +190,7 @@ public class HelloController {
         tasksInProgressKpiLabel.setText(String.valueOf(projectDAO.getTasksInProgressCount()));
         completedTasksKpiLabel.setText(String.valueOf(projectDAO.getCompletedTasksCount()));
         upcomingDeadlinesKpiLabel.setText(String.valueOf(projectDAO.getUpcomingDeadlinesCount(3)));
+        overdueUndoneKpiLabel.setText(String.valueOf(projectDAO.getOverdueUndoneTasksCount()));
     }
 
     private void loadCurrentUserTasks() {
@@ -230,8 +238,7 @@ public class HelloController {
                 statusCheck.setSelected(!statusCheck.isSelected());
                 return;
             }
-            loadCurrentUserTasks();
-            loadKpis();
+            loadData();
         });
 
         row.getChildren().addAll(statusCheck, titleLabel, assignedTo);

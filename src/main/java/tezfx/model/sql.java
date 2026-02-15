@@ -45,34 +45,34 @@ public class sql {
     }
 
 
-    public int addProjectAndReturnId(Project project) {
+    public int ReturnPrID(Project project) {
         String query = "INSERT INTO projects (name, description, progress, budget, start_date, end_date, assigned_to, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
 
         try (Connection conn = databaseconnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
-            pstmt.setString(1, project.getName());
-            pstmt.setString(2, project.getDescription());
-            pstmt.setInt(3, project.getProgress());
-            pstmt.setDouble(4, project.getBudget());
+             PreparedStatement RID = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
+            RID.setString(1, project.getName());
+            RID.setString(2, project.getDescription());
+            RID.setInt(3, project.getProgress());
+            RID.setDouble(4, project.getBudget());
 
             String startDateStr = project.getStartDate();
             if (startDateStr != null && startDateStr.length() == 10) {
-                pstmt.setDate(5, Date.valueOf(startDateStr));
+                RID.setDate(5, Date.valueOf(startDateStr));
             } else {
-                pstmt.setNull(5, Types.DATE);
+                RID.setNull(5, Types.DATE);
             }
 
             String endDateStr = project.getEndDate();
             if (endDateStr != null && endDateStr.length() == 10) {
-                pstmt.setDate(6, Date.valueOf(endDateStr));
+                RID.setDate(6, Date.valueOf(endDateStr));
             } else {
-                pstmt.setNull(6, Types.DATE);
+                RID.setNull(6, Types.DATE);
             }
 
-            pstmt.setInt(7, project.getAssignedTo());
-            pstmt.setInt(8, project.getCreatedby());
-            pstmt.executeUpdate();
-            ResultSet keys = pstmt.getGeneratedKeys();
+            RID.setInt(7, project.getAssignedTo());
+            RID.setInt(8, project.getCreatedby());
+            RID.executeUpdate();
+            ResultSet keys = RID.getGeneratedKeys();
             if (keys.next()) {
                 return keys.getInt(1);
             }
@@ -86,19 +86,19 @@ public class sql {
         String query = "INSERT INTO tasks (title, description, status, priority, start_date, due_date, project_id, assigned_to ,created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ? ,?)";
 
         try (Connection conn = databaseconnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
+             PreparedStatement adt = conn.prepareStatement(query)) {
 
-            pstmt.setString(1, task.getTitle());
-            pstmt.setString(2, task.getDescription());
-            pstmt.setString(3, task.getStatus());
-            pstmt.setString(4, task.getPriority());
-            pstmt.setString(5, task.getStartDate()); // Ensure format YYYY-MM-DD
-            pstmt.setString(6, task.getDueDate());
-            pstmt.setInt(7, task.getProjectId());
-            pstmt.setInt(8, task.getAssignedTo());
-            pstmt.setInt(9, task.getCreatedby());
+            adt.setString(1, task.getTitle());
+            adt.setString(2, task.getDescription());
+            adt.setString(3, task.getStatus());
+            adt.setString(4, task.getPriority());
+            adt.setString(5, task.getStartDate()); // Ensure format YYYY-MM-DD
+            adt.setString(6, task.getDueDate());
+            adt.setInt(7, task.getProjectId());
+            adt.setInt(8, task.getAssignedTo());
+            adt.setInt(9, task.getCreatedby());
 
-            pstmt.executeUpdate();
+            adt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -341,6 +341,21 @@ public class sql {
         return 0;
     }
 
+    public int getOverdueUndoneTasksCount() {
+        String query = "SELECT COUNT(*) FROM tasks " +
+                "WHERE due_date IS NOT NULL " +
+                "AND DATE(due_date) < CURDATE() " +
+                "AND UPPER(REPLACE(REPLACE(COALESCE(status, ''), ' ', '_'), '-', '_')) <> 'DONE'";
+        try (Connection conn = databaseconnection.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(query)) {
+            if (rs.next()) return rs.getInt(1);
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     public boolean deleteProjectById(int projectId) {
         String deleteTasksSql = "DELETE FROM tasks WHERE project_id = ?";
         String deleteProjectSql = "DELETE FROM projects WHERE id = ?";
@@ -375,27 +390,28 @@ public class sql {
         String query = "UPDATE projects SET name = ?, description = ?, budget = ?, start_date = ?, end_date = ? WHERE id = ?";
 
         try (Connection conn = databaseconnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, project.getName());
-            pstmt.setString(2, project.getDescription());
-            pstmt.setDouble(3, project.getBudget());
+             PreparedStatement upPro = conn.prepareStatement(query)) {
+            upPro.setString(1, project.getName());
+            upPro.setString(2, project.getDescription());
+            upPro.setDouble(3, project.getBudget());
 
             String startDateStr = project.getStartDate();
             if (startDateStr != null && startDateStr.length() == 10) {
-                pstmt.setDate(4, Date.valueOf(startDateStr));
+                upPro.setDate(4, Date.valueOf(startDateStr));
             } else {
-                pstmt.setNull(4, Types.DATE);
+
+                upPro.setNull(4, Types.DATE);
             }
 
             String endDateStr = project.getEndDate();
             if (endDateStr != null && endDateStr.length() == 10) {
-                pstmt.setDate(5, Date.valueOf(endDateStr));
+                upPro.setDate(5, Date.valueOf(endDateStr));
             } else {
-                pstmt.setNull(5, Types.DATE);
+                upPro.setNull(5, Types.DATE);
             }
 
-            pstmt.setInt(6, project.getId());
-            return pstmt.executeUpdate() > 0;
+            upPro.setInt(6, project.getId());
+            return upPro.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
@@ -415,21 +431,17 @@ public class sql {
         }
     }
 
-    public List<Task> getTasksByAssignedUser(int userId, int limit) {
+    public List<Task> getTasksByAssignedUser(int userId) {
         List<Task> tasks = new ArrayList<>();
-        String baseQuery = "SELECT t.*, CONCAT(u.prenom, ' ', u.nom) as user_name " +
+        String query = "SELECT t.*, CONCAT(u.prenom, ' ', u.nom) as user_name " +
                 "FROM tasks t " +
                 "LEFT JOIN utilisateurs u ON t.assigned_to = u.id " +
                 "WHERE t.assigned_to = ? " +
                 "ORDER BY t.due_date IS NULL, t.due_date ASC, t.id DESC";
-        String query = limit > 0 ? baseQuery + " LIMIT ?" : baseQuery;
 
         try (Connection conn = databaseconnection.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, userId);
-            if (limit > 0) {
-                pstmt.setInt(2, limit);
-            }
             ResultSet rs = pstmt.executeQuery();
 
             while (rs.next()) {
@@ -454,22 +466,20 @@ public class sql {
         return tasks;
     }
 
-    public List<Task> getTasksByAssignedUser(int userId) {
-        return getTasksByAssignedUser(userId, 0);
-    }
+
 
     public boolean updateTask(Task task) {
         String query = "UPDATE tasks SET title = ?, description = ?, status = ?, priority = ?, due_date = ?, assigned_to = ? WHERE id = ?";
         try (Connection conn = databaseconnection.getConnection();
-             PreparedStatement pstmt = conn.prepareStatement(query)) {
-            pstmt.setString(1, task.getTitle());
-            pstmt.setString(2, task.getDescription());
-            pstmt.setString(3, task.getStatus());
-            pstmt.setString(4, task.getPriority());
-            pstmt.setString(5, task.getDueDate());
-            pstmt.setInt(6, task.getAssignedTo());
-            pstmt.setInt(7, task.getId());
-            return pstmt.executeUpdate() > 0;
+             PreparedStatement UpTa = conn.prepareStatement(query)) {
+            UpTa.setString(1, task.getTitle());
+            UpTa.setString(2, task.getDescription());
+            UpTa.setString(3, task.getStatus());
+            UpTa.setString(4, task.getPriority());
+            UpTa.setString(5, task.getDueDate());
+            UpTa.setInt(6, task.getAssignedTo());
+            UpTa.setInt(7, task.getId());
+            return UpTa.executeUpdate() > 0;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;

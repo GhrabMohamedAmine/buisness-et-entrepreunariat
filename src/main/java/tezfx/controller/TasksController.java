@@ -160,7 +160,7 @@ public class TasksController {
                 doneCheck.setSelected(!doneCheck.isSelected());
                 return;
             }
-            loadTasks(searchField.getText());
+            loadTasks(currentSearchQuery());
         });
 
         row.getChildren().addAll(doneCheck, title, priority, dateBox, assignedTo, editIcon, deleteIcon);
@@ -237,7 +237,7 @@ public class TasksController {
             mainLayout.setEffect(null);
 
             if (controller.isSaved()) {
-                loadTasks(searchField.getText());
+                loadTasks(currentSearchQuery());
             }
         } catch (IOException e) {
             mainLayout.setEffect(null);
@@ -274,7 +274,7 @@ public class TasksController {
             popupStage.showAndWait();
 
             mainLayout.setEffect(null);
-            loadTasks(searchField.getText());
+            loadTasks(currentSearchQuery());
         } catch (IOException e) {
             mainLayout.setEffect(null);
             e.printStackTrace();
@@ -312,11 +312,15 @@ public class TasksController {
             mainLayout.setEffect(null);
 
             if (controller.isConfirmed() && dao.deleteTaskById(task.getId())) {
-                loadTasks(searchField.getText());
+                loadTasks(currentSearchQuery());
             }
         } catch (IOException e) {
             mainLayout.setEffect(null);
             e.printStackTrace();
         }
+    }
+
+    private String currentSearchQuery() {
+        return searchField == null ? null : searchField.getText();
     }
 }

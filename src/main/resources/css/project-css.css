@@ -185,8 +185,8 @@ w-card {
 }
 
 .badge-progress {
-    -fx-background-color: #e0e7ff; /* Soft Blue */
-    -fx-text-fill: #3730a3;       /* Dark Blue */
+    -fx-background-color: #ffedd5; /* Soft Orange */
+    -fx-text-fill: #c2410c;       /* Dark Orange */
     -fx-background-radius: 20;
     -fx-padding: 4 12;
     -fx-font-weight: bold;

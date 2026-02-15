@@ -428,6 +428,9 @@
 .orange-icon {
     -fx-icon-color: #F77500 !important; /* Use your custom color variable */
 }
+.gray-icon {
+    -fx-icon-color: #9ca3af !important;
+}
 .blue-icon {
     -fx-icon-color: #1546b3 !important; /* Use your custom color variable */
 }
@@ -663,17 +666,20 @@
 .projects-table {
     -fx-background-color: transparent;
     -fx-table-cell-border-color: transparent;
+    -fx-border-color: transparent;
     -fx-padding: 0;
 }
 
 .projects-table .column-header-background {
-    -fx-background-color: #f1f5f9;
-    -fx-background-radius: 12 12 10 10;
-    -fx-padding: 2 0;
+    -fx-background-color: transparent;
+    -fx-background-radius: 0;
+    -fx-padding: 0;
+    -fx-border-color: transparent;
 }
 
 .projects-table .column-header {
     -fx-background-color: transparent;
+    -fx-border-color: transparent;
     -fx-size: 44;
 }
 
@@ -694,8 +700,8 @@
 
 .projects-table .table-row-cell {
     -fx-background-color: #ffffff;
-    -fx-border-color: #eef2f7;
-    -fx-border-width: 0 0 1 0;
+    -fx-border-color: transparent;
+    -fx-border-width: 0;
     -fx-cell-size: 56;
 }
 

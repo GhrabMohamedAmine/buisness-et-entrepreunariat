@@ -1,15 +1,25 @@
 package tezfx.controller;
 
 import javafx.fxml.FXML;
+import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
+import javafx.event.ActionEvent;
 import javafx.scene.input.MouseEvent;
+import org.kordamp.ikonli.javafx.FontIcon;
 import tezfx.model.Task;
+
+import java.util.function.Function;
 
 public class TaskRowController {
     // Add assignedUser here
     @FXML private Label taskTitle, taskDesc, priorityLabel, statusLabel, dueDateLabel, assignedUser;
+    @FXML private CheckBox doneCheck;
+    @FXML private FontIcon inProgressIcon;
     private Runnable onEdit;
     private Runnable onDelete;
+    private Function<Boolean, Boolean> onStatusToggle;
+    private Function<String, Boolean> onStatusChange;
+    private String currentStatus = "TODO";
 
     public void setTaskData(Task task) {
         if (task == null) return;
@@ -25,7 +35,12 @@ public class TaskRowController {
             assignedUser.setText(task.getAssignedToName());
         }
 
-        updateStatusStyle(task.getStatus());
+        String normalizedStatus = normalizeStatus(task.getStatus());
+        currentStatus = normalizedStatus;
+        if (doneCheck != null) {
+            doneCheck.setSelected("DONE".equals(normalizedStatus));
+        }
+        updateStatusStyle(normalizedStatus);
         updatePriorityStyle(task.getPriority());
     }
 
@@ -41,6 +56,7 @@ public class TaskRowController {
         } else {
             statusLabel.getStyleClass().add("badge-todo");
         }
+        updateInProgressIconStyle(normalized);
     }
 
     private void updatePriorityStyle(String priority) {
@@ -70,12 +86,73 @@ public class TaskRowController {
         return "To Do";
     }
 
+    private void updateInProgressIconStyle(String normalizedStatus) {
+        if (inProgressIcon == null) return;
+        inProgressIcon.getStyleClass().removeAll("gray-icon", "orange-icon");
+        if ("IN_PROGRESS".equals(normalizedStatus)) {
+            inProgressIcon.getStyleClass().add("orange-icon");
+        } else {
+            inProgressIcon.getStyleClass().add("gray-icon");
+        }
+    }
+
     public void setOnEdit(Runnable onEdit) {
         this.onEdit = onEdit;
     }
 
     public void setOnDelete(Runnable onDelete) {
         this.onDelete = onDelete;
+    }
+
+    public void setOnStatusToggle(Function<Boolean, Boolean> onStatusToggle) {
+        this.onStatusToggle = onStatusToggle;
+    }
+
+    public void setOnStatusChange(Function<String, Boolean> onStatusChange) {
+        this.onStatusChange = onStatusChange;
+    }
+
+    @FXML
+    private void onDoneToggle(ActionEvent event) {
+        if (doneCheck == null) return;
+        boolean selected = doneCheck.isSelected();
+        String nextStatus = selected ? "DONE" : "TODO";
+
+        if (onStatusToggle != null) {
+            boolean updated = Boolean.TRUE.equals(onStatusToggle.apply(selected));
+            if (!updated) {
+                doneCheck.setSelected(!selected);
+                return;
+            }
+        } else if (onStatusChange != null) {
+            boolean updated = Boolean.TRUE.equals(onStatusChange.apply(nextStatus));
+            if (!updated) {
+                doneCheck.setSelected(!selected);
+                return;
+            }
+        }
+
+        currentStatus = nextStatus;
+        updateStatusStyle(nextStatus);
+    }
+
+    @FXML
+    private void onInProgressClick(MouseEvent event) {
+        String normalized = normalizeStatus(currentStatus);
+        if ("IN_PROGRESS".equals(normalized)) {
+            return;
+        }
+
+        boolean updated = onStatusChange != null && Boolean.TRUE.equals(onStatusChange.apply("IN_PROGRESS"));
+        if (!updated) {
+            return;
+        }
+
+        currentStatus = "IN_PROGRESS";
+        if (doneCheck != null) {
+            doneCheck.setSelected(false);
+        }
+        updateStatusStyle("IN_PROGRESS");
     }
 
     @FXML

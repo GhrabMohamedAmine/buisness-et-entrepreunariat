@@ -112,15 +112,9 @@ public class AddTaskController {
         } else if (title.length() < 3) {
             setError(titleErrorLabel, "Minimum 3 characters.");
             valid = false;
-        } else if (title.length() > 120) {
-            setError(titleErrorLabel, "Maximum 120 characters.");
-            valid = false;
         }
 
-        if (desc.length() > 1000) {
-            setError(descErrorLabel, "Maximum 1000 characters.");
-            valid = false;
-        }
+
 
         if (dueDatePicker.getValue() == null) {
             setError(dueDateErrorLabel, "Due date is required.");

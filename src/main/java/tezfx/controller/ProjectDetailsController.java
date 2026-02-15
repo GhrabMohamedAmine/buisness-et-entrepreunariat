@@ -185,6 +185,23 @@ public class ProjectDetailsController {
 
                 TaskRowController controller = loader.getController();
                 controller.setTaskData(t);
+                controller.setOnStatusToggle(selected -> {
+                    String newStatus = selected ? "DONE" : "TODO";
+                    boolean updated = dao.updateTaskStatus(t.getId(), newStatus);
+                    if (updated && currentProject != null) {
+                        loadProjectStats(currentProject.getId());
+                        showTasksTab();
+                    }
+                    return updated;
+                });
+                controller.setOnStatusChange(newStatus -> {
+                    boolean updated = dao.updateTaskStatus(t.getId(), newStatus);
+                    if (updated && currentProject != null) {
+                        loadProjectStats(currentProject.getId());
+                        showTasksTab();
+                    }
+                    return updated;
+                });
                 controller.setOnEdit(() -> openUpdateTaskModal(t));
                 controller.setOnDelete(() -> deleteTask(t));
 

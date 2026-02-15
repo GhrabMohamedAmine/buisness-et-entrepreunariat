@@ -82,6 +82,16 @@
             <Label text="Upcoming Deadlines" styleClass="kpi-label"/>
         </VBox>
 
+        <VBox styleClass="kpi-card-urgent">
+            <HBox>
+                <StackPane styleClass="kpi-icon orange">
+                    <FontIcon iconLiteral="mdi2c-clock-outline" iconSize="16" styleClass="red-icon"/>
+                </StackPane>
+            </HBox>
+            <Label fx:id="overdueUndoneKpiLabel" text="0" styleClass="kpi-value"/>
+            <Label text="Overdue Undone Tasks" styleClass="kpi-label"/>
+        </VBox>
+
     </HBox>
 
     <!-- Content row -->
@@ -95,17 +105,16 @@
                     <Label text="Track active projects and progress" styleClass="projects-panel-subtitle" />
                 </VBox>
                 <Region HBox.hgrow="ALWAYS"/>
-                <Button text="View All" styleClass="projects-panel-action"/>
             </HBox>
 
             <TableView fx:id="projectsTable" prefHeight="300" styleClass="modern-table,projects-table">
 
                 <columns>
-                    <TableColumn fx:id="nameCol" text="Project Name" prefWidth="260"/>
-                    <TableColumn fx:id="progressCol" text="Progress" prefWidth="230"/>
-                    <TableColumn fx:id="teamCol" text="Team" prefWidth="180"/>
-                    <TableColumn fx:id="startDateCol" text="Start Date" prefWidth="120"/>
-                    <TableColumn fx:id="endDateCol" text="End Date" prefWidth="120"/>
+                    <TableColumn fx:id="nameCol" text="Project Name"/>
+                    <TableColumn fx:id="progressCol" text="Progress"/>
+                    <TableColumn fx:id="teamCol" text="Team"/>
+                    <TableColumn fx:id="startDateCol" text="Start Date"/>
+                    <TableColumn fx:id="endDateCol" text="End Date"/>
                 </columns>
 
             </TableView>

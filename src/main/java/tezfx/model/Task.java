@@ -50,6 +50,7 @@ public class Task {
     public int getProjectId() { return projectId.get(); }
     public int getAssignedTo() { return assignedTo.get(); }
 
+
     public void setId(int id) { this.id.set(id); }
     public void setStatus(String status) { this.status.set(status); }
 
