@@ -1,0 +1,79 @@
+.root {
+    -color-nexum-violet: #7c3aed; /* Violet de l'image */
+    -color-nexum-violet-hover: #6d28d9;
+}
+
+/* Style des champs de saisie */
+.login-input {
+    -fx-background-color: #f9fafb;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 12;
+    -fx-font-size: 14px;
+}
+
+.login-input:focused {
+    -fx-border-color: -color-nexum-violet;
+    -fx-background-color: white;
+}
+
+.input-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #374151;
+}
+
+/* Bouton Sign In Large */
+.btn-primary-large {
+    -fx-background-color: -color-nexum-violet;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+    -fx-background-radius: 12;
+    -fx-padding: 14;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(124, 58, 237, 0.3), 15, 0, 0, 5);
+}
+
+.btn-primary-large:hover {
+    -fx-background-color: -color-nexum-violet-hover;
+}
+
+/* Liens cliquables */
+.forgot-link, .signup-link {
+    -fx-text-fill: -color-nexum-violet;
+    -fx-font-weight: bold;
+    -fx-underline: false;
+}
+
+.btn-back {
+    -fx-background-color: transparent;
+    -fx-text-fill: #6b7280;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+}
+/* Fond général de l'application */
+.root {
+    -fx-background-color: #f3f4f6; /* Gris très clair pour le fond */
+    -color-nexum-violet: #7c3aed;
+}
+
+/* La carte blanche centrale */
+.login-card {
+    -fx-background-color: white;
+    -fx-background-radius: 25;
+    -fx-overflow: hidden; /* Important pour que l'image ne dépasse pas des coins arrondis */
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 20, 0, 0, 10);
+}
+
+/* Style du volet droit (Violet si l'image ne charge pas) */
+.right-pane {
+    -fx-background-color: #4c1d95;
+    -fx-background-radius: 0 25 25 0; /* Arrondi uniquement à droite */
+}
+
+/* On force l'image à suivre l'arrondi de la carte */
+.right-pane .image-view {
+    -fx-background-radius: 0 25 25 0;
+}

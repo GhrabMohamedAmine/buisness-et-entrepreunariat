@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+<?import org.kordamp.ikonli.javafx.*?>
+
+<StackPane prefHeight="700.0" prefWidth="1000.0" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.SignUpController">
+    <children>
+        <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="650.0" prefWidth="950.0" styleClass="login-card">
+            <children>
+                <VBox prefWidth="550.0" spacing="15.0" HBox.hgrow="ALWAYS">
+                    <padding>
+
+                        <Insets bottom="30.0" left="50.0" right="50.0" top="30.0" />
+                    </padding>
+                    <children>
+                        <Label style="-fx-text-fill: #7c3aed;
+ -fx-font-weight: bold; -fx-font-size: 12px;" text="CRÉATION DE COMPTE" />
+
+                        <VBox spacing="5.0">
+                            <Label styleClass="title-label" text="Rejoignez l'équipe" />
+                            <Label styleClass="description-label" text="Veuillez remplir vos informations pour continuer."
+                            />
+                        </VBox>
+
+                        <HBox spacing="20.0" alignment="CENTER_LEFT">
+                            <children>
+                                <StackPane>
+                                    <Circle fx:id="profileCircle" radius="35.0" fill="#f3f4f6" stroke="#e5e7eb" strokeWidth="1.0" />
+                                </StackPane>
+                                <VBox spacing="5.0" alignment="CENTER_LEFT">
+                                    <children>
+                                        <Label styleClass="input-label" text="Photo de profil" />
+                                        <Label style="-fx-text-fill: #9ca3af; -fx-font-size: 12px;" text="Recommandé 400x400px" />
+                                        <Hyperlink onAction="#handleImageUpload" styleClass="link-primary" text="Télécharger" style="-fx-border-color: transparent; -fx-padding: 2 0;"/>
+                                    </children>
+                                </VBox>
+                            </children>
+                            <VBox.margin>
+                                <Insets bottom="10.0" top="10.0" />
+                            </VBox.margin>
+                        </HBox>
+                        <HBox spacing="15.0">
+                            <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+
+                                <Label styleClass="input-label" text="Prénom" />
+                                <TextField fx:id="firstNameField" promptText="Sarah" styleClass="login-input" />
+                            </VBox>
+
+                            <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                <Label styleClass="input-label" text="Nom" />
+                                <TextField fx:id="lastNameField" promptText="Connor" styleClass="login-input" />
+
+                            </VBox>
+                        </HBox>
+
+                        <VBox spacing="5.0">
+                            <Label styleClass="input-label" text="Adresse Email" />
+
+                            <TextField fx:id="emailField" promptText="sarah@company.com" styleClass="login-input" />
+                        </VBox>
+
+                        <VBox spacing="5.0">
+                            <Label styleClass="input-label" text="Téléphone"
+                            />
+                            <TextField fx:id="phoneField" promptText="+216 22 333 444" styleClass="login-input" />
+                        </VBox>
+
+                        <HBox spacing="15.0">
+
+                            <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                <Label styleClass="input-label" text="Rôle" />
+                                <ComboBox fx:id="roleComboBox" maxWidth="Infinity" promptText="Sélectionner..." styleClass="login-input">
+
+                                    <items>
+                                        <FXCollections fx:factory="observableArrayList">
+                                            <String fx:value="Manager" />
+                                            <String fx:value="Ressource Manager" />
+                                            <String fx:value="Employer" />
+                                            <String fx:value="Formateur" />
+                                            <String fx:value="Chef Projet" />
+                                            <String fx:value="Expert Financier" />
+
+                                        </FXCollections>
+                                    </items>
+                                </ComboBox>
+
+                            </VBox>
+                            <VBox spacing="5.0" HBox.hgrow="ALWAYS">
+                                <Label styleClass="input-label" text="Département" />
+
+                                <TextField fx:id="deptField" promptText="ex: Ingénierie" styleClass="login-input" />
+                            </VBox>
+                        </HBox>
+
+
+                        <VBox spacing="5.0">
+                            <Label styleClass="input-label" text="Mot de passe" />
+                            <PasswordField fx:id="passwordField" promptText="••••••••" styleClass="login-input" />
+                        </VBox>
+
+
+                        <Region VBox.vgrow="ALWAYS" />
+
+                        <HBox alignment="CENTER_LEFT">
+                            <Button onAction="#handleBack" styleClass="btn-back" text="Retour" />
+
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Button onAction="#handleSignUp" prefWidth="150" styleClass="btn-primary" text="Créer un compte" />
+                        </HBox>
+                    </children>
+                </VBox>
+
+
+                <VBox prefWidth="350.0" style="-fx-background-color: #f9fafb;
+ -fx-border-color: transparent transparent transparent #e5e7eb;">
+                    <padding>
+                        <Insets bottom="40.0" left="40.0" right="40.0" top="40.0" />
+                    </padding>
+                    <children>
+
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                            <ImageView fitHeight="30.0" preserveRatio="true">
+                                <image>
+
+                                    <Image url="@Logo.png" />
+                                </image>
+                            </ImageView>
+
+                            <Label style="-fx-font-weight: bold;
+ -fx-font-size: 18px;" text="Nexum" />
+                        </HBox>
+                        <Region prefHeight="40.0" />
+                        <VBox spacing="25.0">
+
+                            <HBox alignment="CENTER_LEFT" spacing="15.0">
+                                <StackPane>
+                                    <Circle fill="#7c3aed" radius="12.0" stroke="#7c3aed" strokeWidth="1.5" />
+
+                                    <Label style="-fx-text-fill: white;
+ -fx-font-weight: bold;" text="1" />
+                                </StackPane>
+                                <Label style="-fx-text-fill: #111827;
+ -fx-font-weight: bold;" text="Informations" />
+                            </HBox>
+                            <HBox alignment="CENTER_LEFT" spacing="15.0">
+                                <StackPane>
+
+                                    <Circle fill="transparent" radius="12.0" stroke="#d1d5db" strokeWidth="1.5" />
+                                    <Label style="-fx-text-fill: #9ca3af;" text="2" />
+
+                                </StackPane>
+                                <Label style="-fx-text-fill: #9ca3af;" text="Vérification" />
+                            </HBox>
+                        </VBox>
+
+                    </children>
+                </VBox>
+            </children>
+        </HBox>
+    </children>
+</StackPane>

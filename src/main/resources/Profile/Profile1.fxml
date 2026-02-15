@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.String?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<BorderPane fx:id="mainPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="800.0" minWidth="1200.0" styleClass="root-pane" stylesheets="@style.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.ProfileController">
+
+    <top>
+        <HBox alignment="CENTER_LEFT" spacing="20.0" styleClass="top-bar" BorderPane.alignment="CENTER">
+            <children>
+                <StackPane alignment="CENTER_LEFT">
+                    <TextField promptText="Search..." styleClass="top-search-field" />
+                    <FontIcon iconLiteral="fth-search" iconColor="#9CA3AF" iconSize="16" translateX="300" />
+                </StackPane>
+
+                <Region HBox.hgrow="ALWAYS" />
+
+                <HBox alignment="CENTER" spacing="15.0">
+                    <children>
+                        <Button onAction="#handleRec" style="-fx-background-color: transparent; -fx-cursor: hand;">
+                            <graphic><FontIcon iconLiteral="fth-bell" iconColor="#6B7280" iconSize="20" /></graphic>
+                        </Button>
+
+                        <Separator orientation="VERTICAL" maxHeight="20.0" />
+
+                        <HBox alignment="CENTER" spacing="10.0" style="-fx-cursor: hand;">
+                            <children>
+                                <Circle fill="#fbbf24" radius="16.0" />
+                                <Label style="-fx-font-weight: bold; -fx-text-fill: #374151;" text="Alex" />
+                                <FontIcon iconLiteral="fth-chevron-down" iconColor="#6B7280" iconSize="14" />
+                            </children>
+                        </HBox>
+                    </children>
+                </HBox>
+            </children>
+        </HBox>
+    </top>
+
+    <left>
+        <VBox prefWidth="280.0" spacing="8.0" styleClass="sidebar" BorderPane.alignment="CENTER">
+            <padding>
+                <Insets top="20.0" right="20.0" bottom="20.0" left="20.0" />
+            </padding>
+            <children>
+                <Button fx:id="btnProfile" alignment="BASELINE_LEFT" graphicTextGap="12.0" maxWidth="Infinity" onAction="#showProfile" text="My Profile">
+                    <styleClass>
+                        <String fx:value="menu-item" />
+                        <String fx:value="active" />
+                    </styleClass>
+                    <graphic><FontIcon iconLiteral="fth-user" iconSize="18" /></graphic>
+                </Button>
+
+                <Button fx:id="btnNotifications" alignment="BASELINE_LEFT" graphicTextGap="12.0" maxWidth="Infinity" onAction="#showNotifications" styleClass="menu-item" text="Notifications">
+                    <graphic><FontIcon iconLiteral="fth-bell" iconSize="18" /></graphic>
+                </Button>
+
+                <Button fx:id="btnSecurity" alignment="BASELINE_LEFT" graphicTextGap="12.0" maxWidth="Infinity" onAction="#showSecurity" styleClass="menu-item" text="Password &amp; Security">
+                    <graphic><FontIcon iconLiteral="fth-lock" iconSize="18" /></graphic>
+                </Button>
+
+                <Region VBox.vgrow="ALWAYS" />
+
+                <Button fx:id="btnLogout" alignment="BASELINE_LEFT" graphicTextGap="12.0" maxWidth="Infinity" onAction="#logout" styleClass="menu-item" text="Log out">
+                    <graphic><FontIcon iconLiteral="fth-log-out" iconSize="18" /></graphic>
+                </Button>
+            </children>
+        </VBox>
+    </left>
+
+    <center>
+        <StackPane fx:id="contentArea" style="-fx-padding: 30;">
+        </StackPane>
+    </center>
+
+</BorderPane>

@@ -1,0 +1,122 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.Circle?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="controllers.SignUpController"
+           stylesheets="@styles.css" prefHeight="700.0" prefWidth="1000.0">
+
+    <children>
+        <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity"
+              prefHeight="600.0" prefWidth="950.0" styleClass="login-card">
+            <children>
+
+                <VBox HBox.hgrow="ALWAYS" prefWidth="600.0" spacing="30.0" alignment="TOP_CENTER">
+                    <padding>
+                        <Insets bottom="40.0" left="50.0" right="50.0" top="60.0" />
+                    </padding>
+                    <children>
+                        <StackPane>
+                            <Circle radius="30.0" fill="#f0fdf4" />
+                            <FontIcon iconLiteral="fth-check" iconSize="30" iconColor="#22c55e"/>
+                        </StackPane>
+
+                        <VBox spacing="10.0" alignment="CENTER">
+                            <Label styleClass="title-label" text="You're all set!" />
+                            <Label styleClass="description-label" text="Your workspace is ready. Where would you like to start today?" />
+                        </VBox>
+
+                        <VBox spacing="15.0" maxWidth="450.0">
+                            <children>
+                                <HBox styleClass="action-row" alignment="CENTER_LEFT" onMouseClicked="#goToProjects">
+                                    <StackPane styleClass="icon-box-purple">
+                                        <FontIcon iconLiteral="fth-layers" iconSize="20" iconColor="#7c3aed"/>
+                                    </StackPane>
+                                    <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+                                        <Label text="Create a Project" styleClass="action-title" />
+                                        <Label text="Set up your first roadmap" styleClass="action-subtitle" />
+                                    </VBox>
+                                    <FontIcon iconLiteral="fth-chevron-right" iconSize="16" iconColor="#d1d5db"/>
+                                </HBox>
+
+                                <HBox styleClass="action-row" alignment="CENTER_LEFT" onMouseClicked="#goToTrainings">
+                                    <StackPane styleClass="icon-box-yellow">
+                                        <FontIcon iconLiteral="fth-book-open" iconSize="20" iconColor="#d97706"/>
+                                    </StackPane>
+                                    <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+                                        <Label text="View Trainings" styleClass="action-title" />
+                                        <Label text="Explore assigned courses" styleClass="action-subtitle" />
+                                    </VBox>
+                                    <FontIcon iconLiteral="fth-chevron-right" iconSize="16" iconColor="#d1d5db"/>
+                                </HBox>
+
+                                <HBox styleClass="action-row" alignment="CENTER_LEFT" onMouseClicked="#goToDashboard">
+                                    <StackPane styleClass="icon-box-grey">
+                                        <FontIcon iconLiteral="fth-grid" iconSize="20" iconColor="#4b5563"/>
+                                    </StackPane>
+                                    <VBox spacing="2.0" HBox.hgrow="ALWAYS">
+                                        <Label text="Go to Dashboard" styleClass="action-title" />
+                                        <Label text="See your daily overview" styleClass="action-subtitle" />
+                                    </VBox>
+                                    <FontIcon iconLiteral="fth-chevron-right" iconSize="16" iconColor="#d1d5db"/>
+                                </HBox>
+                            </children>
+                        </VBox>
+                    </children>
+                </VBox>
+
+                <VBox prefWidth="300.0" styleClass="right-pane-sidebar">
+                    <padding>
+                        <Insets bottom="40.0" left="30.0" right="30.0" top="40.0" />
+                    </padding>
+                    <children>
+                        <HBox alignment="CENTER_LEFT" spacing="10.0">
+                            <ImageView fitHeight="25.0" preserveRatio="true">
+                                <Image url="@Logo.png" />
+                            </ImageView>
+                            <Label text="Nexum" style="-fx-font-weight: bold; -fx-font-size: 16px;"/>
+                        </HBox>
+
+                        <Region prefHeight="40.0" />
+
+                        <VBox spacing="20.0">
+                            <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                <StackPane>
+                                    <Circle radius="12.0" fill="#7c3aed" />
+                                    <FontIcon iconLiteral="fth-check" iconSize="14" iconColor="white"/>
+                                </StackPane>
+                                <Label text="Account Setup" styleClass="step-label-active" />
+                            </HBox>
+
+                            <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                <StackPane>
+                                    <Circle radius="12.0" fill="#7c3aed" />
+                                    <FontIcon iconLiteral="fth-check" iconSize="14" iconColor="white"/>
+                                </StackPane>
+                                <Label text="Feature Tour" styleClass="step-label-active" />
+                            </HBox>
+
+                            <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                <StackPane>
+                                    <Circle radius="12.0" fill="transparent" stroke="#7c3aed" strokeWidth="2"/>
+                                    <Label text="3" style="-fx-text-fill: #7c3aed; -fx-font-weight: bold;"/>
+                                </StackPane>
+                                <Label text="Ready" styleClass="step-label-active" />
+                            </HBox>
+                        </VBox>
+
+                        <Region VBox.vgrow="ALWAYS" />
+                        <VBox styleClass="quote-box">
+                            <Label wrapText="true" styleClass="quote-text" text="&quot;The onboarding process ensures progressive user adoption by introducing core modules step by step.&quot;" />
+                        </VBox>
+                    </children>
+                </VBox>
+            </children>
+        </HBox>
+    </children>
+</StackPane>
