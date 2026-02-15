@@ -1,5 +1,6 @@
 package tezfx.controller;
 
+import javafx.scene.Parent;
 import tezfx.app.ViewLoader;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
@@ -17,6 +18,12 @@ public class MainController {
     }
     public static StackPane getStaticContentArea() {
         return staticContentArea;
+    }
+
+    public static void setContent(Parent root) {
+        if (root != null && staticContentArea != null) {
+            staticContentArea.getChildren().setAll(root);
+        }
     }
 
     @FXML

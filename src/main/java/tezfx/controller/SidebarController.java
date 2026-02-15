@@ -23,6 +23,12 @@ public class SidebarController {
         }
 
 
+        @FXML
+        private void onTasksClicked() {
+            MainController.setView("tasks.fxml");
+        }
+
+
 
     private void loadPage(String pageName) {
         System.out.println("Loading: " + pageName);

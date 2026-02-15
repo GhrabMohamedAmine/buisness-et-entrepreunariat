@@ -48,7 +48,7 @@
                     <FontIcon iconLiteral="mdi2c-clock-outline" iconSize="16" styleClass="orange-icon"/>
                 </StackPane>
             </HBox>
-            <Label text="24" styleClass="kpi-value"/>
+            <Label fx:id="tasksInProgressKpiLabel" text="0" styleClass="kpi-value"/>
             <Label text="Tasks In Progress" styleClass="kpi-label"/>
         </VBox>
 
@@ -58,7 +58,7 @@
                     <FontIcon iconLiteral="mdi2c-check-circle-outline" iconSize="16" styleClass="green-icon"/>
                 </StackPane>
             </HBox>
-            <Label text="148" styleClass="kpi-value"/>
+            <Label fx:id="completedTasksKpiLabel" text="0" styleClass="kpi-value"/>
             <Label text="Completed Tasks" styleClass="kpi-label"/>
         </VBox>
 
@@ -68,7 +68,7 @@
                     <FontIcon iconLiteral="mdi2f-folder-outline" iconSize="16" styleClass="blue-icon" />
                 </StackPane>
             </HBox>
-            <Label text="12" styleClass="kpi-value"/>
+            <Label fx:id="totalProjectsKpiLabel" text="0" styleClass="kpi-value"/>
             <Label text="Total Projects" styleClass="kpi-label"/>
         </VBox>
 
@@ -78,7 +78,7 @@
                     <FontIcon iconLiteral="mdi2a-alert-outline" iconSize="16" styleClass="red-icon"/>
                 </StackPane>
             </HBox>
-            <Label text="3" styleClass="kpi-value"/>
+            <Label fx:id="upcomingDeadlinesKpiLabel" text="0" styleClass="kpi-value"/>
             <Label text="Upcoming Deadlines" styleClass="kpi-label"/>
         </VBox>
 
@@ -88,21 +88,23 @@
     <HBox spacing="20">
 
         <!-- Recent Projects -->
-        <VBox spacing="20" HBox.hgrow="ALWAYS" styleClass="table-container">
-            <HBox alignment="CENTER_LEFT" spacing="20">
-                <Label text="Recent Projects" styleClass="card-title" />
+        <VBox spacing="14" HBox.hgrow="ALWAYS" styleClass="table-container,projects-panel">
+            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="projects-panel-header">
+                <VBox spacing="2">
+                    <Label text="Recent Projects" styleClass="projects-panel-title" />
+                    <Label text="Track active projects and progress" styleClass="projects-panel-subtitle" />
+                </VBox>
                 <Region HBox.hgrow="ALWAYS"/>
-                <ToggleButton text="View All" styleClass="btn-tertiary"/>
+                <Button text="View All" styleClass="projects-panel-action"/>
             </HBox>
 
-            <TableView fx:id="projectsTable" prefHeight="300" styleClass="modern-table">
+            <TableView fx:id="projectsTable" prefHeight="300" styleClass="modern-table,projects-table">
 
                 <columns>
-                    <TableColumn fx:id="nameCol" text="Project Name" prefWidth="200"/>
-                    <TableColumn fx:id="progressCol" text="Progress" prefWidth="180"/>
-                    <TableColumn fx:id="teamCol" text="Team" prefWidth="160"/>
-                    <TableColumn fx:id="statusCol" text="Status" prefWidth="120"/>
-                    <TableColumn fx:id="startDateCol" text="start Date" prefWidth="120"/>
+                    <TableColumn fx:id="nameCol" text="Project Name" prefWidth="260"/>
+                    <TableColumn fx:id="progressCol" text="Progress" prefWidth="230"/>
+                    <TableColumn fx:id="teamCol" text="Team" prefWidth="180"/>
+                    <TableColumn fx:id="startDateCol" text="Start Date" prefWidth="120"/>
                     <TableColumn fx:id="endDateCol" text="End Date" prefWidth="120"/>
                 </columns>
 
@@ -110,28 +112,21 @@
 
         </VBox>
 
-        <!-- Today's Tasks -->
-        <VBox spacing="15" styleClass="task-card">
+        <!-- Tasks -->
+        <VBox spacing="15" prefWidth="420" minWidth="420" maxWidth="420" styleClass="task-card">
             <HBox alignment="CENTER_LEFT">
-                <Label text="Today's Tasks" styleClass="card-title" />
+                <Label text="Tasks" styleClass="card-title" />
                 <Region HBox.hgrow="ALWAYS" />
                 <Button styleClass="small-fab">
                     <graphic><FontIcon iconLiteral="mdi2p-plus" iconSize="14" iconColor="#7C3AED"/></graphic>
                 </Button>
             </HBox>
 
-            <VBox spacing="10">
-                <HBox styleClass="task-item" spacing="15" alignment="CENTER_LEFT">
-                    <RadioButton /> <VBox>
-                    <Label text="Review homepage wireframes" styleClass="task-text" />
-                    <HBox spacing="5" alignment="CENTER_LEFT">
-                        <FontIcon iconLiteral="mdi2c-clock-outline" iconSize="12" iconColor="GRAY"/>
-                        <Label text="10:00 AM" styleClass="task-time" />
-                    </HBox>
-                </VBox>
-                </HBox>
-
-            </VBox>
+            <ScrollPane fitToWidth="true" prefHeight="420.0" style="-fx-background-color: transparent; -fx-background: transparent;">
+                <content>
+                    <VBox fx:id="tasksListContainer" spacing="8" />
+                </content>
+            </ScrollPane>
 
 
         </VBox>

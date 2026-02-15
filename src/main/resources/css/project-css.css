@@ -51,3 +51,264 @@
     -fx-background-color: #F3F4F6;
     -fx-background-radius: 5;
 }
+
+.project-card {
+    -fx-background-color: white;
+    -fx-background-radius: 16px;
+    -fx-border-radius: 16px;
+    -fx-border-color: #f0f0f0;
+    -fx-border-width: 1px;
+    /* Soft Shadow */
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 15, 0, 0, 5);
+    -fx-min-width: 300px;
+    -fx-max-width: 350px;
+}
+
+ .project-card-title{
+     -fx-font-family: Inter;
+     -fx-font-weight: bold;
+     -fx-font-size: 14px;
+ }
+ .project-card-description{
+     -fx-font-weight: 400;
+     -fx-font-size: 12px;
+ }
+ .project-card-ddl{
+     -fx-background-color: rgba(225, 225, 225, 0.2);
+    -fx-background-radius: 4px;
+     -fx-padding: 4px;
+     
+
+ }
+.detail-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-padding: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 5);
+}
+
+
+/* General Card Style */
+.nexum-card {
+    -fx-background-color: white;
+    -fx-background-radius: 16;
+    -fx-padding: 24;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.03), 20, 0, 0, 8);
+}
+
+/* Typography */
+.header-title {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #1a202c;
+}
+
+.text-muted {
+    -fx-text-fill: #718096;
+    -fx-font-size: 14px;
+}
+
+/* Progress Bar */
+.nexum-progress .bar {
+    -fx-background-color: #7c4dff; /* Purple */
+    -fx-background-radius: 10;
+}
+.nexum-progress .track {
+    -fx-background-color: #edf2f7;
+    -fx-background-radius: 10;
+}
+
+/* Tab Navigation */
+.tab-active {
+    -fx-background-color: transparent;
+    -fx-text-fill: #7c4dff;
+    -fx-border-color: transparent transparent #7c4dff transparent;
+    -fx-border-width: 2;
+    -fx-font-weight: bold;
+    -fx-padding: 0 0 10 0;
+}
+
+.tab-inactive {
+    -fx-background-color: transparent;
+    -fx-text-fill: #718096;
+    -fx-padding: 0 0 10 0;
+}
+
+/* Stat Rows */
+.stat-row {
+    -fx-padding: 12;
+    -fx-background-color: #f8f9fa;
+    -fx-background-radius: 10;
+}
+.stat-row-total { -fx-background-color: #f9fafb; -fx-border-color: #f3f4f6; }
+.stat-row-completed { -fx-background-color: #f0fdf4; -fx-border-color: #dcfce7; }
+.stat-row-overdue { -fx-background-color: #fef2f2; -fx-border-color: #fee2e2; }
+
+.stat-number { -fx-font-size: 16px; -fx-font-weight: bold; }
+.stat-number-green { -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #166534; }
+.stat-number-red { -fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #991b1b; }
+.stat-number { -fx-font-weight: bold; -fx-font-size: 16; }
+/* Stat Rows */
+.stat-row-total, .stat-row-completed, .stat-row-overdue {
+    -fx-padding: 12 16;
+    -fx-background-radius: 8;
+    -fx-border-width: 1;
+}
+
+w-card {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #f0f0f0;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.02), 5, 0, 0, 2);
+}
+
+/* Priority Badges */
+.badge-priority-high {
+    -fx-background-color: #fee2e2;
+    -fx-text-fill: #dc2626;
+    -fx-padding: 4 10;
+    -fx-background-radius: 20;
+    -fx-font-size: 11;
+}
+
+/* Status Badges */
+
+/* --- Status Badges --- */
+.badge-done {
+    -fx-background-color: #dcfce7; /* Soft Green */
+    -fx-text-fill: #166534;       /* Dark Green */
+    -fx-background-radius: 20;
+    -fx-padding: 4 12;
+    -fx-font-weight: bold;
+    -fx-font-size: 11;
+}
+
+.badge-progress {
+    -fx-background-color: #e0e7ff; /* Soft Blue */
+    -fx-text-fill: #3730a3;       /* Dark Blue */
+    -fx-background-radius: 20;
+    -fx-padding: 4 12;
+    -fx-font-weight: bold;
+    -fx-font-size: 11;
+}
+
+.badge-todo {
+    -fx-background-color: #f3f4f6; /* Soft Grey */
+    -fx-text-fill: #4b5563;       /* Dark Grey */
+    -fx-background-radius: 20;
+    -fx-padding: 4 12;
+    -fx-font-weight: bold;
+    -fx-font-size: 11;
+}
+
+/* --- Priority Badges --- */
+.badge-priority-high {
+    -fx-background-color: #fee2e2; /* Soft Red */
+    -fx-text-fill: #991b1b;       /* Deep Red */
+    -fx-background-radius: 20;
+    -fx-padding: 4 12;
+    -fx-font-weight: bold;
+    -fx-font-size: 11;
+}
+
+.badge-priority-medium {
+    -fx-background-color: #fef3c7; /* Soft Amber */
+    -fx-background-color: #fef3c7; /* Soft Amber */
+    -fx-text-fill: #92400e;       /* Deep Amber */
+    -fx-background-radius: 20;
+    -fx-padding: 4 12;
+    -fx-font-weight: bold;
+    -fx-font-size: 11;
+}
+
+.badge-priority-low {
+    -fx-background-color: #f0fdf4; /* Very Light Green/Teal */
+    -fx-text-fill: #15803d;       /* Dark Green */
+    -fx-background-radius: 20;
+    -fx-padding: 4 12;
+    -fx-font-weight: bold;
+    -fx-font-size: 11;
+}
+/* The main modal container */
+.modal-card {
+    -fx-background-color: white;
+    -fx-background-radius: 25px; /* Matches your project modal */
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 20, 0, 0, 10);
+}
+
+/* Modern Input Styles */
+.modern-text-field, .modern-text-area, .modern-datepicker, .modern-combo {
+    -fx-background-color: white;
+    -fx-border-color: #e0e0e0;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 8px;
+}
+
+.modern-text-field:focused, .modern-text-area:focused {
+    -fx-border-color: #7c4dff; /* Purple accent */
+    -fx-border-width: 2px;
+}
+.btn-icon-outline .ikonli-font-icon {
+    -fx-icon-color: #6b7280;
+}
+
+.btn-icon-danger .ikonli-font-icon {
+    -fx-icon-color: #ef4444;
+}
+
+.btn-icon-danger:hover .ikonli-font-icon {
+    -fx-icon-color: white; /* Icon turns white when button background turns red */
+}
+
+/* Delete Project Modal */
+.delete-modal-card {
+    -fx-background-color: white;
+    -fx-background-radius: 20;
+    -fx-border-color: #fee2e2;
+    -fx-border-width: 1;
+    -fx-border-radius: 20;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.18), 25, 0.1, 0, 12);
+}
+
+.delete-modal-icon-wrap {
+    -fx-background-color: #fef2f2;
+    -fx-background-radius: 999;
+    -fx-padding: 10;
+}
+
+.delete-modal-icon {
+    -fx-icon-color: #dc2626;
+}
+
+.delete-modal-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111827;
+}
+
+.delete-modal-subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: #6b7280;
+}
+
+.delete-modal-message-box {
+    -fx-background-color: #f9fafb;
+    -fx-background-radius: 12;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 1;
+    -fx-border-radius: 12;
+    -fx-padding: 14 16;
+}
+
+.delete-modal-message {
+    -fx-font-size: 13px;
+    -fx-text-fill: #4b5563;
+}
+
+.delete-modal-project-name {
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111827;
+}

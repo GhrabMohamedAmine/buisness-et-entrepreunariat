@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.text.*?>
+
+<VBox maxWidth="320" prefWidth="320" spacing="10" styleClass="project-card" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tezfx.controller.ProjectCardController">
+    <padding><Insets bottom="20" left="20" right="20" top="20" /></padding>
+
+    <HBox alignment="CENTER_LEFT">
+        <Label fx:id="nameLabel" styleClass="project-card-title" text="Website Redesign">
+         <font>
+            <Font name="Inter Semi Bold" size="13.0" />
+         </font></Label>
+    </HBox>
+
+    <Label fx:id="descriptionLabel" styleClass="project-card-description" text="Description goes here..." wrapText="true" />
+
+    <ProgressBar fx:id="progressBar" maxWidth="Infinity" progress="0.75" />
+
+    <HBox alignment="CENTER_LEFT" spacing="-6">
+        <children>
+            <HBox fx:id="assigneesContainer" alignment="CENTER_LEFT" spacing="-6" />
+        </children>
+    </HBox>
+
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <Label fx:id="progressText" text="75%" />
+        <Region HBox.hgrow="ALWAYS" />
+        <Label fx:id="dateLabel" text="Oct 24"  styleClass="project-card-ddl"/>
+    </HBox>
+
+    <Button maxWidth="Infinity" styleClass="btn-secondary" HBox.hgrow="ALWAYS" onAction="#handleViewDetails"> View Details </Button>
+</VBox>

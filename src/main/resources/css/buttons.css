@@ -30,6 +30,16 @@
     -fx-border-color: -mauve;
 }
 
+/* DANGER: High emphasis destructive action */
+.btn-danger {
+    -fx-background-color: #ef4444;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+.btn-danger:hover {
+    -fx-background-color: #dc2626;
+}
+
 /* TERTIARY: Low emphasis (Text only/Ghost) */
 .btn-tertiary {
     -fx-background-color: transparent;

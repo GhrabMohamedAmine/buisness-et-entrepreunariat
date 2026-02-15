@@ -19,26 +19,26 @@ public class Project {
     private final IntegerProperty createdby = new SimpleIntegerProperty();
 
     // Constructor for loading from Database (includes ID)
-    public Project(int id, String name, String description, int progress, double budget, Date status, Date dueDate, int assignedTo, int createdby) {
+    public Project(int id, String name, String description, int progress, double budget, String startDateva, String enddateva, int assignedTo, int createdby) {
         this.id.set(id);
         this.name.set(name);
         this.description.set(description);
         this.progress.set(progress);
         this.budget.set(budget);
-        this.startDate.set(startDate != null ? startDate.toString() : "");
-        this.endDate.set(endDate != null ? endDate.toString() : "");
+        this.startDate.set(startDateva != null ? startDateva : "");
+        this.endDate.set(enddateva != null ? enddateva : "");
         this.assignedTo.set(assignedTo);
         this.createdby.set(createdby);
     }
 
     // Constructor for creating NEW projects (ID is auto-incremented by SQL)
-    public Project(String name, String description, int progress, double budget, String status, String dueDate, int assignedTo, int createdby) {
+    public Project(String name, String description, int progress, double budget, String startDateva, String enddateva, int assignedTo, int createdby) {
         this.name.set(name);
         this.description.set(description);
         this.progress.set(progress);
         this.budget.set(budget);
-        this.startDate.set(startDate != null ? startDate.toString() : "");
-        this.endDate.set(endDate != null ? endDate.toString() : "");
+        this.startDate.set(startDateva != null ? startDateva: "");
+        this.endDate.set(enddateva != null ? enddateva : "");
         this.assignedTo.set(assignedTo);
         this.createdby.set(createdby);
 

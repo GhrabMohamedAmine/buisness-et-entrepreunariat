@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<StackPane prefHeight="300.0" prefWidth="520.0" stylesheets="@../../css/stylesheet.css, @../../css/buttons.css, @../../css/project-css.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tezfx.controller.DeleteProjectModalController">
+    <children>
+        <VBox alignment="TOP_LEFT" spacing="18.0" styleClass="delete-modal-card">
+            <padding>
+                <Insets bottom="28.0" left="28.0" right="28.0" top="28.0" />
+            </padding>
+
+            <HBox alignment="CENTER_LEFT" spacing="12.0">
+                <children>
+                    <StackPane styleClass="delete-modal-icon-wrap">
+                        <children>
+                            <FontIcon iconLiteral="mdi2a-alert-outline" iconSize="20" styleClass="delete-modal-icon" />
+                        </children>
+                    </StackPane>
+                    <VBox spacing="4.0">
+                        <children>
+                            <Label styleClass="delete-modal-title" text="Delete Project?" />
+                            <Label styleClass="delete-modal-subtitle" text="This action cannot be undone." />
+                        </children>
+                    </VBox>
+                </children>
+            </HBox>
+
+            <Region prefHeight="4.0" />
+
+            <VBox spacing="8.0" styleClass="delete-modal-message-box">
+                <children>
+                    <Label styleClass="delete-modal-message" text="You are about to permanently delete:" />
+                    <Label fx:id="projectNameLabel" styleClass="delete-modal-project-name" text="Project Name" wrapText="true" />
+                    <Label styleClass="delete-modal-message" text="All tasks linked to this project will be removed as well." wrapText="true" />
+                </children>
+            </VBox>
+
+            <HBox alignment="CENTER_RIGHT" spacing="12.0">
+                <children>
+                    <Button minWidth="100.0" onAction="#onCancel" styleClass="btn-secondary" text="Cancel" />
+                    <Button minWidth="145.0" onAction="#onConfirmDelete" styleClass="btn-danger" text="Delete Project" />
+                </children>
+            </HBox>
+        </VBox>
+    </children>
+</StackPane>

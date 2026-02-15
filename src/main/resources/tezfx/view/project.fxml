@@ -1,12 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<?import javafx.geometry.Insets?>
-<VBox spacing="20" xmlns:fx="http://javafx.com/fxml" >
-    <padding><Insets top="30" right="30" bottom="30" left="30"/></padding>
+<VBox spacing="20"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="tezfx.controller.ProjectsController">
+    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
 
     <HBox spacing="15" alignment="CENTER_LEFT">
         <VBox spacing="5">
@@ -14,51 +16,20 @@
             <Label text="Manage and track your team's projects" styleClass="subtitle"/>
         </VBox>
         <Region HBox.hgrow="ALWAYS" />
-        <TextField promptText="Search projects..." prefWidth="250" styleClass="search-field"/>
+        <TextField fx:id="searchField" promptText="Search projects..." prefWidth="250" styleClass="search-field"/>
         <Button text="Filter" styleClass="btn-secondary">
             <graphic><FontIcon iconLiteral="mdi2f-filter-outline" iconSize="16"/></graphic>
         </Button>
-        <Button text="New Project" styleClass="btn-primary">
+        <Button text="New Project" styleClass="btn-primary" onAction="#openAddProjectPopup">
             <graphic><FontIcon iconLiteral="mdi2p-plus" iconSize="16" styleClass="white-icon"/></graphic>
         </Button>
     </HBox>
 
-    <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;">
-        <FlowPane fx:id="projectsContainer" hgap="20" vgap="20">
-            <ScrollPane fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;">
-                <FlowPane hgap="20" vgap="20" prefWrapLength="1100">
-                    <padding>
-                        <Insets top="20" right="20" bottom="20" left="20"/>
-                    </padding>
+    <ScrollPane fx:id="scrollPane" fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;">
+        <content>
+            <FlowPane fx:id="projectsGrid">
 
-                    <VBox styleClass="project-card" prefWidth="350" spacing="15">
-                        <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
-
-                        <HBox alignment="CENTER_LEFT">
-                            <Label text="Website Redesign" style="-fx-font-weight: bold; -fx-font-size: 16px;"/>
-                            <Region HBox.hgrow="ALWAYS" />
-                            <FontIcon iconLiteral="mdi2d-dots-horizontal" iconSize="18" iconColor="#9CA3AF"/>
-                        </HBox>
-
-                        <Label text="Complete overhaul of the corporate website with new branding guidelines."
-                               wrapText="true" style="-fx-text-fill: #6B7280;"/>
-
-                        <HBox spacing="10">
-                            <Label text="DESIGN" styleClass="tag-label" />
-                            <Label text="DEV" styleClass="tag-label" />
-                        </HBox>
-
-                        <VBox spacing="5">
-                            <HBox>
-                                <Label text="Progress" style="-fx-font-size: 12px; -fx-text-fill: #9CA3AF;"/>
-                                <Region HBox.hgrow="ALWAYS" />
-                                <Label text="75%" style="-fx-font-size: 12px; -fx-font-weight: bold;"/>
-                            </HBox>
-                            <ProgressBar progress="0.75" maxWidth="Infinity" styleClass="project-progress-bar"/>
-                        </VBox>
-                    </VBox>
-                </FlowPane>
-            </ScrollPane>
-        </FlowPane>
+            </FlowPane>
+        </content>
     </ScrollPane>
 </VBox>

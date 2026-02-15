@@ -49,7 +49,7 @@
             <text>Projects</text>
         </ToggleButton>
 
-        <ToggleButton styleClass="nav-item" toggleGroup="$navGroup">
+        <ToggleButton styleClass="nav-item" toggleGroup="$navGroup" onAction="#onTasksClicked">
             <graphic>
                 <FontIcon iconLiteral="mdi2c-checkbox-marked-outline"/>
             </graphic>
