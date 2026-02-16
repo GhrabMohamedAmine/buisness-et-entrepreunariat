@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="esprit.tn.pi_kavafx.controllers.FormationAddController"
+      spacing="12"
+ >
+
+    <padding>
+        <Insets top="22" right="22" bottom="22" left="22"/>
+    </padding>
+
+    <Label text="Ajouter une formation" styleClass="page-title"/>
+    <Label text="Ajoutez le titre, la description et 3 vidéos." styleClass="page-subtitle"/>
+
+    <TextField fx:id="titreField" promptText="Titre"/>
+    <TextArea fx:id="descField" promptText="Description" prefRowCount="4"/>
+
+    <HBox spacing="10">
+        <Button fx:id="btnVideo1" text="Choisir vidéo 1" onAction="#chooseVideo1" styleClass="btn-outline"/>
+        <Button fx:id="btnVideo2" text="Choisir vidéo 2" onAction="#chooseVideo2" styleClass="btn-outline"/>
+        <Button fx:id="btnVideo3" text="Choisir vidéo 3" onAction="#chooseVideo3" styleClass="btn-outline"/>
+    </HBox>
+
+    <HBox spacing="10">
+        <Button fx:id="btnBack" text="Retour" onAction="#goBack" styleClass="btn-black"/>
+        <Button fx:id="btnSave" text="Enregistrer" onAction="#saveFormation" styleClass="btn-primary"/>
+    </HBox>
+
+</VBox>

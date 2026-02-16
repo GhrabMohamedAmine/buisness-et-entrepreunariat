@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="esprit.tn.pi_kavafx.controllers.LayoutController"
+ >
+
+    <!-- ================= SIDEBAR ================= -->
+    <left>
+        <VBox styleClass="sidebar" spacing="20">
+            <padding>
+                <Insets top="30" right="20" bottom="30" left="20"/>
+            </padding>
+
+            <Label text="🎓 Formation"
+                   styleClass="sidebar-title"/>
+
+            <Button text="📚 Formations"
+                    styleClass="sidebar-btn"
+                    onAction="#goFormations"/>
+
+            <Button text="➕ Ajouter Formation"
+                    styleClass="sidebar-btn"
+                    onAction="#goAddFormation"/>
+
+
+
+        </VBox>
+    </left>
+
+    <!-- ================= CONTENT ================= -->
+    <center>
+        <StackPane fx:id="contentArea"/>
+    </center>
+
+</BorderPane>

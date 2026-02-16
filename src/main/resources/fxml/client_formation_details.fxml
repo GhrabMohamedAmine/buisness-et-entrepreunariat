@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.media.MediaView?>
+<?import javafx.geometry.Insets?>
+
+<ScrollPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="esprit.tn.pi_kavafx.controllers.ClientFormationDetailsController"
+            fitToWidth="true">
+
+    <content>
+        <VBox spacing="22" styleClass="details-container">
+
+            <padding>
+                <Insets top="22" right="22" bottom="30" left="22"/>
+            </padding>
+
+            <!-- HEADER -->
+            <VBox spacing="6">
+                <Label fx:id="titreLabel" styleClass="page-title"/>
+                <Label fx:id="descLabel" styleClass="page-subtitle" wrapText="true"/>
+            </VBox>
+
+            <!-- VIDEO SECTION -->
+            <HBox spacing="18">
+
+                <!-- VIDEO CARD -->
+                <VBox spacing="10" styleClass="video-card">
+
+                    <StackPane styleClass="video-wrapper">
+                        <MediaView fx:id="mainVideo"
+                                   fitWidth="720"
+                                   fitHeight="405"
+                                   preserveRatio="true"/>
+                    </StackPane>
+
+                    <!-- CONTROLS -->
+                    <HBox spacing="10" alignment="CENTER_LEFT" styleClass="player-bar">
+
+                        <Button fx:id="playBtn" text="▶" styleClass="player-btn"/>
+                        <Button fx:id="pauseBtn" text="⏸" styleClass="player-btn"/>
+                        <Button fx:id="stopBtn" text="⏹" styleClass="player-btn"/>
+
+                        <Slider fx:id="progressSlider" prefWidth="420"/>
+
+                        <Label fx:id="timeLabel" styleClass="player-time" text="00:00 / 00:00"/>
+
+                    </HBox>
+                </VBox>
+
+                <!-- PLAYLIST -->
+                <VBox spacing="12" prefWidth="260" styleClass="playlist-card">
+
+                    <Label text="Chapitres" styleClass="card-title"/>
+
+                    <Button fx:id="video1Btn" text="Chapitre 1" styleClass="playlist-btn"/>
+                    <Button fx:id="video2Btn" text="Chapitre 2" styleClass="playlist-btn"/>
+                    <Button fx:id="video3Btn" text="Chapitre 3" styleClass="playlist-btn"/>
+
+                </VBox>
+
+            </HBox>
+
+            <!-- QUIZ -->
+            <VBox spacing="16" styleClass="quiz-container">
+                <Label text="Quiz de validation" styleClass="card-title"/>
+                <VBox fx:id="quizBox" spacing="18"/>
+            </VBox>
+
+            <Button text="Valider le quiz"
+                    onAction="#submitQuiz"
+                    styleClass="btn-primary submit-quiz-btn"/>
+
+        </VBox>
+    </content>
+</ScrollPane>

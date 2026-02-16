@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="esprit.tn.pi_kavafx.controllers.ClientFormationListController"
+      spacing="14">
+
+    <padding>
+        <Insets top="22" right="22" bottom="22" left="22"/>
+    </padding>
+
+    <Label text="Catalogue des formations" styleClass="page-title"/>
+    <Label text="Choisissez une formation et passez le quiz." styleClass="page-subtitle"/>
+
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS">
+        <content>
+            <FlowPane fx:id="cardsFlow"
+                      hgap="14"
+                      vgap="14"
+                      prefWrapLength="980"/>
+        </content>
+    </ScrollPane>
+
+</VBox>

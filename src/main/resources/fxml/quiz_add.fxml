@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox spacing="10"
+      xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="esprit.tn.pi_kavafx.controllers.FormationController">
+    <TextField fx:id="questionField" promptText="Question"/>
+    <TextField fx:id="r1" promptText="Réponse 1"/>
+    <TextField fx:id="r2" promptText="Réponse 2"/>
+    <TextField fx:id="r3" promptText="Réponse 3"/>
+    <Button text="Choisir image" onAction="#chooseQuizImage"/>
+    <Button text="Ajouter Quiz" onAction="#saveQuiz"/>
+</VBox>
+

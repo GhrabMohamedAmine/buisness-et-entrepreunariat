@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.media.MediaView?>
+<?import javafx.geometry.Insets?>
+
+<ScrollPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="esprit.tn.pi_kavafx.controllers.FormationDetailsController"
+            fitToWidth="true"
+            hbarPolicy="NEVER"
+            vbarPolicy="AS_NEEDED">
+
+    <content>
+        <VBox spacing="14">
+
+            <padding>
+                <Insets top="22" right="22" bottom="22" left="22"/>
+            </padding>
+
+            <!-- HEADER -->
+            <HBox spacing="10">
+                <VBox spacing="6" HBox.hgrow="ALWAYS">
+                    <Label fx:id="titreLabel" text="Titre" styleClass="page-title"/>
+                    <Label fx:id="descLabel" text="Description" styleClass="page-subtitle" wrapText="true"/>
+                </VBox>
+
+                <VBox spacing="10">
+                    <Button fx:id="btnAjouterQuiz" text="➕ Ajouter Quiz"
+                            onAction="#onAjouterQuiz" styleClass="btn-primary"/>
+                    <Button fx:id="btnBack" text="Retour"
+                            onAction="#goBack" styleClass="btn-black"/>
+                </VBox>
+            </HBox>
+
+            <!-- VIDEOS -->
+            <Label text="Vidéos" styleClass="card-title"/>
+
+            <HBox spacing="12">
+                <VBox styleClass="card" spacing="8">
+                    <Label text="Vidéo 1" styleClass="card-title"/>
+                    <MediaView fx:id="mv1" fitWidth="320" fitHeight="180" preserveRatio="true"/>
+                </VBox>
+
+                <VBox styleClass="card" spacing="8">
+                    <Label text="Vidéo 2" styleClass="card-title"/>
+                    <MediaView fx:id="mv2" fitWidth="320" fitHeight="180" preserveRatio="true"/>
+                </VBox>
+
+                <VBox styleClass="card" spacing="8">
+                    <Label text="Vidéo 3" styleClass="card-title"/>
+                    <MediaView fx:id="mv3" fitWidth="320" fitHeight="180" preserveRatio="true"/>
+                </VBox>
+            </HBox>
+
+            <!-- QUIZ -->
+            <Label text="Quiz liés à cette formation" styleClass="card-title"/>
+
+            <FlowPane fx:id="quizCards"
+                      hgap="12"
+                      vgap="12"
+                      prefWrapLength="900"/>
+
+        </VBox>
+    </content>
+</ScrollPane>
