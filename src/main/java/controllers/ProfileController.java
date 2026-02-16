@@ -8,6 +8,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.layout.StackPane;
@@ -31,6 +32,8 @@ public class ProfileController implements Initializable {
     // --- Elements venant de Profile1.fxml (Le conteneur principal) ---
     @FXML
     private StackPane contentArea;
+    @FXML private Label topName;
+    @FXML private Circle topAvatar;
 
     // --- Elements venant de Profile2.fxml (Le formulaire) ---
     @FXML private TextField tfNom;
@@ -48,6 +51,35 @@ public class ProfileController implements Initializable {
     private UserService userService;
     private User userConnecte;
 
+    private void setupTopProfile() {
+        // 1. Get current user
+        User currentUser = UserService.getCurrentUser();
+
+        if (currentUser != null) {
+            // 2. Update Name ONLY if the label exists (is not null)
+            if (topName != null) {
+                String fullName = (currentUser.getFirstName() != null ? currentUser.getFirstName() : "")
+                        + " " + (currentUser.getName() != null ? currentUser.getName() : "");
+                topName.setText(fullName.trim());
+            }
+
+            // 3. Update Avatar ONLY if the circle exists (is not null)
+            if (topAvatar != null) {
+                String imagePath = currentUser.getImageLink();
+                if (imagePath != null && !imagePath.isEmpty()) {
+                    try {
+                        Image img = new Image(imagePath, 32, 32, true, true);
+                        if (!img.isError()) {
+                            topAvatar.setFill(new ImagePattern(img));
+                        }
+                    } catch (Exception e) {
+                        System.err.println("Error loading top profile image: " + e.getMessage());
+                    }
+                }
+            }
+        }
+    }
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         userService = new UserService();
@@ -61,6 +93,7 @@ public class ProfileController implements Initializable {
         else if (contentArea != null) {
             chargerVue("/Profile/Profile2.fxml");
         }
+        setupTopProfile();
     }
 
     // Méthode utilitaire pour charger une vue dans le contentArea

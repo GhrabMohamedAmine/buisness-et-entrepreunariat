@@ -37,8 +37,7 @@
 
                 <HBox alignment="CENTER" spacing="12" styleClass="user-badge">
                     <VBox alignment="CENTER_RIGHT">
-                        <Label styleClass="user-name" text="Utilisateur" />
-                        <Label styleClass="user-role" text="Client" />
+                        <Label fx:id="topName" styleClass="user-name" text="Utilisateur" />
                     </VBox>
                     <Circle fx:id="btnProfil"
                             fill="#E5E7EB"

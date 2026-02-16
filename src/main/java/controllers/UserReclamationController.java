@@ -12,9 +12,12 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.paint.ImagePattern;
+import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -28,6 +31,8 @@ import java.util.ResourceBundle;
 
 public class UserReclamationController implements Initializable {
 
+    @FXML private Label topName;
+    @FXML private Circle btnProfil;
     @FXML
     private FlowPane ticketsContainer; // Le conteneur des cartes
 
@@ -41,6 +46,28 @@ public class UserReclamationController implements Initializable {
     private User currentUser;
     private ObservableList<Reclamation> myReclamations;
 
+    private void loadCurrentUserProfile() {
+        User currentUser = UserService.getCurrentUser();
+
+        if (currentUser != null) {
+            // 1. Update the Name (Alex -> Real Name)
+            String fullName = currentUser.getFirstName() + " " + currentUser.getName();
+            topName.setText(fullName);
+
+            // 2. Update the Avatar Circle
+            String imagePath = currentUser.getImageLink();
+            if (imagePath != null && !imagePath.isEmpty()) {
+                try {
+                    Image img = new Image(imagePath, 32, 32, true, true);
+                    if (!img.isError()) {
+                        btnProfil.setFill(new ImagePattern(img));
+                    }
+                } catch (Exception e) {
+                    System.out.println("Error loading profile image: " + e.getMessage());
+                }
+            }
+        }
+    }
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         service = new ReclamationService();
@@ -56,6 +83,7 @@ public class UserReclamationController implements Initializable {
 
         // 2. Charger les données et afficher
         loadData();
+        loadCurrentUserProfile();
 
         // 3. Ajouter la recherche dynamique
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {

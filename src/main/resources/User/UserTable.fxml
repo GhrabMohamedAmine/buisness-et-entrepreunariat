@@ -45,8 +45,8 @@
                 <Region HBox.hgrow="ALWAYS" />
                 <FontIcon iconLiteral="mdi2b-bell-outline" iconSize="20" />
                 <HBox alignment="CENTER" spacing="10">
-                    <Label style="-fx-font-weight: bold;" text="Alex" />
-                    <Circle fill="#DDD" radius="16" />
+                    <Label fx:id="topName" style="-fx-font-weight: bold;" text="Alex" />
+                    <Circle fx:id="topAvatar" fill="#DDD" radius="16" />
                 </HBox>
             </HBox>
 

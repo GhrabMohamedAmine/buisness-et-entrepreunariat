@@ -23,7 +23,9 @@ module NEXUM {
     // 5. Accès pour l'affichage des données (TableView)
     // IMPORTANT : Permet à la TableView de lire les champs de votre classe User
     opens entities to javafx.base;
-
+    exports services;
+    opens services;
+    exports entities;
     // 6. Exportation du package principal pour lancer l'application
     exports Mains;
 }

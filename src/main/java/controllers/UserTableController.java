@@ -32,6 +32,9 @@ import java.util.ResourceBundle;
 
 public class UserTableController implements Initializable {
 
+
+    @FXML private Label topName;
+    @FXML private Circle topAvatar;
     @FXML private TableView<User> userTable;
 
     // Modification ici : <User, User> pour accéder à l'objet complet (Image + Nom)
@@ -46,6 +49,28 @@ public class UserTableController implements Initializable {
     // Service pour la base de données
     private final UserService userService = new UserService();
 
+    private void loadCurrentUserProfile() {
+        User currentUser = UserService.getCurrentUser();
+
+        if (currentUser != null) {
+            // 1. Update the Name (Alex -> Real Name)
+            String fullName = currentUser.getFirstName() + " " + currentUser.getName();
+            topName.setText(fullName);
+
+            // 2. Update the Avatar Circle
+            String imagePath = currentUser.getImageLink();
+            if (imagePath != null && !imagePath.isEmpty()) {
+                try {
+                    Image img = new Image(imagePath, 32, 32, true, true);
+                    if (!img.isError()) {
+                        topAvatar.setFill(new ImagePattern(img));
+                    }
+                } catch (Exception e) {
+                    System.out.println("Error loading profile image: " + e.getMessage());
+                }
+            }
+        }
+    }
     // --- LISTE DES RÔLES ---
     private final ObservableList<String> roleOptions = FXCollections.observableArrayList(
             "Admin",
@@ -61,6 +86,7 @@ public class UserTableController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         setupColumns();
         loadUsersFromDatabase();
+        loadCurrentUserProfile();
     }
 
     private void setupColumns() {

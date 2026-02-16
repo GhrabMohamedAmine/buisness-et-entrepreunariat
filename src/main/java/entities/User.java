@@ -54,4 +54,5 @@ public class User {
     public void setStatus(String status) {this.status.set(status);}
     public void setJoinedDate(String joinedDate) {this.joinedDate.set(joinedDate);}
 
+
 }

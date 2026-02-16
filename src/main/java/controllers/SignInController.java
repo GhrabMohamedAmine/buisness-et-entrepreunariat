@@ -23,6 +23,7 @@ public class SignInController {
     private final UserService userService = new UserService();
 
 
+
     @FXML
     void handleSignIn(ActionEvent event) {
         String email = emailField.getText();
@@ -34,20 +35,30 @@ public class SignInController {
         }
 
         try {
-            // 1. Tenter l'authentification
+            // 1. Authenticate user
             if (userService.authenticate(email, password)) {
 
-                // 2. Récupérer l'utilisateur connecté
+                // 2. Get the current user
                 User currentUser = UserService.getCurrentUser();
+
+                // ---------------------------------------------------------
+                // NEW: Check Status Condition
+                // ---------------------------------------------------------
+                // NOTE: Ensure your User entity has getStatut() or getStatus()
+                String status = currentUser.getStatus();
+
+                if (status == null || (!status.equalsIgnoreCase("actif") && !status.equalsIgnoreCase("active"))) {
+                    showAlert("Accès Refusé", "Votre compte n'est pas actif. Veuillez contacter l'administrateur.");
+                    return; // Stop here, do not switch scene
+                }
+                // ---------------------------------------------------------
+
                 System.out.println("Connexion réussie ! Rôle : " + currentUser.getRole());
 
-                // 3. Vérifier le rôle pour la redirection
-                // Adaptez "Admin" selon ce qui est écrit exactement dans votre base de données (ex: "ADMIN", "Administrateur")
-                if ("Admin".equalsIgnoreCase(currentUser.getRole())) {
-                    // Si c'est un admin -> Table des utilisateurs
+                // 3. Navigate based on Role
+                if ("Admin".equals(currentUser.getRole())) {
                     switchScene(event, "/User/UserTable.fxml");
                 } else {
-                    // Si c'est un autre rôle (Client, User, etc.) -> Page de profil
                     switchScene(event, "/Profile/Profile1.fxml");
                 }
 

@@ -2,6 +2,7 @@ package controllers;
 
 import java.time.LocalDate;
 import entities.Reclamation;
+import entities.User;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -13,7 +14,10 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
+import javafx.scene.paint.ImagePattern;
+import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -26,6 +30,8 @@ import java.util.ResourceBundle;
 
 public class ReclamationController implements Initializable {
 
+    @FXML private Label topName;
+    @FXML private Circle topAvatar;
     @FXML
     private TableView<Reclamation> reclamationTable;
 
@@ -41,6 +47,28 @@ public class ReclamationController implements Initializable {
     private ReclamationService reclamationService;
     private ObservableList<Reclamation> reclamationList;
 
+    private void loadCurrentUserProfile() {
+        User currentUser = UserService.getCurrentUser();
+
+        if (currentUser != null) {
+            // 1. Update the Name (Alex -> Real Name)
+            String fullName = currentUser.getFirstName() + " " + currentUser.getName();
+            topName.setText(fullName);
+
+            // 2. Update the Avatar Circle
+            String imagePath = currentUser.getImageLink();
+            if (imagePath != null && !imagePath.isEmpty()) {
+                try {
+                    Image img = new Image(imagePath, 32, 32, true, true);
+                    if (!img.isError()) {
+                        topAvatar.setFill(new ImagePattern(img));
+                    }
+                } catch (Exception e) {
+                    System.out.println("Error loading profile image: " + e.getMessage());
+                }
+            }
+        }
+    }
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         // Initialisation du service
@@ -49,7 +77,8 @@ public class ReclamationController implements Initializable {
         if (reclamationTable != null) {
             setupTable();
             loadData(); // Chargement des données réelles
-        }// Chargement des données réelles
+        }
+        loadCurrentUserProfile();
     }
 
     private void loadData() {
