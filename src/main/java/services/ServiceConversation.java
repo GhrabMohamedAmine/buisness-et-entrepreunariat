@@ -247,6 +247,155 @@ public class ServiceConversation {
         }
     }
 
+    public List<ParticipantView> listAllUsersExcept(int currentUserId) throws SQLException {
+        List<ParticipantView> out = new ArrayList<>();
+
+        String sql = """
+        SELECT id, CONCAT(prenom, ' ', nom) AS username
+        FROM utilisateurs
+        WHERE id <> ?
+        ORDER BY prenom, nom
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, currentUserId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    out.add(new ParticipantView(
+                            rs.getInt("id"),
+                            rs.getString("username")
+                    ));
+                }
+            }
+        }
+
+        return out;
+    }
+
+
+
+    // DM: check dm_key before creating, return existing if found
+    public long createPrivateConversation(int user1, int user2) throws SQLException {
+
+        int min = Math.min(user1, user2);
+        int max = Math.max(user1, user2);
+
+        // Support BOTH formats to not break existing data:
+        String dmKeyUnderscore = min + "_" + max; // new format
+        String dmKeyColon      = min + ":" + max; // old format already used in your code
+
+        // 1) Check existing DM by dm_key (and type)
+        String checkSql = "SELECT id FROM conversations WHERE type='DM' AND (dm_key = ? OR dm_key = ?) LIMIT 1";
+        try (PreparedStatement ps = connection.prepareStatement(checkSql)) {
+            ps.setString(1, dmKeyUnderscore);
+            ps.setString(2, dmKeyColon);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getLong(1);
+            }
+        }
+
+        // 2) Create new DM
+        String insertSql =
+                "INSERT INTO conversations(type, dm_key, created_by) VALUES('DM', ?, ?)";
+
+        long convId;
+        try (PreparedStatement ps = connection.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, dmKeyUnderscore); // write using the new format
+            ps.setInt(2, user1);              // creator
+            ps.executeUpdate();
+
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (!keys.next()) throw new SQLException("Cannot get DM conversation id");
+                convId = keys.getLong(1);
+            }
+        }
+
+        // 3) Insert participants (use your existing helper, idempotent and revives left users)
+        addParticipant(convId, user1, "ADMIN", user1);
+        addParticipant(convId, user2, "MEMBER", user1);
+
+        return convId;
+    }
+
+    // GROUP: create conversation then add members (+ creator as ADMIN)
+    public long createGroupConversation(String title, int creatorId, List<Integer> members) throws SQLException {
+
+        String insertSql =
+                "INSERT INTO conversations(type, title, created_by, dm_key) VALUES('GROUP', ?, ?, NULL)";
+
+        long convId;
+        try (PreparedStatement ps = connection.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
+            ps.setString(1, title);
+            ps.setInt(2, creatorId);
+            ps.executeUpdate();
+
+            try (ResultSet keys = ps.getGeneratedKeys()) {
+                if (!keys.next()) throw new SQLException("Cannot get group conversation id");
+                convId = keys.getLong(1);
+            }
+        }
+
+        // Ensure creator is in members, avoid duplicates
+        java.util.LinkedHashSet<Integer> uniq = new java.util.LinkedHashSet<>();
+        uniq.add(creatorId);
+        if (members != null) uniq.addAll(members);
+
+        for (int uid : uniq) {
+            addParticipant(convId, uid, (uid == creatorId) ? "ADMIN" : "MEMBER", creatorId);
+        }
+
+        return convId;
+    }
+    public void deleteConversation(long conversationId) throws SQLException {
+        String sql = "DELETE FROM conversations WHERE id = ?";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, conversationId);
+            ps.executeUpdate();
+        }
+    }
+
+    public void kickParticipant(long conversationId, int userId, int byUserId) throws SQLException {
+        String sql = """
+        UPDATE conversation_participants
+        SET left_at = NOW(), added_by = ?
+        WHERE conversation_id = ?
+          AND user_id = ?
+          AND left_at IS NULL
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, byUserId);
+            ps.setLong(2, conversationId);
+            ps.setInt(3, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    public void addMembers(long conversationId, int addedBy, List<Integer> userIds) throws SQLException {
+        String sql = """
+        INSERT INTO conversation_participants(conversation_id, user_id, added_by, joined_at, left_at)
+        VALUES (?, ?, ?, NOW(), NULL)
+        ON DUPLICATE KEY UPDATE
+            added_by = VALUES(added_by),
+            joined_at = CASE WHEN left_at IS NOT NULL THEN NOW() ELSE joined_at END,
+            left_at = NULL
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            for (Integer uid : userIds) {
+                if (uid == null) continue;
+                if (uid == addedBy) continue; // don't add yourself
+
+                ps.setLong(1, conversationId);
+                ps.setInt(2, uid);
+                ps.setInt(3, addedBy);
+                ps.executeUpdate();
+            }
+        }
+    }
+
 
 }
 

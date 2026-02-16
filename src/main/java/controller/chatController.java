@@ -4,8 +4,7 @@ import javafx.beans.binding.Bindings;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
 import model.Conversation;
@@ -21,18 +20,13 @@ import java.time.format.DateTimeFormatter;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Button;
 import javafx.scene.effect.GaussianBlur;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.control.ContextMenu;
-import javafx.scene.control.MenuItem;
-import javafx.scene.control.SeparatorMenuItem;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
-import javafx.scene.control.ListView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.util.Duration;
@@ -49,10 +43,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.image.Image;
 import javafx.scene.paint.ImagePattern;
 import java.io.ByteArrayInputStream;
-import javafx.scene.control.TextInputDialog;
-import javafx.scene.control.Dialog;
-import javafx.scene.control.ButtonType;
-import javafx.scene.control.ButtonBar;
+
 import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import javafx.collections.FXCollections;
@@ -62,7 +53,6 @@ import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
@@ -77,27 +67,17 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import javafx.scene.control.TextArea;
-
-
 
 
 import model.ParticipantView;
 
 
 import java.nio.file.Files;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
-
-
+import java.util.*;
 
 
 import java.sql.SQLException;
 import javafx.application.Platform;
-import javafx.scene.control.ScrollPane;
-import java.util.List;
-import java.util.Locale;
 
 public class chatController {
 
@@ -132,6 +112,22 @@ public class chatController {
     @FXML private Button saveChatNameBtn;
     @FXML private StackPane nicknamesOverlay;
     @FXML private ListView<ParticipantView> nicknamesList;
+    @FXML private StackPane newMessageOverlay;
+    @FXML private Label newMsgTitle;
+    @FXML private VBox stepChooseType;
+    @FXML private VBox stepPickUsers;
+    @FXML private VBox choicePrivate;
+    @FXML private VBox choiceGroup;
+    @FXML private TextField userSearchField;
+    @FXML private ListView<ParticipantView> usersPickList;
+    @FXML private HBox groupNameRow;
+    @FXML private TextField groupNameField;
+    @FXML private Button newMsgBackBtn;
+    @FXML private Button newMsgPrimaryBtn;
+    @FXML private Button newMsgCancelBtn;
+    @FXML private ScrollPane conversationScroll;
+
+
 
 
 
@@ -140,6 +136,11 @@ public class chatController {
     @FXML private void toggleMembers()    { toggleSection(secMembers,    chevMembers); }
     @FXML private void toggleMedia()      { toggleSection(secMedia,      chevMedia); }
 
+    private enum NewMsgMode { PRIVATE, GROUP }
+    private NewMsgMode newMsgMode = NewMsgMode.PRIVATE;
+
+    private final ObservableList<ParticipantView> allUsers = FXCollections.observableArrayList();
+    private final ObservableList<ParticipantView> filteredUsers = FXCollections.observableArrayList();
     private final ObservableList<ParticipantView> members = FXCollections.observableArrayList();
     private final ObservableList<ParticipantView> nicknamesData = FXCollections.observableArrayList();
     private boolean drawerOpen = false;
@@ -161,6 +162,7 @@ public class chatController {
     private Message editingMessage = null;
     private javafx.scene.effect.GaussianBlur blur = new javafx.scene.effect.GaussianBlur(12);
     private Long nicknamesConvId = null;
+    private boolean addMembersMode = false;
     private int currentUserId = 1;
     //==========================
     //HELPER METHODS
@@ -178,6 +180,9 @@ public class chatController {
 
     @FXML
     public void initialize() {
+        newMsgPrimaryBtn.getStyleClass().add("overlay-btn-primary");
+        newMsgBackBtn.getStyleClass().add("overlay-btn");
+        newMsgCancelBtn.getStyleClass().add("overlay-btn");
         setSelectedConversation(null);
         messageInput.setOnKeyPressed(e -> {
             if (e.getCode() == javafx.scene.input.KeyCode.ESCAPE && editingMessage != null) {
@@ -222,6 +227,21 @@ public class chatController {
         // Make sure drawer starts hidden off-screen (after layout)
         Platform.runLater(() -> drawer.setTranslateX(drawer.getWidth()));
         chatNameField.textProperty().addListener((obs, oldV, newV) -> updateSaveState());
+
+        // --- New Message modal setup ---
+        usersPickList.setItems(filteredUsers);
+        usersPickList.setCellFactory(lv -> new UserPickCell()); // class below
+
+        usersPickList.setFixedCellSize(64);
+        usersPickList.prefHeightProperty().bind(
+                usersPickList.fixedCellSizeProperty()
+                        .multiply(Bindings.min(maxRows, Bindings.size(filteredUsers)))
+                        .add(2)
+        );
+        usersPickList.maxHeightProperty().bind(usersPickList.prefHeightProperty());
+
+        // Search filter
+        userSearchField.textProperty().addListener((obs, o, q) -> applyUserFilter(q));
     }
 
     private void updateSaveState() {
@@ -434,19 +454,36 @@ public class chatController {
     // LOAD CONVERSATIONS
     // =========================
     private void loadConversations() {
-        conversationContainer.getChildren().clear();
+        double oldV = (conversationScroll == null) ? 0.0 : conversationScroll.getVvalue();
+        long selectedId = (selectedConversation == null) ? -1 : selectedConversation.getId();
 
         try {
             List<Conversation> list = conversationService.listForUser(currentUserId);
 
+            List<VBox> items = new ArrayList<>(list.size());
             for (Conversation conv : list) {
                 VBox item = buildConversationItem(conv);
-                conversationContainer.getChildren().add(item);
+
+                // mark selected item by id (works after rebuild)
+                if (conv.getId() == selectedId) {
+                    item.getStyleClass().remove("chat-item");
+                    item.getStyleClass().add("chat-item-selected");
+                }
+
+                items.add(item);
             }
+
+            // setAll avoids the visible "blank moment" (less flicker)
+            conversationContainer.getChildren().setAll(items);
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
+
+        // restore scroll AFTER layout
+        Platform.runLater(() -> {
+            if (conversationScroll != null) conversationScroll.setVvalue(oldV);
+        });
     }
 
     private VBox buildConversationItem(Conversation conv) {
@@ -504,20 +541,7 @@ public class chatController {
         row.getChildren().addAll(avatar, textBox, spacer, rightBox);
         wrapper.getChildren().add(row);
 
-        wrapper.setOnMouseClicked(e -> {
-            setSelectedConversation(conv);
-            selectedConversation = conv;
-            applyAvatar(chatAvatarCircle,
-                    selectedConversation.getAvatar(),
-                    selectedConversation.getType());
-            highlightSelected(wrapper);
-            loadMessages(conv.getId());
-            loadConversations();
-            chatTitle.setText(name.getText());
-            chatSubtitle.setText("Active conversation");
-            refreshDrawer();
-        });
-
+        wrapper.setOnMouseClicked(e -> selectConversation(conv));
         return wrapper;
     }
 
@@ -982,6 +1006,35 @@ public class chatController {
     // CHAT PARTICIPANTS
     // =========================
 
+    private void loadAllUsersForPicker() {
+        try {
+            allUsers.setAll(conversationService.listAllUsersExcept(currentUserId));
+            applyUserFilter(userSearchField.getText());
+            usersPickList.getSelectionModel().clearSelection();
+        } catch (SQLException e) {
+            e.printStackTrace();
+            allUsers.clear();
+            filteredUsers.clear();
+        }
+    }
+
+
+    private void applyUserFilter(String q) {
+        String s = (q == null) ? "" : q.trim().toLowerCase();
+
+        if (s.isBlank()) {
+            filteredUsers.setAll(allUsers);
+            return;
+        }
+
+        filteredUsers.setAll(allUsers.filtered(u -> {
+            String username = (u.getUsername() == null) ? "" : u.getUsername().toLowerCase();
+            String nick = (u.getNickname() == null) ? "" : u.getNickname().toLowerCase();
+            return username.contains(s) || nick.contains(s);
+        }));
+    }
+
+
     private void loadMembers(long conversationId) {
         try {
             List<ParticipantView> list = conversationService.listParticipantViews(conversationId);
@@ -997,13 +1050,15 @@ public class chatController {
         InputStream is = getClass().getResourceAsStream("/assets/user-default.png");
         return (is == null) ? null : new Image(is);
     }
-
     private class MemberCell extends ListCell<ParticipantView> {
+
         private final HBox row = new HBox(10);
         private final Circle avatar = new Circle(16);
         private final VBox texts = new VBox(2);
         private final Label name = new Label();
         private final Label sub = new Label();
+
+
 
         MemberCell() {
             row.getStyleClass().add("member-cell");
@@ -1014,9 +1069,46 @@ public class chatController {
             row.setAlignment(Pos.CENTER_LEFT);
             row.getChildren().addAll(avatar, texts);
 
-            // default avatar image
+            // default avatar
             Image img = getDefaultUserAvatar();
             if (img != null) avatar.setFill(new ImagePattern(img));
+
+            MenuItem kick = new MenuItem("Kick from group");
+            kick.getStyleClass().add("danger-item");
+            ContextMenu menu = new ContextMenu(kick);
+            menu.getStyleClass().add("danger-menu");
+
+            // Right click
+            setOnContextMenuRequested(ev -> {
+                ParticipantView item = getItem();
+                if (item == null || selectedConversation == null) return;
+
+                boolean isGroup = "GROUP".equalsIgnoreCase(selectedConversation.getType());
+                boolean isSelf  = item.getUserId() == currentUserId;
+
+                // Only for group & not self
+                if (!isGroup || isSelf) {
+                    ev.consume();
+                    return;
+                }
+
+                kick.setOnAction(a -> {
+                    try {
+                        conversationService.kickParticipant(
+                                selectedConversation.getId(),
+                                item.getUserId(),
+                                currentUserId
+                        );
+                        refreshDrawer();          // reload members
+                        loadConversations();      // update list if needed
+                    } catch (SQLException e) {
+                        e.printStackTrace();
+                    }
+                });
+
+                menu.show(this, ev.getScreenX(), ev.getScreenY());
+                ev.consume();
+            });
         }
 
         @Override
@@ -1035,13 +1127,400 @@ public class chatController {
 
             name.setText(display);
 
-            // small secondary line like FB (“username • role”)
             String role = item.getRole() == null ? "" : item.getRole().toLowerCase();
             sub.setText(item.getUsername() + (role.isBlank() ? "" : " • " + role));
 
             setText(null);
             setGraphic(row);
         }
+    }
+
+
+    // =========================
+    // NEW MESSAGE MODAL
+    // =========================
+
+
+    @FXML
+    private void openNewMessageModal() {
+        // Load users once per open (or cache)
+        loadAllUsersForPicker();
+
+        newMessageOverlay.setVisible(true);
+        newMessageOverlay.setManaged(true);
+
+        // default screen
+        stepChooseType.setVisible(true);
+        stepChooseType.setManaged(true);
+        stepPickUsers.setVisible(false);
+        stepPickUsers.setManaged(false);
+
+        newMsgBackBtn.setVisible(false);
+        newMsgBackBtn.setManaged(false);
+
+        newMsgPrimaryBtn.setText("Continue");
+        newMsgTitle.setText("New Message");
+        newMsgBackBtn.getStyleClass().setAll("overlay-btn");
+        newMsgPrimaryBtn.getStyleClass().setAll("overlay-btn-primary");
+        newMsgCancelBtn.getStyleClass().setAll("overlay-btn");
+        pickPrivateMode(); // default highlight + behavior
+    }
+
+    @FXML
+    private void closeNewMessageModal() {
+        newMessageOverlay.setVisible(false);
+        newMessageOverlay.setManaged(false);
+
+        userSearchField.clear();
+        usersPickList.getSelectionModel().clearSelection();
+        groupNameField.clear();
+    }
+
+    @FXML
+    private void pickPrivateMode() {
+        newMsgMode = NewMsgMode.PRIVATE;
+        highlightChoice(true);
+    }
+
+    @FXML
+    private void pickGroupMode() {
+        newMsgMode = NewMsgMode.GROUP;
+        highlightChoice(false);
+    }
+
+    private void highlightChoice(boolean privateSelected) {
+        // simple inline style swap (you can move to CSS later)
+        String sel = "-fx-border-color: #7c3aed; -fx-border-width: 2; -fx-background-color: rgba(124,58,237,0.06); -fx-padding: 14; -fx-background-radius: 14; -fx-border-radius: 14;";
+        String norm = "-fx-border-color: #e5e7eb; -fx-border-width: 1; -fx-background-color: transparent; -fx-padding: 14; -fx-background-radius: 14; -fx-border-radius: 14;";
+
+        choicePrivate.setStyle(privateSelected ? sel : norm);
+        choiceGroup.setStyle(privateSelected ? norm : sel);
+    }
+
+    @FXML
+    private void newMessagePrimary() {
+
+        // STEP 1 → go to user selection screen
+        if (stepChooseType.isVisible()) {
+            goToPickUsers();
+            return;
+        }
+
+        // STEP 2 → create conversation
+        if (newMsgMode == NewMsgMode.PRIVATE) {
+
+            ParticipantView selected =
+                    usersPickList.getSelectionModel().getSelectedItem();
+
+            if (selected == null) return;
+
+            try {
+                long convId = conversationService
+                        .createPrivateConversation(currentUserId, selected.getUserId());
+
+                openConversationById(convId);
+                closeNewMessageModal();
+
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            return;
+        }
+
+        // GROUP
+        List<Integer> ids =
+                usersPickList.getSelectionModel()
+                        .getSelectedItems()
+                        .stream()
+                        .map(ParticipantView::getUserId)
+                        .toList();
+
+        if (ids.isEmpty()) return;
+
+        String title = groupNameField.getText();
+        if (title == null || title.isBlank()) {
+            title = "New Group";
+        }
+
+        try {
+            if (addMembersMode) {
+                conversationService.addMembers(selectedConversation.getId(), currentUserId, ids);
+
+                loadMembers(selectedConversation.getId());
+                refreshDrawer();
+                loadConversations();
+
+                addMembersMode = false;
+                closeNewMessageModal();
+                return;
+            }
+            long convId = conversationService.createGroupConversation(title, currentUserId, ids);
+            loadConversations();
+            openConversationById(convId);
+            closeNewMessageModal();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void selectConversation(Conversation conv) {
+        setSelectedConversation(conv);
+        selectedConversation = conv;
+
+        applyAvatar(chatAvatarCircle, conv.getAvatar(), conv.getType());
+        loadMessages(conv.getId());
+
+        chatTitle.setText(conv.getTitle() == null ? "Chat" : conv.getTitle());
+        chatSubtitle.setText("Active conversation");
+        refreshDrawer();
+
+        // refresh list to reflect selected style
+        loadConversations();
+    }
+
+    private void openConversationById(long convId) {
+        try {
+            List<Conversation> list = conversationService.listForUser(currentUserId);
+            for (Conversation c : list) {
+                if (c.getId() == convId) {
+                    selectConversation(c);
+                    return;
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+
+    private void goToPickUsers() {
+        newMsgBackBtn.getStyleClass().setAll("overlay-btn");
+        newMsgPrimaryBtn.getStyleClass().setAll("overlay-btn-primary");
+        stepChooseType.setVisible(false);
+        stepChooseType.setManaged(false);
+
+        stepPickUsers.setVisible(true);
+        stepPickUsers.setManaged(true);
+
+        newMsgBackBtn.setVisible(true);
+        newMsgBackBtn.setManaged(true);
+
+
+        // Configure selection rules
+        FontIcon backIcon = new FontIcon("mdi2c-chevron-left");
+        backIcon.setIconSize(16);
+        newMsgBackBtn.setGraphic(backIcon);
+        if (newMsgMode == NewMsgMode.PRIVATE) {
+            newMsgTitle.setText("Select User");
+            groupNameRow.setVisible(false);
+            groupNameRow.setManaged(false);
+
+            usersPickList.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.SINGLE);
+            newMsgPrimaryBtn.setText("Start Chat");
+            FontIcon sendIcon = new FontIcon("mdi2s-send");
+            sendIcon.setIconSize(16);
+            newMsgPrimaryBtn.setGraphic(sendIcon);
+
+
+        } else {
+            newMsgTitle.setText("Create Group");
+            groupNameRow.setVisible(true);
+            groupNameRow.setManaged(true);
+
+            usersPickList.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.MULTIPLE);
+            newMsgPrimaryBtn.setText("Create Group");
+            FontIcon groupIcon = new FontIcon("mdi2a-account-multiple-plus");
+            groupIcon.setIconSize(16);
+            newMsgPrimaryBtn.setGraphic(groupIcon);
+
+        }
+
+        usersPickList.getSelectionModel().clearSelection();
+        userSearchField.requestFocus();
+    }
+
+    @FXML
+    private void backNewMessage() {
+        // back to step 1
+        stepPickUsers.setVisible(false);
+        stepPickUsers.setManaged(false);
+
+        stepChooseType.setVisible(true);
+        stepChooseType.setManaged(true);
+
+        newMsgBackBtn.setVisible(false);
+        newMsgBackBtn.setManaged(false);
+
+        newMsgPrimaryBtn.setText("Continue");
+        newMsgTitle.setText("New Message");
+
+        userSearchField.clear();
+        usersPickList.getSelectionModel().clearSelection();
+        groupNameField.clear();
+    }
+
+    private class UserPickCell extends ListCell<ParticipantView> {
+        private final HBox row = new HBox(12);
+        private final Circle avatar = new Circle(18);
+        private final VBox texts = new VBox(2);
+        private final Label name = new Label();
+        private final Label sub = new Label();
+        private final Region spacer = new Region();
+        private final StackPane indicator = new StackPane();
+        private final Image fallback = new Image(getClass().getResourceAsStream("/assets/user-default.png"));
+        // circle/check
+
+        UserPickCell() {
+            row.setAlignment(Pos.CENTER_LEFT);
+            name.getStyleClass().add("member-name");
+            sub.getStyleClass().add("member-sub");
+
+            texts.getChildren().addAll(name, sub);
+            HBox.setHgrow(spacer, Priority.ALWAYS);
+
+            indicator.setMinSize(28, 28);
+            indicator.setMaxSize(28, 28);
+            row.getChildren().addAll(avatar, texts, spacer, indicator);
+
+            row.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, ev -> {
+                if (newMsgMode != NewMsgMode.GROUP) return;
+
+                var lv = getListView();
+                if (lv == null) return;
+
+                ParticipantView item = getItem();
+                if (item == null) return;
+
+                var sm = lv.getSelectionModel();
+
+                // Toggle using the actual object reference (works with filtered lists)
+                if (sm.getSelectedItems().contains(item)) {
+                    sm.clearSelection(lv.getItems().indexOf(item));
+                } else {
+                    sm.select(item);
+                }
+
+                lv.requestFocus();
+                ev.consume();
+                lv.refresh();
+            });
+
+
+        }
+
+        @Override
+        protected void updateItem(ParticipantView item, boolean empty) {
+            super.updateItem(item, empty);
+            if (empty || item == null) {
+                setGraphic(null);
+                return;
+            }
+
+            // avatar fallback (you can enhance to use item avatar if you have it)
+            avatar.setFill(new ImagePattern(fallback));
+            /*try {
+                Image img = new Image(getClass().getResourceAsStream("/assets/user-default.png"));
+                avatar.setFill(new ImagePattern(img));
+            } catch (Exception ignore) {}*/
+
+            name.setText(displayName(item));
+            sub.setText(item.getUsername() == null ? "" : item.getUsername());
+
+            boolean selected = getListView() != null
+                    && getListView().getSelectionModel().getSelectedItems().contains(item);
+
+            indicator.getChildren().clear();
+
+            if (newMsgMode == NewMsgMode.PRIVATE) {
+                Circle ring = new Circle(10);
+                ring.setFill(Color.TRANSPARENT);
+                ring.setStroke(selected ? Color.web("#7c3aed") : Color.web("#d1d5db"));
+                ring.setStrokeWidth(2);
+                indicator.getChildren().add(ring);
+                if (selected) {
+                    Circle dot = new Circle(6);
+                    dot.setFill(Color.web("#7c3aed"));
+                    indicator.getChildren().add(dot);
+                }
+            } else {
+                Circle bg = new Circle(10);
+                bg.setFill(Color.TRANSPARENT);
+                bg.setStroke(selected ? Color.web("#7c3aed") : Color.web("#d1d5db"));
+                bg.setStrokeWidth(2);
+                indicator.getChildren().add(bg);
+
+                if (selected) {
+                    Circle dot = new Circle(6);
+                    dot.setFill(Color.web("#7c3aed"));
+                    indicator.getChildren().add(dot);
+                }
+            }
+
+            setGraphic(row);
+        }
+    }
+
+    // =========================
+    // DELETE
+    // =========================
+    @FXML
+    private void onDeleteConversation() {
+        if (selectedConversation == null) return;
+
+        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
+        alert.setTitle("Delete conversation");
+        alert.setHeaderText("Delete this conversation?");
+        alert.setContentText("This action cannot be undone.");
+
+        if (alert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
+            try {
+                conversationService.deleteConversation(selectedConversation.getId());
+                closeDrawer();
+                setSelectedConversation(null);
+                loadConversations();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    // =========================
+    // ADD MEMBER TO GROUP
+    // =========================
+    @FXML
+    private void onAddPeople() {
+        if (selectedConversation == null) return;
+        if (!"GROUP".equalsIgnoreCase(selectedConversation.getType())) return;
+
+        addMembersMode = true;
+        newMsgMode = NewMsgMode.GROUP;
+
+        loadAllUsersForPicker();
+
+        newMessageOverlay.setVisible(true);
+        newMessageOverlay.setManaged(true);
+
+        // Jump directly to picker step (no type choice)
+        stepChooseType.setVisible(false);
+        stepChooseType.setManaged(false);
+
+        stepPickUsers.setVisible(true);
+        stepPickUsers.setManaged(true);
+
+        newMsgBackBtn.setVisible(true);
+        newMsgBackBtn.setManaged(true);
+
+        newMsgTitle.setText("Add people");
+
+        // No group name when adding members
+        groupNameRow.setVisible(false);
+        groupNameRow.setManaged(false);
+
+        usersPickList.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.MULTIPLE);
+
+        newMsgPrimaryBtn.setText("Add");
+        usersPickList.getSelectionModel().clearSelection();
     }
 
 

@@ -695,6 +695,50 @@
     -fx-font-size: 11px;
     -fx-text-fill: #7A7A7A;
 }
+.danger-row {
+    -fx-padding: 10 8 10 8;
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.danger-row:hover {
+    -fx-background-color: rgba(220,38,38,0.06);
+}
+
+.danger-link {
+    -fx-text-fill: #dc2626; /* red-600 */
+    -fx-font-weight: 500;
+}
+
+.danger-icon {
+    -fx-icon-color: #dc2626;
+}
+.danger-row:hover .danger-link {
+    -fx-text-fill: #b91c1c;
+}
+
+.danger-row:hover .danger-icon {
+    -fx-icon-color: #b91c1c;
+}
+/* Context menu container */
+.context-menu.danger-menu {
+    -fx-padding: 6;
+}
+
+/* Red text */
+.context-menu.danger-menu .menu-item > .label {
+    -fx-text-fill: #dc2626;
+    -fx-font-weight: 500;
+}
+
+/* Hover/focus background + darker red */
+.context-menu.danger-menu .menu-item:focused {
+    -fx-background-color: rgba(220, 38, 38, 0.08);
+}
+
+.context-menu.danger-menu .menu-item:focused > .label {
+    -fx-text-fill: #b91c1c;
+}
 
 
 

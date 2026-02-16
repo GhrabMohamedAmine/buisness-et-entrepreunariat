@@ -22,6 +22,13 @@ public class ParticipantView extends ConversationParticipant {
         this.username = username;
     }
 
+    public ParticipantView(int userId, String username) {
+        super();
+        setUserId(userId);
+        this.username = username;
+    }
+
+
     public String getUsername() {
         return username;
     }
