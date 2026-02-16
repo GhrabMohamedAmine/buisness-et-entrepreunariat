@@ -1,0 +1,72 @@
+.popup-root {
+    -fx-background-color: white;
+    -fx-background-radius: 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.12), 18, 0, 0, 6);
+    -fx-font-family: "Segoe UI", "Inter", "Arial";
+}
+
+.popup-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #4f46e5;
+}
+
+.popup-subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: #6b7280;
+    -fx-padding: 0 0 6 0;
+}
+
+.popup-root .label {
+    -fx-text-fill: #374151;
+    -fx-font-weight: 700;
+    -fx-font-size: 13px;
+}
+
+.popup-root .text-field,
+.popup-root .combo-box {
+    -fx-background-color: #f9fafb;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+    -fx-padding: 8 12;
+    -fx-font-size: 14px;
+}
+
+.popup-root .text-field:focused,
+.popup-root .combo-box:focused {
+    -fx-border-color: #7c3aed;
+    -fx-effect: dropshadow(gaussian, rgba(124,58,237,0.25), 10, 0, 0, 2);
+}
+
+.cost-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #111827;
+    -fx-font-weight: 800;
+}
+
+.primary-btn {
+    -fx-background-color: linear-gradient(to right, #8b5cf6, #7c3aed);
+    -fx-text-fill: white;
+    -fx-font-weight: 800;
+    -fx-padding: 9 18;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+
+.primary-btn:hover {
+    -fx-background-color: linear-gradient(to right, #7c3aed, #6d28d9);
+}
+
+.btn-secondary {
+    -fx-background-color: #f3f4f6;
+    -fx-text-fill: #374151;
+    -fx-font-weight: 800;
+    -fx-padding: 9 18;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: #e5e7eb;
+}

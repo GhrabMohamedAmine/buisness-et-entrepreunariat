@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controllers.ManageResourcesController"
+      spacing="20"
+      fillWidth="true"
+      stylesheets="@manage-resources.css">
+
+    <padding>
+        <Insets top="25" right="25" bottom="25" left="25"/>
+    </padding>
+
+    <!-- ================= HEADER ================= -->
+    <BorderPane>
+
+        <left>
+            <VBox spacing="5">
+                <Label text="Resources" styleClass="title"/>
+                <Label text="Manage hardware inventory and software licenses"
+                       styleClass="subtitle"/>
+            </VBox>
+        </left>
+
+        <right>
+            <HBox spacing="10">
+            <Button text="Manage Requests"
+                    onAction="#goToManageRequests"
+                    styleClass="secondary-btn"/>
+
+            <Button text="+ Add Resource"
+                    fx:id="addResourceBtn"
+                    styleClass="primary-btn"
+                    onAction="#handleAddResource"/>
+
+            </HBox>
+
+
+        </right>
+
+    </BorderPane>
+
+    <!-- ================= STATS ================= -->
+    <!-- ================= STATS ================= -->
+    <HBox spacing="18">
+
+        <VBox spacing="6" styleClass="card">
+            <Label text="Total Resources" styleClass="card-title"/>
+            <Label fx:id="totalResourcesLabel" text="0" styleClass="stat-value"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="card">
+            <Label text="Hardware (Matériel)" styleClass="card-title"/>
+            <Label fx:id="hardwareLabel" text="0" styleClass="stat-value"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="card">
+            <Label text="Software (Logiciel)" styleClass="card-title"/>
+            <Label fx:id="softwareLabel" text="0" styleClass="stat-value"/>
+        </VBox>
+
+        <VBox spacing="6" styleClass="card">
+            <Label text="In Maintenance" styleClass="card-title"/>
+            <Label fx:id="maintenanceLabel" text="0" styleClass="stat-value"/>
+        </VBox>
+
+    </HBox>
+
+
+    <!-- ================= FILTER BAR ================= -->
+    <!-- ================= FILTER BAR ================= -->
+    <HBox spacing="15"
+          alignment="CENTER_LEFT"
+          styleClass="filter-bar">
+
+        <fx:define>
+            <ToggleGroup fx:id="filterGroup"/>
+        </fx:define>
+
+        <ToggleButton text="All"
+                      toggleGroup="$filterGroup"
+                      selected="true"
+                      styleClass="filter-btn"/>
+
+        <ToggleButton text="Matériel"
+                      toggleGroup="$filterGroup"
+                      styleClass="filter-btn"/>
+
+        <ToggleButton text="Logiciel"
+                      toggleGroup="$filterGroup"
+                      styleClass="filter-btn"/>
+
+        <Pane HBox.hgrow="ALWAYS"/>
+
+        <TextField fx:id="searchField"
+                   promptText="Search resources..."
+                   prefWidth="260"
+                   styleClass="search-field"/>
+
+    </HBox>
+
+
+    <!-- ================= TABLE ================= -->
+    <TableView fx:id="resourceTable"
+               VBox.vgrow="ALWAYS"
+               styleClass="table-view">
+
+        <columns>
+            <TableColumn fx:id="nameCol" text="NAME" prefWidth="220"/>
+            <TableColumn fx:id="typeCol" text="TYPE" prefWidth="120"/>
+            <TableColumn fx:id="statusCol" text="STATUS" prefWidth="130"/>
+            <TableColumn fx:id="availableCol" text="AVAILABLE QTY" prefWidth="150"/>
+            <TableColumn fx:id="totalCol" text="TOTAL QTY" prefWidth="150"/>
+            <TableColumn fx:id="actionCol" text="ACTIONS" prefWidth="140"/>
+
+        </columns>
+
+    </TableView>
+
+
+</VBox>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controllers.ManageRequestsController"
+      spacing="18"
+      stylesheets="@manage-requests.css">
+
+    <padding>
+        <Insets top="24" right="24" bottom="24" left="24"/>
+    </padding>
+
+    <!-- Header -->
+    <BorderPane>
+        <left>
+            <VBox spacing="4">
+                <Label text="Pending Resource Requests" styleClass="title"/>
+                <Label text="Accept or decline client requests"
+                       styleClass="subtitle"/>
+            </VBox>
+        </left>
+        <right>
+            <Button text="Refresh" onAction="#handleRefresh" styleClass="secondary-btn"/>
+            <Button text="Back to Resources"
+                    onAction="#goBack"
+                    styleClass="secondary-btn"/>
+
+        </right>
+    </BorderPane>
+
+    <!-- Table -->
+    <TableView fx:id="requestsTable" VBox.vgrow="ALWAYS" styleClass="table-view">
+        <columns>
+            <TableColumn fx:id="clientCol" text="CLIENT" prefWidth="120"/>
+            <TableColumn fx:id="projectCol" text="PROJECT" prefWidth="120"/>
+            <TableColumn fx:id="resourceCol" text="RESOURCE" prefWidth="220"/>
+            <TableColumn fx:id="typeCol" text="TYPE" prefWidth="120"/>
+            <TableColumn fx:id="qtyCol" text="QTY" prefWidth="80"/>
+            <TableColumn fx:id="dateCol" text="DATE" prefWidth="130"/>
+            <TableColumn fx:id="costCol" text="TOTAL COST" prefWidth="120"/>
+            <TableColumn fx:id="actionCol" text="ACTION" prefWidth="170"/>
+        </columns>
+    </TableView>
+
+</VBox>

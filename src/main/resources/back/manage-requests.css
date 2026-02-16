@@ -1,0 +1,66 @@
+.root {
+    -fx-font-family: "Segoe UI", "Inter", "Arial";
+    -fx-background-color: #f5f6fa;
+}
+
+.title {
+    -fx-font-size: 24px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #1f2937;
+}
+.subtitle {
+    -fx-font-size: 13px;
+    -fx-text-fill: #6b7280;
+}
+
+.secondary-btn {
+    -fx-background-color: #f3f4f6;
+    -fx-text-fill: #374151;
+    -fx-font-weight: 800;
+    -fx-padding: 9 16;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+.secondary-btn:hover { -fx-background-color: #e5e7eb; }
+
+.table-view {
+    -fx-background-color: white;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-padding: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 12, 0, 0, 4);
+}
+
+.table-view .column-header {
+    -fx-background-color: #f9fafb;
+}
+.table-view .column-header .label {
+    -fx-text-fill: #6b7280;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+.table-row-cell:hover { -fx-background-color: #f3f4f6; }
+.table-row-cell:selected { -fx-background-color: #ede9fe; }
+
+/* action buttons inside table */
+.accept-btn {
+    -fx-background-color: linear-gradient(to right, #8b5cf6, #7c3aed);
+    -fx-text-fill: white;
+    -fx-font-weight: 800;
+    -fx-padding: 6 12;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+.accept-btn:hover {
+    -fx-background-color: linear-gradient(to right, #7c3aed, #6d28d9);
+}
+
+.decline-btn {
+    -fx-background-color: #fee2e2;
+    -fx-text-fill: #991b1b;
+    -fx-font-weight: 800;
+    -fx-padding: 6 12;
+    -fx-background-radius: 10;
+    -fx-cursor: hand;
+}
+.decline-btn:hover { -fx-background-color: #fecaca; }

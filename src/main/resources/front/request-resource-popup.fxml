@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controllers.RequestResourceController"
+      spacing="14"
+      styleClass="popup-root"
+      stylesheets="@request-resource-popup.css">
+
+    <padding>
+        <Insets top="22" right="22" bottom="22" left="22"/>
+    </padding>
+
+    <Label text="Request a Resource" styleClass="popup-title"/>
+    <Label text="Choose a resource and send your request to the admin"
+           styleClass="popup-subtitle"/>
+
+    <GridPane hgap="10" vgap="12">
+        <columnConstraints>
+            <ColumnConstraints prefWidth="120"/>
+            <ColumnConstraints hgrow="ALWAYS"/>
+        </columnConstraints>
+
+        <Label text="Project Code:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="projectCodeField" promptText="EX: PRJ-001"
+                   GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <Label text="Resource:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="resourceCombo" prefWidth="260"
+                  GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+        <Label text="Quantity:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <TextField fx:id="quantityField" promptText="EX: 2"
+                   GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+        <Label text="Est. Cost:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <Label fx:id="costLabel" text="0.00" styleClass="cost-label"
+               GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+    </GridPane>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Cancel" onAction="#handleCancel" styleClass="btn-secondary"/>
+        <Button fx:id="submitBtn" text="Send Request" onAction="#handleRequest" styleClass="primary-btn"/>
+
+    </HBox>
+
+</VBox>

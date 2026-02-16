@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controllers.UpdateResourceController"
+      spacing="14"
+      styleClass="popup-root"
+      stylesheets="@update-resource-popup.css">
+
+    <padding>
+        <Insets top="22" right="22" bottom="22" left="22"/>
+    </padding>
+
+    <Label text="Update Resource" styleClass="popup-title"/>
+
+
+    <GridPane hgap="10" vgap="10">
+        <columnConstraints>
+            <ColumnConstraints prefWidth="130"/>
+            <ColumnConstraints hgrow="ALWAYS"/>
+        </columnConstraints>
+
+        <Label text="Code:" styleClass="form-label" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="codeField" GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <Label text="Name:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <TextField fx:id="nameField" GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+        <Label text="Type:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="typeCombo" GridPane.rowIndex="2" GridPane.columnIndex="1" prefWidth="220"/>
+
+        <Label text="Unit Cost:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <TextField fx:id="unitCostField" GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+        <Label text="Total Qty:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <TextField fx:id="totalQtyField" GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+        <Label text="Available Qty:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+        <TextField fx:id="availableQtyField" GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+        <Label text="Status:" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="statusCombo" GridPane.rowIndex="6" GridPane.columnIndex="1" prefWidth="220"/>
+    </GridPane>
+
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Cancel" onAction="#handleCancel" styleClass="btn-secondary"/>
+        <Button text="Save Changes" onAction="#handleSave" styleClass="primary-btn"/>
+    </HBox>
+
+</VBox>

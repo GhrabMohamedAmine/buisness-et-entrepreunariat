@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controllers.CreateResourceController"
+      spacing="14"
+      styleClass="popup-root"
+      stylesheets="@add-resource-popup.css">
+
+    <padding>
+        <Insets top="22" right="22" bottom="22" left="22"/>
+    </padding>
+
+    <!-- Title -->
+    <Label text="Add Resource" styleClass="popup-title"/>
+    <Label text="Create a new physical or software resource"
+           styleClass="popup-subtitle"/>
+
+    <!-- Form -->
+    <GridPane hgap="10" vgap="12">
+        <columnConstraints>
+            <ColumnConstraints prefWidth="140"/>
+            <ColumnConstraints hgrow="ALWAYS"/>
+        </columnConstraints>
+
+        <Label text="Resource Code:" GridPane.rowIndex="0" GridPane.columnIndex="0"/>
+        <TextField fx:id="codeField" promptText="EX: 1001"
+                   GridPane.rowIndex="0" GridPane.columnIndex="1"/>
+
+        <Label text="Resource Name:" GridPane.rowIndex="1" GridPane.columnIndex="0"/>
+        <TextField fx:id="nameField" promptText="EX: Laptop Dell"
+                   GridPane.rowIndex="1" GridPane.columnIndex="1"/>
+
+        <Label text="Type:" GridPane.rowIndex="2" GridPane.columnIndex="0"/>
+        <ComboBox fx:id="typeCombo" prefWidth="220"
+                  GridPane.rowIndex="2" GridPane.columnIndex="1"/>
+
+        <Label text="Unit Cost:" GridPane.rowIndex="3" GridPane.columnIndex="0"/>
+        <TextField fx:id="unitcostField" promptText="EX: 1500.00"
+                   GridPane.rowIndex="3" GridPane.columnIndex="1"/>
+
+        <Label text="Total Quantity:" GridPane.rowIndex="4" GridPane.columnIndex="0"/>
+        <TextField fx:id="quantityField" promptText="EX: 10"
+                   GridPane.rowIndex="4" GridPane.columnIndex="1"/>
+
+        <Label text="Available Quantity:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
+        <TextField fx:id="avquantField" promptText="EX: 8"
+                   GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+    </GridPane>
+
+    <!-- Buttons -->
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button text="Cancel" onAction="#handleCancel" styleClass="btn-secondary"/>
+        <Button text="Create" onAction="#handleAdd" styleClass="primary-btn"/>
+    </HBox>
+
+</VBox>

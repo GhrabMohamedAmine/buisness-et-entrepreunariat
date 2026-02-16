@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controllers.ClientResourcesController"
+      spacing="18"
+      stylesheets="@client-resources.css"
+      styleClass="root">
+
+    <padding>
+        <Insets top="24" right="24" bottom="24" left="24"/>
+    </padding>
+
+    <!-- Header -->
+    <BorderPane>
+        <left>
+            <VBox spacing="4">
+                <Label text="My Resources" styleClass="title"/>
+                <Label text="Requests, accepted allocations, and declined items"
+                       styleClass="subtitle"/>
+            </VBox>
+        </left>
+
+        <right>
+            <Button text="+ Request Resource"
+                    styleClass="primary-btn"
+                    onAction="#openRequestPopup"/>
+        </right>
+    </BorderPane>
+
+    <!-- Stats -->
+    <HBox spacing="14">
+        <VBox styleClass="stat-card" spacing="6">
+            <Label text="Requested" styleClass="stat-title"/>
+            <Label fx:id="requestedCountLabel" text="0" styleClass="stat-value"/>
+        </VBox>
+
+        <VBox styleClass="stat-card" spacing="6">
+            <Label text="Accepted" styleClass="stat-title"/>
+            <Label fx:id="acceptedCountLabel" text="0" styleClass="stat-value"/>
+        </VBox>
+
+        <VBox styleClass="stat-card" spacing="6">
+            <Label text="Declined" styleClass="stat-title"/>
+            <Label fx:id="declinedCountLabel" text="0" styleClass="stat-value"/>
+        </VBox>
+
+        <Region HBox.hgrow="ALWAYS"/>
+    </HBox>
+
+    <!-- Content -->
+    <ScrollPane fitToWidth="true" styleClass="scroll" VBox.vgrow="ALWAYS">
+        <content>
+            <VBox spacing="18" styleClass="content">
+
+                <!-- Requested -->
+                <VBox spacing="10">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Requested" styleClass="section-title"/>
+                        <Label text="Waiting for admin approval" styleClass="section-sub"/>
+                    </HBox>
+
+                    <FlowPane fx:id="requestedFlow"
+                              hgap="14" vgap="14" prefWrapLength="900"
+                              styleClass="cards-wrap"/>
+                </VBox>
+
+                <!-- Accepted -->
+                <VBox spacing="10">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Accepted" styleClass="section-title"/>
+                        <Label text="Allocated resources ready to use" styleClass="section-sub"/>
+                    </HBox>
+
+                    <FlowPane fx:id="acceptedFlow"
+                              hgap="14" vgap="14" prefWrapLength="900"
+                              styleClass="cards-wrap"/>
+                </VBox>
+
+                <!-- Declined -->
+                <VBox spacing="10">
+                    <HBox alignment="CENTER_LEFT" spacing="10">
+                        <Label text="Declined" styleClass="section-title"/>
+                        <Label text="Requests rejected by admin" styleClass="section-sub"/>
+                    </HBox>
+
+                    <FlowPane fx:id="declinedFlow"
+                              hgap="14" vgap="14" prefWrapLength="900"
+                              styleClass="cards-wrap"/>
+                </VBox>
+
+            </VBox>
+        </content>
+    </ScrollPane>
+
+</VBox>
