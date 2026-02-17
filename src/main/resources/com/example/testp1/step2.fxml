@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.*?>
+
+<BorderPane id="BorderPaneSI" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1469.0" styleClass="root" stylesheets="@../../styles/nexum.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.Step2Controller">
+    <center>
+        <HBox alignment="TOP_CENTER" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="600.0" prefWidth="1024.0" styleClass="splash-card" BorderPane.alignment="CENTER">
+            <VBox alignment="TOP_CENTER" prefWidth="900" spacing="25">
+                <VBox alignment="TOP_LEFT" spacing="8">
+                    <Label styleClass="step-label" text="Step 2 of 3" />
+                    <Label styleClass="splash-title-label" text="Discover the basics">
+                    </Label>
+                    <Label styleClass="splash-body-label" text="A quick overview of your new workspace." />
+               <VBox.margin>
+                  <Insets left="175.0" right="175.0" top="50.0" />
+               </VBox.margin>
+                </VBox>
+                <HBox alignment="BASELINE_LEFT" maxWidth="900" prefWidth="862.0" spacing="20.0">
+                    <HBox.margin>
+                        <Insets left="30" />
+                    </HBox.margin>
+                    <VBox spacing="15" styleClass="feature-card">
+                        <StackPane maxHeight="44" maxWidth="44" minHeight="44" minWidth="44" styleClass="feature-icon-box">
+                            <FontIcon fx:id="starIcon" iconLiteral="mdi2s-star-outline" iconSize="25">
+                            </FontIcon>
+                        </StackPane>
+                        <VBox spacing="5">
+                            <Label styleClass="feature-card-title" text="Manage Projects" />
+                            <Label styleClass="feature-card-body" text="%step.desc1" wrapText="true" />
+                        </VBox>
+                    </VBox>
+
+
+                    <VBox spacing="15" styleClass="feature-card">
+                        <StackPane maxHeight="44" maxWidth="44" minHeight="44" minWidth="44" styleClass="feature-icon-box">
+                            <FontIcon fx:id="messageIcon" iconLiteral="mdi2m-message-outline" iconSize="25">
+                            </FontIcon>
+                        </StackPane>
+                        <VBox spacing="5">
+                            <Label styleClass="feature-card-title" text="Team Chat" />
+                            <Label styleClass="feature-card-body" text="%step.desc2" wrapText="true" />
+                        </VBox>
+                    </VBox>
+
+                    <VBox spacing="15" styleClass="feature-card">
+                        <StackPane maxHeight="44" maxWidth="44" minHeight="44" minWidth="44" styleClass="feature-icon-box">
+                            <FontIcon fx:id="pieIcon" iconLiteral="mdi2c-chart-donut" iconSize="25">
+                            </FontIcon>
+                        </StackPane>
+                        <VBox spacing="5">
+                            <Label styleClass="feature-card-title" text="Track Finances" />
+                            <Label styleClass="feature-card-body" text="%step.desc3" wrapText="true" />
+                        </VBox>
+                    </VBox>
+               <VBox.margin>
+                  <Insets left="20.0" />
+               </VBox.margin>
+
+
+                </HBox>
+                <Region prefHeight="100" />
+                <HBox alignment="BOTTOM_CENTER">
+                    <Button styleClass="splash-sign-in" text="Back" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button prefWidth="120" styleClass="next-button" text="Next" />
+                </HBox>
+
+            </VBox>
+
+        </HBox>
+    </center>
+</BorderPane>

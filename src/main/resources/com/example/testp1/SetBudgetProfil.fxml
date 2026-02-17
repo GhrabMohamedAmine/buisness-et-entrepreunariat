@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import java.net.URL?>
+<fx:root type="javafx.scene.layout.StackPane" xmlns="http://javafx.com/javafx/17.0.12"
+         xmlns:fx="http://javafx.com/fxml/1" prefHeight="886.0" prefWidth="1213.0">
+
+    <stylesheets>
+        <URL value="@../../styles/nexum.css" />
+    </stylesheets>
+
+    <Region fx:id="dimOverlay" styleClass="modal-overlay" onMouseClicked="#hide"/>
+
+    <VBox fx:id="popupCard" maxWidth="450.0" maxHeight="400.0" spacing="25" styleClass="popup-card"
+          StackPane.alignment="CENTER">
+
+        <HBox alignment="CENTER_LEFT">
+            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                <Label fx:id="titleLabel" text="Fiscal Profile Settings" styleClass="splash-title-label" style="-fx-font-size: 22px;" />
+                <Label text="Update global budget limits for the company" styleClass="splash-body-label" />
+            </VBox>
+            <Button onAction="#hide" styleClass="close-button" text="✕"
+                    style="-fx-background-color: transparent; -fx-cursor: hand;" />
+        </HBox>
+
+        <VBox spacing="15">
+            <VBox spacing="8">
+                <Label text="Fiscal Year *" styleClass="input-label" />
+                <TextField fx:id="yearField" promptText="e.g., 2026" styleClass="nexum-input" />
+                <Label fx:id="yearErrorLabel" managed="false" textFill="#dc2626" visible="false" />
+            </VBox>
+
+            <VBox spacing="8">
+                <Label text="Total Annual Budget Limit *" styleClass="input-label" />
+                <TextField fx:id="totalBudgetField" promptText="0.00" styleClass="nexum-input" />
+                <Label fx:id="totalErrorLabel" managed="false" textFill="#dc2626" visible="false" />
+            </VBox>
+        </VBox>
+
+        <HBox alignment="CENTER_RIGHT" spacing="15">
+            <Button onAction="#hide" prefWidth="110.0" styleClass="white-button" text="Cancel" />
+            <Button fx:id="saveButton" onAction="#handleSave" prefWidth="160.0" styleClass="set-button" text="Update Profile" />
+        </HBox>
+    </VBox>
+</fx:root>

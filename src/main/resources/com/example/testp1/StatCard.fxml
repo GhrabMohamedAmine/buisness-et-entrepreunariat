@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<fx:root type="javafx.scene.layout.VBox" xmlns="http://javafx.com/javafx" stylesheets="@../../styles/nexum.css"
+         xmlns:fx="http://javafx.com/fxml" styleClass="stat-card" spacing="12">
+
+    <HBox alignment="CENTER_LEFT">
+        <StackPane fx:id="iconContainer" styleClass="stat-icon-box">
+            <FontIcon fx:id="statIcon" id="statIcon" iconSize="20" />
+        </StackPane>
+
+        <Region HBox.hgrow="ALWAYS" />
+
+        <Label fx:id="percentageLabel" styleClass="stat-badge" visible="false"/>
+    </HBox>
+
+    <VBox spacing="2">
+        <Label fx:id="titleLabel" styleClass="stat-title" />
+        <Label fx:id="valueLabel" styleClass="stat-value" />
+    </VBox>
+
+</fx:root>

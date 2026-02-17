@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import java.net.URL?>
+<fx:root type="javafx.scene.layout.StackPane" xmlns="http://javafx.com/javafx/17.0.12"
+         xmlns:fx="http://javafx.com/fxml/1" prefHeight="886.0" prefWidth="1213.0">
+
+    <stylesheets>
+        <URL value="@../../styles/nexum.css" />
+    </stylesheets>
+
+    <Region fx:id="dimOverlay" styleClass="modal-overlay" onMouseClicked="#hide"/>
+
+    <VBox fx:id="popupCard" maxWidth="500.0" maxHeight="450.0" spacing="25" styleClass="popup-card"
+          StackPane.alignment="CENTER">
+
+        <HBox alignment="CENTER_LEFT">
+            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                <Label fx:id="titleLabel" text="Configure Budget" styleClass="splash-title-label" style="-fx-font-size: 24px;" />
+                <Label fx:id="bodyLabel" text="Associate a new budget with an existing project" styleClass="splash-body-label" />
+            </VBox>
+            <Button onAction="#hide" styleClass="close-button" text="✕"
+                    style="-fx-background-color: transparent; -fx-cursor: hand;" />
+        </HBox>
+
+        <VBox spacing="15">
+            <VBox spacing="8">
+                <Label text="Select Project *" styleClass="input-label" />
+                <ComboBox fx:id="projectComboBox" promptText="Choose related project..."
+                          maxWidth="Infinity" styleClass="nexum-combo-box" />
+                <Label fx:id="PNameErrorLabel" managed="false" textFill="#dc2626" visible="false" />
+            </VBox>
+
+            <VBox spacing="8">
+                <Label text="Budget Title *" styleClass="input-label" />
+                <TextField fx:id="budgetNameField" promptText="e.g., Marketing Q1" styleClass="nexum-input" />
+                <Label fx:id="nameErrorLabel" managed="false" textFill="#dc2626" visible="false" />
+            </VBox>
+
+            <HBox spacing="20">
+                <VBox spacing="8" HBox.hgrow="ALWAYS">
+                    <Label text="Total Amount *" styleClass="input-label" />
+                    <TextField fx:id="totalAmountField" promptText="0.00" styleClass="nexum-input" />
+                    <Label fx:id="amountErrorLabel" managed="false" textFill="#dc2626" visible="false" />
+                </VBox>
+                <VBox spacing="8" HBox.hgrow="ALWAYS">
+                    <Label text="Due Date *" styleClass="input-label" />
+                    <DatePicker fx:id="dueDatePicker" maxWidth="Infinity" styleClass="date-picker" />
+                    <Label fx:id="DateErrorLabel" managed="false" textFill="#dc2626" visible="false" />
+                </VBox>
+            </HBox>
+        </VBox>
+
+        <HBox alignment="CENTER_RIGHT" spacing="15">
+            <Button onAction="#hide" prefWidth="110.0" styleClass="white-button" text="Cancel" />
+            <Button fx:id="saveButton" onAction="#handleSave" prefWidth="150.0" styleClass="set-button" text="Create Budget" />
+        </HBox>
+    </VBox>
+</fx:root>

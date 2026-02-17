@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.example.testp1.*?>
+<?import java.net.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.PBpageController">
+    <children>
+        <AnchorPane  fx:id="mainPageWrapper" prefHeight="886" prefWidth="1213" style="-fx-background-color: #F5F5F4">
+            <stylesheets>
+                <URL value="@../../styles/nexum.css" />
+            </stylesheets>
+
+            <HBox alignment="CENTER_LEFT" prefHeight="26.0" prefWidth="1086.0" spacing="8" AnchorPane.leftAnchor="64.0" AnchorPane.topAnchor="30.0">
+                <Label onMouseClicked="#handleBackToOverview" styleClass="splash-body-label" text="Financial Overview" />
+                <FontIcon iconColor="#78716C" iconLiteral="mdi2c-chevron-right" iconSize="16" />
+                <Label fx:id="breadcrumbProjectName" styleClass="section-title" text="Mobile App Development" />
+                <Region HBox.hgrow="ALWAYS" />
+                <FontIcon fx:id="editIcon" iconLiteral="mdi2p-pencil" iconSize="20"
+                          styleClass="action-icon"  onMouseClicked="#handleEditBudget"/>
+
+                <FontIcon fx:id="deleteIcon" iconLiteral="mdi2d-delete" iconSize="22"
+                          styleClass="action-icon" onMouseClicked="#handleDeleteBudget" />
+                <Label fx:id="statusBadge" />
+            </HBox>
+
+            <VBox spacing="25" styleClass="project-header-card" AnchorPane.leftAnchor="64.0" AnchorPane.rightAnchor="64.0" AnchorPane.topAnchor="75.0">
+                <HBox alignment="TOP_LEFT">
+                    <VBox spacing="8" HBox.hgrow="ALWAYS">
+                        <Label fx:id="projectNameLabel" styleClass="project-title-large" text="Mobile App Development" />
+                        <Label fx:id="budgetCodeLabel" styleClass="budget-code-label" text="Budget Code: #MAD-2026-Q4" />
+                    </VBox>
+
+                    <HBox alignment="CENTER_RIGHT" spacing="45">
+                        <VBox spacing="4">
+                            <Label styleClass="stat-header-small" text="Allocated Budget" />
+                            <Label fx:id="allocatedLabel" styleClass="stat-val-black" text="\$120k" />
+                        </VBox>
+                        <VBox spacing="4">
+                            <Label styleClass="stat-header-small" text="Actual Spent" />
+                            <Label fx:id="spentLabel" styleClass="stat-val-purple" text="\$95k" />
+                        </VBox>
+                        <VBox spacing="4">
+                            <Label styleClass="stat-header-small" text="Remaining" />
+                            <Label fx:id="remainingLabel" styleClass="stat-val-green" text="\$25k" />
+                        </VBox>
+                    </HBox>
+                </HBox>
+
+                <VBox spacing="10">
+                    <HBox alignment="BOTTOM_LEFT">
+                        <Label styleClass="stat-header-small" text="Budget Utilization" />
+                        <Region HBox.hgrow="ALWAYS" />
+                        <Label fx:id="utilizationPercentLabel" style="-fx-font-size: 14px;" styleClass="nexum-currency-value" text="79.2%" />
+                    </HBox>
+                    <ProgressBar fx:id="utilizationBar" maxWidth="Infinity" prefHeight="12" progress="0.79" styleClass="project-progress-bar" />
+                </VBox>
+
+            </VBox>
+
+            <VBox layoutX="64.0" layoutY="308.0" prefHeight="493.0" prefWidth="1086.0" spacing="20">
+                <HBox alignment="CENTER_LEFT" prefHeight="23.0" prefWidth="1086.0" spacing="25" style="-fx-padding: 0 0 10 0; -fx-border-color: #E7E5E4; -fx-border-width: 0 0 1 0;">
+                    <Button fx:id="overviewTab"  onAction="#onOverviewTabClicked" styleClass="tab-active" text="Overview" />
+                    <Button fx:id="expensesTab"  onAction="#onExpensesTabClicked" styleClass="tab-inactive" text="Expenses" />
+                    <Button fx:id="analysisTab"  onAction="#onAnalysisTabClicked" styleClass="tab-inactive" text="Analysis" />
+                </HBox>
+
+                <StackPane  VBox.vgrow="ALWAYS" >
+
+                    <AnchorPane fx:id="expensesContent" visible="false" managed="false">
+                        <fx:include fx:id="transactionTab" source="PBtransactionTab.fxml" />
+                    </AnchorPane>
+                    <AnchorPane fx:id="overviewContent" visible="false" managed="false">
+                    </AnchorPane>
+                    <AnchorPane fx:id="analysisContent" visible="false" managed="false">
+                    </AnchorPane>
+
+                </StackPane>
+            </VBox>
+        </AnchorPane>
+
+        <DeleteConfirmation fx:id="deleteTransactionPopUp"/>
+        <AddTransaction fx:id="addTransactionPage"/>
+        <UpdateTransaction fx:id="updateTransactionPage"/>
+        <AddProjectBudget fx:id="updateCurrentProjectBudget"/>
+    </children>
+</StackPane>

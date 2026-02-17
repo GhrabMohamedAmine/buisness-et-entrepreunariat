@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+<StackPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="com.example.testp1.ActionTrayController">
+
+    <HBox fx:id="container" alignment="CENTER_RIGHT" spacing="10"
+          style="-fx-background-color: #f4f4f4; -fx-background-radius: 20; -fx-padding: 5;"
+          maxWidth="40" prefHeight="40">
+
+        <HBox fx:id="iconTray" spacing="18" opacity="0.0" alignment="CENTER" visible="false">
+            <FontIcon fx:id="addIcon" iconLiteral="mdi2c-cash-plus" iconSize="22"
+                       styleClass="action-icon" onMouseClicked="#onAdd"/>
+
+            <FontIcon fx:id="editIcon" iconLiteral="mdi2p-pencil" iconSize="20"
+                       styleClass="action-icon" onMouseClicked="#onEdit"/>
+
+            <FontIcon fx:id="deleteIcon" iconLiteral="mdi2d-delete" iconSize="22"
+                       styleClass="action-icon" onMouseClicked="#onDelete"/>
+        </HBox>
+
+        <Button fx:id="triggerBtn" onAction="#toggleTray"
+                style="-fx-background-radius: 10; -fx-background-color: #6366F1; -fx-cursor: hand;"
+                prefWidth="32" prefHeight="32" minWidth="32" minHeight="32">
+            <graphic>
+                <FontIcon fx:id="triggerIcon" iconLiteral="mdi2d-dots-vertical" iconSize="20" iconColor="white"/>
+            </graphic>
+        </Button>
+    </HBox>
+</StackPane>

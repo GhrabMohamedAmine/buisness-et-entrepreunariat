@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<?import atlantafx.base.controls.CustomTextField?>
+<?import atlantafx.base.controls.PasswordTextField?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+<BorderPane fx:controller="com.example.testp1.SigninController" id="BorderPaneSI"  maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="800.0" prefWidth="1469.0" styleClass="root" stylesheets="@../../styles/nexum.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+    <center>
+        <HBox alignment="CENTER" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="600.0" prefWidth="1024.0" styleClass="splash-card" BorderPane.alignment="CENTER">
+            <VBox spacing="25" alignment="CENTER" prefWidth="600" >
+                <VBox spacing="8">
+                    <Label text="STEP 1 OF 3" styleClass="step-label" />
+                    <Label text="Create your profile" styleClass="splash-title-label" />
+                    <Label text="How should we identify you in the workspace?" styleClass="splash-body-label" />
+                </VBox>
+                <HBox alignment="CENTER_LEFT" spacing="25">
+                    <VBox>
+                        <StackPane fx:id="avatarContainer"
+                                   minWidth="90" minHeight="90"
+                                   maxWidth="90" maxHeight="90"
+                                   styleClass="profile-avatar-placeholder">
+                            <FontIcon iconLiteral="mdi2a-account-outline" iconSize="25">
+                            </FontIcon>
+                        </StackPane>
+                    </VBox>
+
+                    <VBox spacing="15">
+                        <VBox spacing="5" HBox.hgrow="ALWAYS">
+                            <Label text="Email" styleClass="input-label" />
+                            <CustomTextField fx:id="fullNameField" promptText="e.g. Sarah Connor" styleClass="nexum-input" />
+                        </VBox>
+                        <VBox spacing="5" HBox.hgrow="ALWAYS">
+                            <Label text="Full Name" styleClass="input-label" />
+                            <CustomTextField fx:id="email" promptText="name@company.com" styleClass="nexum-input" />
+                        </VBox>
+                        <HBox spacing="15">
+                            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                <Label text="Job Role" styleClass="input-label" />
+                                <PasswordTextField fx:id="signup_pwd" promptText="••••••••" styleClass="nexum-pwd-input"/>
+                            </VBox>
+                            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                <Label text="Department" styleClass="input-label" />
+                                <PasswordTextField fx:id="confirm_signup_pwd" promptText="••••••••" styleClass="nexum-pwd-input"/>
+
+                            </VBox>
+                        </HBox>
+                        <HBox spacing="15">
+                            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                <Label text="Job Role" styleClass="input-label" />
+                                <ComboBox  fx:id="jobRoleCombo" promptText="Select your role" styleClass="nexum-combo-box">
+
+                                </ComboBox>
+                            </VBox>
+                            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                                <Label text="Department" styleClass="input-label" />
+                                <CustomTextField fx:id="departmentField" promptText="e.g. Design" styleClass="nexum-input" />
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                </HBox>
+
+                <HBox alignment="CENTER_LEFT" style="-fx-padding: 20 0 0 0;">
+                    <Button text="Back" styleClass="splash-sign-in" />
+                    <Region HBox.hgrow="ALWAYS" />
+                    <Button text="Continue" styleClass="splash-button" prefWidth="120" />
+                </HBox>
+            </VBox>
+
+        </HBox>
+    </center>
+
+</BorderPane>

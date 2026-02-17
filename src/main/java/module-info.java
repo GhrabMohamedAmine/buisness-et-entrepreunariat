@@ -1,0 +1,17 @@
+module com.example.testp1 {
+    requires javafx.controls;
+    requires javafx.fxml;
+
+    requires org.controlsfx.controls;
+    requires org.kordamp.ikonli.javafx;
+    requires atlantafx.base;
+    requires org.kordamp.ikonli.feather;
+    requires javafx.graphics;
+    requires java.desktop;
+    requires java.sql;
+    requires javafx.base;
+
+
+    opens com.example.testp1 to javafx.fxml;
+    exports com.example.testp1;
+}

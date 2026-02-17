@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<HBox fx:id="transactionRowRoot" alignment="CENTER_LEFT" spacing="20" styleClass="transaction-row-card"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.testp1.TransactionRowController">
+    <padding>
+        <Insets left="15" right="15" top="10" bottom="10" />
+    </padding>
+
+    <FontIcon iconLiteral="mdi2c-currency-usd" iconSize="20"  />
+
+    <VBox spacing="2" HBox.hgrow="ALWAYS">
+        <Label fx:id="Reference" styleClass="input-label"  text="Software Subscription" />
+    </VBox>
+
+    <Label fx:id="amountLabel" style="-fx-font-weight: bold; -fx-text-fill: #ef4444;" text="-$1,240.00" prefWidth="100" alignment="CENTER_RIGHT" />
+
+    <HBox alignment="CENTER_LEFT" spacing="5" style="-fx-background-color: #f3f4f6; -fx-padding: 2 8; -fx-background-radius: 10;">
+        <FontIcon iconLiteral="mdi2v-view-grid" iconSize="12"/>
+        <Label fx:id="categoryLabel" text="Category" styleClass="input-label"/>
+    </HBox>
+
+    <Label fx:id="dateLabel" styleClass="text-muted" text="2026-02-18" />
+
+    <FontIcon styleClass="btn-icon-outline" iconLiteral="mdi2p-pencil-outline" iconSize="18" onMouseClicked="#onEditTransaction" />
+    <FontIcon styleClass="btn-icon-danger" iconLiteral="mdi2d-delete-empty-outline" iconSize="18" onMouseClicked="#onDeleteTransaction" />
+</HBox>

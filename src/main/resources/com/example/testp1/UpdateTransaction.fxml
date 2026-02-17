@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import java.net.URL?>
+
+<fx:root type="javafx.scene.layout.StackPane" xmlns="http://javafx.com/javafx/17.0.12"
+         xmlns:fx="http://javafx.com/fxml/1" prefHeight="886.0" prefWidth="1213.0">
+
+    <stylesheets>
+        <URL value="@../../styles/nexum.css" />
+    </stylesheets>
+
+    <Region fx:id="dimOverlay" styleClass="modal-overlay" onMouseClicked="#hide"/>
+
+    <VBox fx:id="popupCard" maxWidth="500.0" maxHeight="500.0" spacing="25" styleClass="popup-card"
+          StackPane.alignment="CENTER">
+
+        <HBox alignment="CENTER_LEFT">
+            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                <Label text="Edit Transaction" styleClass="splash-title-label" style="-fx-font-size: 24px;" />
+                <Label text="Modify the details of this specific expense" styleClass="splash-body-label" />
+            </VBox>
+            <Button onAction="#hide" styleClass="close-button" text="✕"
+                    style="-fx-background-color: transparent; -fx-cursor: hand;" />
+        </HBox>
+
+        <VBox spacing="15">
+            <VBox spacing="8">
+                <Label text="Reference / Payee *" styleClass="input-label" />
+                <TextField fx:id="refField" promptText="e.g. AWS Hosting" styleClass="nexum-input" />
+                <Label fx:id="RefErrorLabel" managed="false" textFill="#dc2626" visible="false" />
+            </VBox>
+
+            <HBox spacing="20">
+                <VBox spacing="8" HBox.hgrow="ALWAYS">
+                    <Label text="Amount (Cost) *" styleClass="input-label" />
+                    <TextField fx:id="costField" promptText="0.00" styleClass="nexum-input" />
+                    <Label fx:id="amountErrorLabel" managed="false" textFill="#dc2626" visible="false" />
+                </VBox>
+                <VBox spacing="8" HBox.hgrow="ALWAYS">
+                    <Label text="Date *" styleClass="input-label" />
+                    <DatePicker fx:id="transactionDatePicker" maxWidth="Infinity" styleClass="date-picker" />
+                    <Label fx:id="DateErrorLabel" managed="false" textFill="#dc2626" visible="false" />
+                </VBox>
+            </HBox>
+
+            <VBox spacing="8">
+                <Label text="Category *" styleClass="input-label" />
+                <TextField fx:id="categoryField" promptText="e.g. Infrastructure" styleClass="nexum-input" />
+                <Label fx:id="CatErrorLabel" managed="false" textFill="#dc2626" visible="false" />
+            </VBox>
+        </VBox>
+
+        <HBox alignment="CENTER_RIGHT" spacing="15">
+            <Button onAction="#hide" prefWidth="110.0" styleClass="white-button" text="Cancel" />
+            <Button onAction="#handleUpdate" prefWidth="150.0" styleClass="set-button" text="Update Changes" />
+        </HBox>
+    </VBox>
+</fx:root>

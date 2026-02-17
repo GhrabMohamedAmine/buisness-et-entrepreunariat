@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+<?import java.net.URL?>
+
+<BorderPane prefHeight="600.0" prefWidth="800.0" style="-fx-background-color: #F9FAFB;"
+            xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+
+    <stylesheets>
+        <URL value="@../../styles/nexum.css" />
+    </stylesheets>
+
+    <center>
+        <AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity"
+                    prefHeight="210.0" prefWidth="350.0" styleClass="project-budget-card">
+
+            <VBox spacing="2" AnchorPane.leftAnchor="24.0" AnchorPane.topAnchor="24.0">
+                <Label styleClass="nexum-label-primary" text="Website Redesign"  />
+                <Label styleClass="nexum-label-secondary" text="Internal Development" />
+            </VBox>
+
+            <StackPane styleClass="status-badge-on-track" AnchorPane.rightAnchor="24.0" AnchorPane.topAnchor="24.0">
+                <Label styleClass="stat-badge" text="ON TRACK" />
+            </StackPane>
+
+            <HBox spacing="35" AnchorPane.leftAnchor="24.0" AnchorPane.topAnchor="85.0">
+                <VBox spacing="4">
+                    <Label styleClass="nexum-label-secondary" text="TOTAL BUDGET" />
+                    <Label styleClass="nexum-currency-value" text="\$50,000" />
+                </VBox>
+
+                <VBox spacing="4">
+                    <Label styleClass="nexum-label-secondary" text="ACTUAL SPEND" />
+                    <Label styleClass="nexum-currency-value" text="\$37,500" />
+                </VBox>
+
+                <VBox spacing="4">
+                    <Label styleClass="nexum-label-secondary" text="REMAINING" />
+                    <Label styleClass="nexum-currency-remaining" text="\$12,500" />
+                </VBox>
+            </HBox>
+
+            <HBox alignment="CENTER_LEFT" AnchorPane.bottomAnchor="24.0" AnchorPane.leftAnchor="24.0" AnchorPane.rightAnchor="24.0">
+                <VBox spacing="2">
+                    <Label styleClass="nexum-label-secondary" text="DUE DATE" />
+                    <Label styleClass="nexum-label-primary" text="Mar 04, 2026" />
+                </VBox>
+            </HBox>
+        </AnchorPane>
+    </center>
+</BorderPane>

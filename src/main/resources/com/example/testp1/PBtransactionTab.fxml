@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.*?>
+<?import javafx.geometry.Insets?>
+
+<?import java.net.URL?>
+<AnchorPane xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.testp1.PBtransactionController">
+    <stylesheets>
+        <URL value="@../../styles/nexum.css"/>
+    </stylesheets>
+
+    <HBox spacing="20" alignment="CENTER" prefHeight="400">
+
+        <padding>
+            <Insets top="10" right="10" bottom="10" left="10" />
+        </padding>
+
+        <VBox spacing="20" HBox.hgrow="ALWAYS">
+            <children>
+                <HBox alignment="CENTER_LEFT" spacing="15">
+                    <VBox HBox.hgrow="ALWAYS">
+                        <Label text="Transaction Distribution" styleClass="section-title" />
+                        <Label text="Detailed list of transactions for this budget" styleClass="text-muted" style="-fx-font-size: 12px;" />
+                    </VBox>
+
+                    <Button  onAction="#handleAddNewExpense" styleClass="add-button">
+                        <graphic>
+                            <HBox alignment="CENTER" spacing="8">
+                                <FontIcon iconLiteral="mdi2p-plus" iconSize="16" iconColor="white" />
+                                <Label text="New Transaction" style="-fx-text-fill: white; -fx-font-weight: bold;" />
+                            </HBox>
+                        </graphic>
+                    </Button>
+                </HBox>
+
+                <VBox VBox.vgrow="ALWAYS" styleClass="content-card" spacing="0">
+                    <padding>
+                        <Insets top="15" right="15" bottom="15" left="15" />
+                    </padding>
+                    <children>
+                        <ScrollPane fitToWidth="true" styleClass="custom-scroll" VBox.vgrow="ALWAYS"
+                                    style="-fx-background-color: transparent; -fx-background: transparent;">
+                            <content>
+                                <VBox fx:id="transactionListContainer"
+                                      spacing="10"
+                                      prefWidth="650.0"
+                                      minHeight="350.0"
+                                      style="-fx-background-color: transparent;">
+                                    <padding>
+                                        <Insets top="5" right="5" bottom="5" left="5" />
+                                    </padding>
+                                </VBox>
+                            </content>
+                        </ScrollPane>
+                    </children>
+                </VBox>
+            </children>
+        </VBox>
+
+        <VBox fx:id="advancedTaskArea" maxWidth="350" minWidth="300" spacing="20" styleClass="content-card">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20" />
+            </padding>
+            <children>
+                <Label text="Quick Actions" styleClass="section-title" />
+                <Label text="Tools for bulk editing or reporting" styleClass="text-muted" style="-fx-font-size: 12px;" />
+
+                <Separator style="-fx-padding: 10 0;" />
+
+                <VBox alignment="CENTER" spacing="15" VBox.vgrow="ALWAYS">
+                    <FontIcon iconLiteral="mdi2t-tools" iconSize="48" styleClass="text-muted" />
+                    <Label text="Advanced modules will be available here."
+                           textAlignment="CENTER" wrapText="true" styleClass="text-muted" />
+                </VBox>
+            </children>
+        </VBox>
+
+    </HBox>
+</AnchorPane>

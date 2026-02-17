@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.example.testp1.*?>
+<?import java.net.*?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.*?>
+
+
+<StackPane  xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.OverviewController">
+   <children>
+      <AnchorPane fx:id="ovContent" prefHeight="886" prefWidth="1213" style="-fx-background-color: #F5F5F4">
+          <stylesheets>
+              <URL value="@../../styles/nexum.css" />
+          </stylesheets>
+
+          <VBox spacing="5" AnchorPane.leftAnchor="64.0" AnchorPane.topAnchor="45.0">
+              <Label styleClass="splash-title-label" text="Financial Overview" />
+              <Label styleClass="splash-body-label" text="Track budgets and expenses across all projects" />
+          </VBox>
+
+          <HBox spacing="15" AnchorPane.rightAnchor="64.0" AnchorPane.topAnchor="59.0">
+<!--              <Button  onAction="#handleDeleteProfile" styleClass="white-button" text="Reset Profil" />-->
+<!--              <Button onAction="#handleAddBPClick" styleClass="set-button" text="Set Budget Profile" />-->
+<!--              <Button styleClass="set-button" text="update Profile" onAction="#handleUpdateProfileClick" />-->
+              <fx:include fx:id="actionTray" source="ActionTray.fxml" />
+
+          </HBox>
+
+          <HBox alignment="CENTER" spacing="20" AnchorPane.leftAnchor="64.0" AnchorPane.rightAnchor="64.0" AnchorPane.topAnchor="130.0">
+              <StatCard fx:id="cardTotal" />
+              <StatCard fx:id="cardExpense" />
+              <StatCard fx:id="cardRemaining" />
+              <StatCard fx:id="cardUtil" />
+          </HBox>
+
+          <HBox spacing="25" AnchorPane.bottomAnchor="37.0" AnchorPane.leftAnchor="64.0" AnchorPane.rightAnchor="64.0" AnchorPane.topAnchor="310.0">
+
+              <VBox styleClass="content-card" HBox.hgrow="ALWAYS">
+                  <padding>
+                      <Insets bottom="20" left="20" right="20" top="20" />
+                  </padding>
+                  <HBox>
+                      <Label styleClass="section-title" text="Project Budgets" />
+                      <Region HBox.hgrow="ALWAYS" />
+                      <Button onAction="#handleAddClick" styleClass="add-button">
+                          <graphic>
+                              <FontIcon iconLiteral="mdi2c-card-plus-outline" styleClass="add-Icon" />
+                          </graphic>
+                      </Button>
+                  </HBox>
+                  <ScrollPane fitToWidth="true" styleClass="custom-scroll" VBox.vgrow="ALWAYS">
+                      <GridPane fx:id="budgetGrid" hgap="20" styleClass="budget-grid" vgap="20">
+                          <columnConstraints>
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" prefWidth="350.0" />
+                              <ColumnConstraints hgrow="SOMETIMES" minWidth="350.0" prefWidth="350.0" />
+                          </columnConstraints>
+                      </GridPane>
+                  </ScrollPane>
+              </VBox>
+
+              <VBox prefWidth="400.0" styleClass="content-card">
+                  <TabPane styleClass="modern-tabs" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+                      <tabs>
+                          <Tab text="Budget vs Actual">
+                              <VBox alignment="CENTER" spacing="20" styleClass="tab-content">
+                                  <FontIcon iconLiteral="mdi2c-cog-outline" iconSize="20"/>
+                                  <Label styleClass="sub-title" text="In Develompent" alignment="CENTER"  />
+                              </VBox>
+                          </Tab>
+                          <Tab text="Misc">
+                              <VBox spacing="15" styleClass="tab-content">
+                                  <FontIcon iconLiteral="mdi2c-cog-outline" iconSize="20"/>
+                                  <Label styleClass="sub-title" text="In Develompent" alignment="CENTER"  />
+                              </VBox>
+                          </Tab>
+                      </tabs>
+                  </TabPane>
+              </VBox>
+          </HBox>
+      </AnchorPane>
+       <AddProjectBudget fx:id="addProjectBudget" />
+       <AddBudgetProfile fx:id="addBudgetProfile"/>
+       <Warning fx:id="warningOverlay" />
+       <DeleteConfirmation fx:id="deleteConfirmOverlay"/>
+   </children>
+</StackPane>

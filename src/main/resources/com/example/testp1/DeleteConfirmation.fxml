@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+<?import java.net.URL?>
+
+<fx:root type="javafx.scene.layout.StackPane" xmlns="http://javafx.com/javafx/17"
+         xmlns:fx="http://javafx.com/fxml/1">
+
+    <stylesheets>
+        <URL value="@../../styles/nexum.css" />
+    </stylesheets>
+
+    <Region fx:id="dimOverlay" styleClass="modal-overlay" onMouseClicked="#hide"/>
+
+    <VBox fx:id="popupCard"
+          prefWidth="400.0"
+          prefHeight="250.0"
+          maxWidth="-Infinity"
+          maxHeight="-Infinity"
+          spacing="20"
+          styleClass="popup-card" style="-fx-border-color: #EF4444; -fx-border-width: 2px;"
+          StackPane.alignment="CENTER">
+
+        <HBox alignment="CENTER" spacing="15">
+            <FontIcon iconLiteral="mdi2d-delete-alert-outline" iconColor="#EF4444" iconSize="42"/>
+            <VBox>
+                <Label fx:id="deleteLabel" text="Confirm Reset" styleClass="splash-title-label" style="-fx-font-size: 18px;"/>
+                <Label text="This action cannot be undone" styleClass="splash-body-label" />
+            </VBox>
+        </HBox>
+
+        <Label fx:id="deleteText" text="Are you sure you want to delete the fiscal profile? All global dashboard stats will be reset to N/A."
+               wrapText="true" textAlignment="CENTER" styleClass="splash-body-label" />
+
+        <HBox spacing="15" alignment="CENTER">
+            <Button onAction="#hide" prefWidth="120" styleClass="cancelD-Button" text="Cancel" />
+            <Button onAction="#handleConfirm" prefWidth="180"
+                    fx:id="deleteButton"
+                    style="-fx-background-color: #EF4444; -fx-text-fill: white; -fx-font-weight: bold; -fx-background-radius: 8px;"
+                    text="Yes, Reset Profile" />
+        </HBox>
+    </VBox>
+</fx:root>

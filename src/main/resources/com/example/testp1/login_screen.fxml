@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Hyperlink?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.PasswordField?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Rectangle?>
+
+<BorderPane id="BorderPane" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="680.0" prefWidth="1024.0" styleClass="root" stylesheets="@../../styles/nexum.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1">
+    <center>
+        <HBox id="LoginCard" maxHeight="-Infinity" maxWidth="-Infinity" prefHeight="450.0" prefWidth="700.0"
+              styleClass="splash-card" BorderPane.alignment="CENTER">
+            <children>
+
+                <VBox fx:id="loginformside" maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="450.0" prefWidth="350.0" spacing="15.0">
+                    <children>
+                        <Label styleClass="splash-title-label" text="Welcome Back">
+                            <VBox.margin>
+                                <Insets left="30.0" top="40.0" />
+                            </VBox.margin>
+                        </Label>
+
+                        <Label styleClass="splash-body-label" text="Enter your credentials to continue." wrapText="true">
+                            <VBox.margin>
+                                <Insets left="30.0" right="20.0" />
+                            </VBox.margin>
+                        </Label>
+
+                        <VBox spacing="5.0">
+                            <VBox.margin>
+                                <Insets left="30.0" right="30.0" top="10.0" />
+                            </VBox.margin>
+                            <children>
+                                <Label styleClass="field-label" text="Email Address" />
+                                <TextField promptText="name@company.com" styleClass="nexum-input" />
+                            </children>
+                        </VBox>
+
+                        <VBox spacing="5.0">
+                            <VBox.margin>
+                                <Insets left="30.0" right="30.0" />
+                            </VBox.margin>
+                            <children>
+                                <HBox alignment="CENTER_LEFT">
+                                    <children>
+                                        <Label styleClass="field-label" text="Password" />
+                                        <Region HBox.hgrow="ALWAYS" />
+                                        <Hyperlink styleClass="purple-link" text="Forgot?" />
+                                    </children>
+                                </HBox>
+                                <PasswordField promptText="••••••••" styleClass="nexum-input" />
+                            </children>
+                        </VBox>
+
+                        <Button maxWidth="Infinity" styleClass="splash-button" text="Sign In">
+                            <VBox.margin>
+                                <Insets left="30.0" right="30.0" top="10.0" />
+                            </VBox.margin>
+                        </Button>
+
+                        <HBox alignment="CENTER" spacing="5.0">
+                            <children>
+                                <Label text="Account not setup yet?" />
+                                <Hyperlink styleClass="purple-link" text="Get Started" />
+                            </children>
+                        </HBox>
+                    </children>
+                </VBox>
+
+                <ImageView fx:id="loginimg" fitHeight="450.0" fitWidth="340.0" pickOnBounds="true" translateX="10.0">
+                    <image>
+                        <Image url="@../../img/sidepanel.png" />
+                    </image>
+                    <clip>
+                        <Rectangle arcHeight="48.0" arcWidth="48.0" height="450.0" width="390.0" x="-50.0" />
+                    </clip>
+                </ImageView>
+            </children>
+        </HBox>
+    </center>
+</BorderPane>
