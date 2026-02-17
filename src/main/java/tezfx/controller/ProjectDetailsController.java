@@ -13,25 +13,34 @@ import javafx.scene.effect.BoxBlur;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.layout.HBox;
 import javafx.geometry.Pos;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import tezfx.model.Project;
-import tezfx.model.Task;
-import tezfx.model.User;
-import tezfx.model.sql;
+import tezfx.model.Entities.Project;
+import tezfx.model.Entities.Task;
+import tezfx.model.Entities.User;
+import tezfx.model.services.sql;
 import javafx.scene.paint.Color;
 
 import javafx.scene.control.Button;
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class ProjectDetailsController {
     private static final String[] AVATAR_COLOR_CLASSES = {"purple", "blue", "green", "orange"};
+    private static final DateTimeFormatter ACTIVITY_DATE_INPUT = DateTimeFormatter.ISO_LOCAL_DATE;
+    private static final DateTimeFormatter ACTIVITY_DATE_OUTPUT = DateTimeFormatter.ofPattern("dd MMM", Locale.ENGLISH);
 
     @FXML
     private Label detailName, detailDesc, detailDate, detailPercent;
@@ -42,33 +51,51 @@ public class ProjectDetailsController {
     @FXML private ScrollPane tasksScrollPane;
     @FXML private HBox overviewContainer;
     @FXML private VBox teamContainer;
+    @FXML private VBox recentActivityContainer;
     @FXML private Project currentProject;
     @FXML private Button tasksBtn, overviewTab;
-    @FXML private Label breadcrumbCurrent;
 
 
 
     private final sql dao = new sql();
 
-    public void setProjectData(Project project) {
+    private static class ActivityItem {
+        private final long sortKey;
+        private final Node node;
+
+        private ActivityItem(long sortKey, Node node) {
+            this.sortKey = sortKey;
+            this.node = node;
+        }
+    }
+
+    public void ProjectDataLoad(Project project) {
+        if (project == null) {
+            return;
+        }
         this.currentProject = project;
-        // 1. Fill basic info
-        detailName.setText(project.getName());
-        detailDesc.setText(project.getDescription());
-        breadcrumbCurrent.setText(project.getName());
-        detailDate.setText("Due " + project.getEndDate());
+        if (detailName != null) {
+            detailName.setText(project.getName());
+        }
+        if (detailDesc != null) {
+            detailDesc.setText(project.getDescription());
+        }
+        if (detailDate != null) {
+            detailDate.setText("Due " + project.getEndDate());
+        }
 
 
         double progressValue = project.getProgress() / 100.0;
 
-        // Set the value on the progress bar
-        detailProgress.setProgress(progressValue);
+        if (detailProgress != null) {
+            detailProgress.setProgress(progressValue);
+        }
 
 
 
-        // 2. Load Stats (We will write this SQL next)
         loadProjectStats(project.getId());
         loadTeamMembers(project.getId());
+        loadRecentActivities(project.getId());
     }
 
     private void loadProjectStats(int projectId) {
@@ -80,7 +107,6 @@ public class ProjectDetailsController {
         int completed = dao.getTaskCountByStatus(projectId, "DONE");
         int overdue = dao.getOverdueTaskCount(projectId);
 
-        // Update the UI
         totalTasksLabel.setText(String.valueOf(total));
         completedTasksLabel.setText(String.valueOf(completed));
 
@@ -94,9 +120,8 @@ public class ProjectDetailsController {
     }
 
     private void loadTeamMembers(int projectId) {
-        if (teamContainer == null) {
-            return;
-        }
+
+
         teamContainer.getChildren().clear();
 
         Map<Integer, List<User>> assigneesByProject = dao.getProjectAssigneesMap();
@@ -115,6 +140,114 @@ public class ProjectDetailsController {
             Tooltip.install(row, new Tooltip(fullName));
             teamContainer.getChildren().add(row);
         }
+    }
+
+    private void loadRecentActivities(int projectId) {
+        recentActivityContainer.getChildren().clear();
+
+        Map<Integer, String> userNamesById = new java.util.HashMap<>();
+        for (User user : dao.getAllUsers()) {
+            userNamesById.put(user.getId(), user.getFullName());
+        }
+
+        List<ActivityItem> items = new ArrayList<>();
+        List<sql.TaskActivity> activities = dao.getTaskActivitiesByProject(projectId, 20);
+        for (sql.TaskActivity activity : activities) {
+            String type = normalizeActivityType(activity.getType());
+            String title = switch (type) {
+                case "CREATED" -> "Task Created";
+                case "COMPLETED" -> "Task Completed";
+                case "DELETED" -> "Task Deleted";
+                default -> "Task Updated";
+            };
+            String actor = userNamesById.getOrDefault(activity.getActorUserId(), "A user");
+            String taskTitle = activity.getTaskTitle() == null || activity.getTaskTitle().isBlank()
+                    ? "Untitled task"
+                    : activity.getTaskTitle();
+            String message = switch (type) {
+                case "CREATED" -> actor + " created \"" + taskTitle + "\"";
+                case "COMPLETED" -> actor + " completed \"" + taskTitle + "\"";
+                case "DELETED" -> actor + " deleted \"" + taskTitle + "\"";
+                default -> actor + " updated \"" + taskTitle + "\"";
+            };
+            String iconStyle = switch (type) {
+                case "CREATED" -> "activity-icon-created";
+                case "COMPLETED" -> "activity-icon-completed";
+                case "DELETED" -> "activity-icon-deleted";
+                default -> "activity-icon-updated";
+            };
+
+            items.add(new ActivityItem(
+                    activity.getTimestamp(),
+                    createActivityCard(title, message, activity.getActivityDate(), iconStyle)
+            ));
+        }
+
+        if (items.isEmpty()) {
+            List<Task> tasks = dao.getTasksByProject(projectId);
+            for (Task task : tasks) {
+                String createdBy = userNamesById.getOrDefault(task.getCreatedby(), "A user");
+                items.add(new ActivityItem(
+                        (long) task.getId() * 10 + 1,
+                        createActivityCard(
+                                "Task Created",
+                                createdBy + " created \"" + task.getTitle() + "\"",
+                                task.getStartDate(),
+                                "activity-icon-created"
+                        )
+                ));
+            }
+        }
+
+        if (items.isEmpty()) {
+            Label empty = new Label("No activity yet.");
+            empty.getStyleClass().add("text-muted");
+            recentActivityContainer.getChildren().add(empty);
+            return;
+        }
+
+        items.sort(Comparator.comparingLong((ActivityItem i) -> i.sortKey).reversed());
+        int maxItems = Math.min(items.size(), 6);
+        for (int i = 0; i < maxItems; i++) {
+            recentActivityContainer.getChildren().add(items.get(i).node);
+        }
+    }
+
+    private Node createActivityCard(String title, String message, String date, String iconStyleClass) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/components/ActivityCard.fxml"));
+            Node card = loader.load();
+            ActivityCardController controller = loader.getController();
+            controller.setData(title, message, formatActivityDate(date), iconStyleClass);
+            return card;
+        } catch (IOException e) {
+            Label fallback = new Label(message);
+            fallback.getStyleClass().add("text-muted");
+            return fallback;
+        }
+    }
+
+    private String formatActivityDate(String date) {
+        if (date == null || date.isBlank()) {
+            return "Date unavailable";
+        }
+        try {
+            return LocalDate.parse(date, ACTIVITY_DATE_INPUT).format(ACTIVITY_DATE_OUTPUT).toUpperCase(Locale.ENGLISH);
+        } catch (Exception e) {
+            return date;
+        }
+    }
+
+
+
+    private String normalizeStatus(String status) {
+        if (status == null) return "TODO";
+        return status.trim().toUpperCase().replace(' ', '_').replace('-', '_');
+    }
+
+    private String normalizeActivityType(String type) {
+        if (type == null || type.isBlank()) return "UPDATED";
+        return type ;
     }
 
     private StackPane buildAvatarInitial(String fullName) {
@@ -205,6 +338,11 @@ public class ProjectDetailsController {
                 controller.setOnEdit(() -> openUpdateTaskModal(t));
                 controller.setOnDelete(() -> deleteTask(t));
 
+                if (row instanceof Region region) {
+                    region.setMaxWidth(Double.MAX_VALUE);
+                    VBox.setVgrow(region, Priority.NEVER);
+                }
+                HBox.setHgrow(row, Priority.ALWAYS);
                 taskListContainer.getChildren().add(row); // Add it to the list!
             } catch (IOException e) {
                 e.printStackTrace();
@@ -223,6 +361,7 @@ public class ProjectDetailsController {
             detailName.setText(currentProject.getName());
             detailDate.setText("Due " + currentProject.getEndDate().toString());
             loadProjectStats(currentProject.getId());
+            loadRecentActivities(currentProject.getId());
         }
     }
     @FXML
@@ -298,6 +437,7 @@ public class ProjectDetailsController {
 
             // 6. Refresh the task list once the popup is closed
             showTasksTab();
+            loadRecentActivities(currentProject.getId());
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -312,11 +452,16 @@ public class ProjectDetailsController {
 
         Node mainLayout = tasksContainer.getScene().getRoot();
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/DeleteProjectModal.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/DeleteConfirmModal.fxml"));
             Parent root = loader.load();
 
-            DeleteProjectModalController controller = loader.getController();
-            controller.setProjectName(currentProject.getName());
+            DeleteConfirmModalController controller = loader.getController();
+            controller.configure(
+                    "Project",
+                    currentProject.getName(),
+                    "All tasks linked to this project will be removed as well.",
+                    "Delete Project"
+            );
 
             Stage popupStage = new Stage();
             popupStage.initStyle(StageStyle.TRANSPARENT);
@@ -386,7 +531,7 @@ public class ProjectDetailsController {
 
             if (controller.isSaved() && controller.getUpdatedProject() != null) {
                 currentProject = controller.getUpdatedProject();
-                setProjectData(currentProject);
+                ProjectDataLoad(currentProject);
             }
         } catch (IOException e) {
             mainLayout.setEffect(null);
@@ -427,6 +572,7 @@ public class ProjectDetailsController {
             if (controller.isSaved()) {
                 showTasksTab();
                 loadProjectStats(currentProject.getId());
+                loadRecentActivities(currentProject.getId());
             }
         } catch (IOException e) {
             mainLayout.setEffect(null);
@@ -438,11 +584,16 @@ public class ProjectDetailsController {
         if (task == null) return;
         Node mainLayout = tasksContainer.getScene().getRoot();
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/DeleteTaskModal.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/DeleteConfirmModal.fxml"));
             Parent root = loader.load();
 
-            DeleteTaskModalController controller = loader.getController();
-            controller.setTaskName(task.getTitle());
+            DeleteConfirmModalController controller = loader.getController();
+            controller.configure(
+                    "Task",
+                    task.getTitle(),
+                    "This task will be removed from your project.",
+                    "Delete Task"
+            );
 
             Stage popupStage = new Stage();
             popupStage.initStyle(StageStyle.TRANSPARENT);
@@ -467,6 +618,7 @@ public class ProjectDetailsController {
             if (controller.isConfirmed() && dao.deleteTaskById(task.getId())) {
                 showTasksTab();
                 loadProjectStats(currentProject.getId());
+                loadRecentActivities(currentProject.getId());
             }
         } catch (IOException e) {
             mainLayout.setEffect(null);

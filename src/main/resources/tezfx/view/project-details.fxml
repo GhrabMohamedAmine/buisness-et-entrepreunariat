@@ -5,17 +5,13 @@
 <?import javafx.scene.layout.*?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx" xmlns:fx="http://javafx.com/fxml" fx:controller="tezfx.controller.ProjectDetailsController">
+<AnchorPane prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml" fx:controller="tezfx.controller.ProjectDetailsController">
     <VBox spacing="15" style="-fx-background-color: #f9fafb;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <padding>
             <Insets bottom="30" left="40" right="40" top="30" />
         </padding>
 
-        <HBox alignment="CENTER_LEFT" spacing="8">
-            <Label style="-fx-text-fill: #9ca3af; -fx-font-size: 13;" text="Projects" />
-            <FontIcon iconColor="#9ca3af" iconLiteral="mdi2c-chevron-right" iconSize="14" />
-            <Label fx:id="breadcrumbCurrent" style="-fx-text-fill: #111827; -fx-font-size: 13; -fx-font-weight: bold;" text="Website Redesign" />
-        </HBox>
+
 
         <VBox spacing="25" styleClass="nexum-card" VBox.vgrow="ALWAYS">
 
@@ -58,12 +54,13 @@
                 <HBox fx:id="overviewContainer" spacing="25">
                     <VBox spacing="25" HBox.hgrow="ALWAYS">
                         <VBox spacing="15" styleClass="nexum-card-sub">
-                            <Label style="-fx-font-size: 18; -fx-font-weight: bold;" styleClass="section-title" text="Description" />
+                            <Label style="-fx-font-size: 18; -fx-font-weight: bold;"  text="Description" />
                             <Label fx:id="detailDesc" style="-fx-text-fill: #4b5563; -fx-font-size: 14;" text="Your project description goes here..." wrapText="true" />
                             <VBox fx:id="deliverablesContainer" spacing="8" />
                         </VBox>
                         <VBox spacing="15" styleClass="nexum-card-sub" VBox.vgrow="ALWAYS">
-                            <Label style="-fx-font-size: 18; -fx-font-weight: bold;" styleClass="section-title" text="Recent Activity" />
+                            <Label style="-fx-font-size: 18; -fx-font-weight: bold;"  text="Recent Activity" />
+                            <VBox fx:id="recentActivityContainer" spacing="10" />
                         </VBox>
                     </VBox>
 
@@ -93,12 +90,12 @@
                 </HBox>
 
                 <ScrollPane fx:id="tasksScrollPane" fitToWidth="true" managed="false" style="-fx-background-color: transparent; -fx-background: transparent;" visible="false">
-                    <VBox fx:id="tasksContainer" spacing="20" style="-fx-padding: 10;">
+                    <VBox fx:id="tasksContainer" spacing="20" >
                         <HBox alignment="CENTER_LEFT">
                             <Label maxWidth="Infinity" styleClass="header-title" text="Project Tasks" HBox.hgrow="ALWAYS" />
                             <Button onAction="#handleAddTask" styleClass="btn-primary" text="+ Add New Task" />
                         </HBox>
-                        <VBox fx:id="taskListContainer" fillWidth="true" spacing="10" />
+                        <VBox fx:id="taskListContainer" fillWidth="true" spacing="20" />
                     </VBox>
                 </ScrollPane>
             </StackPane>

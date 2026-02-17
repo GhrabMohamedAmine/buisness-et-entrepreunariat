@@ -3,10 +3,11 @@ package tezfx.controller;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Stage;
 import org.controlsfx.control.CheckComboBox;
-import tezfx.model.Project;
-import tezfx.model.User;
-import tezfx.model.sql;
+import tezfx.model.Entities.Project;
+import tezfx.model.Entities.User;
+import tezfx.model.services.sql;
 import javafx.util.StringConverter;
 import javafx.collections.ListChangeListener;
 import java.time.LocalDate;
@@ -99,7 +100,15 @@ public class AddProjectController {
     }
 
     private void closeoverlay() {
+        if (nameField != null && nameField.getScene() != null && nameField.getScene().getWindow() instanceof Stage stage) {
+            stage.close();
+            return;
+        }
+
         StackPane contentArea = MainController.getStaticContentArea();
+        if (contentArea == null) {
+            return;
+        }
         int childCount = contentArea.getChildren().size();
         if (childCount > 0) {
             contentArea.getChildren().remove(childCount - 1);
@@ -117,13 +126,22 @@ public class AddProjectController {
     }
 
     private boolean validateInputs(String name, String desc, LocalDate startDate, LocalDate dueDate, List<User> selectedUsers) {
+        clearErrors();
         boolean valid = true;
 
         if (name.isBlank()) {
             setError(nameErrorLabel, "Project name is required.");
             valid = false;
+        } else if (!InputValidationUtils.hasMeaningfulText(name)) {
+            setError(nameErrorLabel, "Project name must include letters or numbers.");
+            valid = false;
         } else if (name.length() < 3) {
             setError(nameErrorLabel, "Minimum 3 characters.");
+            valid = false;
+        }
+
+        if (!desc.isBlank() && !InputValidationUtils.hasMeaningfulText(desc)) {
+            setError(descErrorLabel, "Description must include letters or numbers.");
             valid = false;
         }
 

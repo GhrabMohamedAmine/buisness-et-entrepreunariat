@@ -6,11 +6,12 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.control.Label?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<VBox spacing="18.0" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tezfx.controller.TasksController">
+<VBox spacing="18.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tezfx.controller.TasksController">
     <padding>
         <Insets bottom="20.0" left="20.0" right="20.0" top="20.0" />
     </padding>
@@ -26,13 +27,18 @@
             <Region HBox.hgrow="ALWAYS" />
             <HBox alignment="CENTER_RIGHT" spacing="8.0">
                 <children>
-                    <TextField fx:id="ssearchField" prefWidth="240.0" promptText="Search tasks..." styleClass="tasks-toolbar-search" />
-                    <Button styleClass="btn-secondary" text="Filter">
-                        <graphic>
-                            <FontIcon iconLiteral="mdi2f-filter-outline" iconSize="16" />
-                        </graphic>
-                    </Button>
-                    <Button styleClass="btn-primary" text="+ New Task" />
+                    <TextField fx:id="searchField" prefWidth="240.0" promptText="Search tasks..." styleClass="tasks-toolbar-search" />
+                    <StackPane>
+                        <children>
+                            <Button fx:id="filterButton" onAction="#onOpenFilter" styleClass="btn-secondary" text="Filter">
+                                <graphic>
+                                    <FontIcon iconLiteral="mdi2f-filter-outline" iconSize="16" />
+                                </graphic>
+                            </Button>
+                            <Label fx:id="filterBadgeLabel" managed="false" styleClass="tasks-filter-badge" text="0" visible="false" StackPane.alignment="TOP_RIGHT" />
+                        </children>
+                    </StackPane>
+                    <Button onAction="#onCreateTask" styleClass="btn-primary" text="+ New Task" />
                 </children>
             </HBox>
         </children>

@@ -1,14 +1,79 @@
-package tezfx.model;
+package tezfx.model.services;
+
+import tezfx.model.Entities.Project;
+import tezfx.model.Entities.Task;
+import tezfx.model.Entities.User;
+import tezfx.model.databaseconnection;
 
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.time.LocalDate;
 
 import static java.awt.AWTEventMulticaster.add;
 
 public class sql {
+    public static class TaskActivity {
+        private final String type;
+        private final int projectId;
+        private final int taskId;
+        private final String taskTitle;
+        private final int actorUserId;
+        private final String activityDate;
+        private final long timestamp;
+
+        public TaskActivity(String type, int projectId, int taskId, String taskTitle, int actorUserId, String activityDate, long timestamp) {
+            this.type = type;
+            this.projectId = projectId;
+            this.taskId = taskId;
+            this.taskTitle = taskTitle;
+            this.actorUserId = actorUserId;
+            this.activityDate = activityDate;
+            this.timestamp = timestamp;
+        }
+
+        public String getType() { return type; }
+        public int getProjectId() { return projectId; }
+        public int getTaskId() { return taskId; }
+        public String getTaskTitle() { return taskTitle; }
+        public int getActorUserId() { return actorUserId; }
+        public String getActivityDate() { return activityDate; }
+        public long getTimestamp() { return timestamp; }
+    }
+
+    private static final List<TaskActivity> TASK_ACTIVITY_LOG = new ArrayList<>();
+
+    private static synchronized void logTaskActivity(String type, int projectId, int taskId, String taskTitle, int actorUserId) {
+        String safeType = type == null ? "UPDATED" : type;
+        String safeTitle = (taskTitle == null || taskTitle.isBlank()) ? "Untitled task" : taskTitle.trim();
+        TASK_ACTIVITY_LOG.add(new TaskActivity(
+                safeType,
+                projectId,
+                taskId,
+                safeTitle,
+                actorUserId,
+                LocalDate.now().toString(),
+                System.currentTimeMillis()
+        ));
+    }
+
+    public synchronized List<TaskActivity> getTaskActivitiesByProject(int projectId, int limit) {
+        List<TaskActivity> result = new ArrayList<>();
+        for (int i = TASK_ACTIVITY_LOG.size() - 1; i >= 0; i--) {
+            TaskActivity activity = TASK_ACTIVITY_LOG.get(i);
+            if (activity.getProjectId() != projectId) {
+                continue;
+            }
+            result.add(activity);
+            if (limit > 0 && result.size() >= limit) {
+                break;
+            }
+        }
+        return result;
+    }
+
     public List<Project> getAllProjects() {
         List<Project> projects = new ArrayList<>();
         String query = "SELECT p.id, p.name, p.description, p.budget, p.start_date, p.end_date, p.assigned_to, p.created_by, " +
@@ -86,7 +151,7 @@ public class sql {
         String query = "INSERT INTO tasks (title, description, status, priority, start_date, due_date, project_id, assigned_to ,created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ? ,?)";
 
         try (Connection conn = databaseconnection.getConnection();
-             PreparedStatement adt = conn.prepareStatement(query)) {
+             PreparedStatement adt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
 
             adt.setString(1, task.getTitle());
             adt.setString(2, task.getDescription());
@@ -99,6 +164,12 @@ public class sql {
             adt.setInt(9, task.getCreatedby());
 
             adt.executeUpdate();
+            int taskId = -1;
+            ResultSet keys = adt.getGeneratedKeys();
+            if (keys.next()) {
+                taskId = keys.getInt(1);
+            }
+            logTaskActivity("CREATED", task.getProjectId(), taskId, task.getTitle(), task.getCreatedby());
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -419,12 +490,35 @@ public class sql {
     }
 
     public boolean updateTaskStatus(int taskId, String newStatus) {
+        String fetchQuery = "SELECT id, title, project_id, assigned_to, created_by, status FROM tasks WHERE id = ?";
         String query = "UPDATE tasks SET status = ? WHERE id = ?";
         try (Connection conn = databaseconnection.getConnection();
+             PreparedStatement fetchStmt = conn.prepareStatement(fetchQuery);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
+            fetchStmt.setInt(1, taskId);
+            ResultSet fetchRs = fetchStmt.executeQuery();
+            if (!fetchRs.next()) {
+                return false;
+            }
+            String oldStatus = fetchRs.getString("status");
+            String title = fetchRs.getString("title");
+            int projectId = fetchRs.getInt("project_id");
+            int actorUserId = fetchRs.getInt("assigned_to");
+            if (fetchRs.wasNull() || actorUserId <= 0) {
+                actorUserId = fetchRs.getInt("created_by");
+            }
+
             pstmt.setString(1, newStatus);
             pstmt.setInt(2, taskId);
-            return pstmt.executeUpdate() > 0;
+            boolean updated = pstmt.executeUpdate() > 0;
+            if (updated && !normalizeStatus(newStatus).equals(normalizeStatus(oldStatus))) {
+                if ("DONE".equals(normalizeStatus(newStatus))) {
+                    logTaskActivity("COMPLETED", projectId, taskId, title, actorUserId);
+                } else {
+                    logTaskActivity("UPDATED", projectId, taskId, title, actorUserId);
+                }
+            }
+            return updated;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
@@ -479,7 +573,11 @@ public class sql {
             UpTa.setString(5, task.getDueDate());
             UpTa.setInt(6, task.getAssignedTo());
             UpTa.setInt(7, task.getId());
-            return UpTa.executeUpdate() > 0;
+            boolean updated = UpTa.executeUpdate() > 0;
+            if (updated) {
+                logTaskActivity("UPDATED", task.getProjectId(), task.getId(), task.getTitle(), task.getAssignedTo());
+            }
+            return updated;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
@@ -487,14 +585,39 @@ public class sql {
     }
 
     public boolean deleteTaskById(int taskId) {
+        String fetchQuery = "SELECT id, title, project_id, assigned_to, created_by FROM tasks WHERE id = ?";
         String query = "DELETE FROM tasks WHERE id = ?";
         try (Connection conn = databaseconnection.getConnection();
+             PreparedStatement fetchStmt = conn.prepareStatement(fetchQuery);
              PreparedStatement pstmt = conn.prepareStatement(query)) {
+            fetchStmt.setInt(1, taskId);
+            ResultSet fetchRs = fetchStmt.executeQuery();
+            if (!fetchRs.next()) {
+                return false;
+            }
+            String title = fetchRs.getString("title");
+            int projectId = fetchRs.getInt("project_id");
+            int actorUserId = fetchRs.getInt("assigned_to");
+            if (fetchRs.wasNull() || actorUserId <= 0) {
+                actorUserId = fetchRs.getInt("created_by");
+            }
+
             pstmt.setInt(1, taskId);
-            return pstmt.executeUpdate() > 0;
+            boolean deleted = pstmt.executeUpdate() > 0;
+            if (deleted) {
+                logTaskActivity("DELETED", projectId, taskId, title, actorUserId);
+            }
+            return deleted;
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
+    }
+
+    private String normalizeStatus(String status) {
+        if (status == null || status.isBlank()) return "TODO";
+        String normalized = status.trim().toUpperCase().replace(' ', '_').replace('-', '_');
+        if ("TO_DO".equals(normalized)) return "TODO";
+        return normalized;
     }
 }

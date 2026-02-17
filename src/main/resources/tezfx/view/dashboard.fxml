@@ -7,7 +7,7 @@
 
 
 <VBox spacing="25"
-      xmlns="http://javafx.com/javafx/21"
+      xmlns="http://javafx.com/javafx/17.0.12"
       xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="tezfx.controller.HelloController">
 
@@ -18,7 +18,7 @@
     <!-- Welcome -->
     <HBox spacing="20" alignment="CENTER_LEFT">
         <VBox spacing="5">
-            <Label text="Welcome back, Alex 👋" styleClass="title"/>
+            <Label text="Welcome back, Alex " styleClass="title"/>
             <Label text="Here's what's happening with your projects today."
                    styleClass="subtitle"/>
         </VBox>
@@ -107,26 +107,20 @@
                 <Region HBox.hgrow="ALWAYS"/>
             </HBox>
 
-            <TableView fx:id="projectsTable" prefHeight="300" styleClass="modern-table,projects-table">
-
-                <columns>
-                    <TableColumn fx:id="nameCol" text="Project Name"/>
-                    <TableColumn fx:id="progressCol" text="Progress"/>
-                    <TableColumn fx:id="teamCol" text="Team"/>
-                    <TableColumn fx:id="startDateCol" text="Start Date"/>
-                    <TableColumn fx:id="endDateCol" text="End Date"/>
-                </columns>
-
-            </TableView>
+            <ScrollPane fitToWidth="true" prefHeight="300.0" style="-fx-background-color: transparent; -fx-background: transparent;">
+                <content>
+                    <VBox fx:id="recentProjectsContainer" spacing="10.0" styleClass="recent-projects-list" />
+                </content>
+            </ScrollPane>
 
         </VBox>
 
         <!-- Tasks -->
         <VBox spacing="15" prefWidth="420" minWidth="420" maxWidth="420" styleClass="task-card">
             <HBox alignment="CENTER_LEFT">
-                <Label text="Tasks" styleClass="card-title" />
+                <Label text="Your Tasks" styleClass="card-title" />
                 <Region HBox.hgrow="ALWAYS" />
-                <Button styleClass="small-fab">
+                <Button onAction="#openPersonalTaskModal" styleClass="small-fab">
                     <graphic><FontIcon iconLiteral="mdi2p-plus" iconSize="14" iconColor="#7C3AED"/></graphic>
                 </Button>
             </HBox>

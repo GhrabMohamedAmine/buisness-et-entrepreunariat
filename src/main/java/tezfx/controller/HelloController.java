@@ -1,20 +1,29 @@
 package tezfx.controller;
 
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
 import javafx.fxml.FXMLLoader;
+import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.Parent;
-import tezfx.model.Project;
-import tezfx.model.Task;
-import tezfx.model.User;
-import tezfx.model.sql; // You need to import your DAO
+import javafx.scene.Scene;
+import tezfx.model.Entities.Project;
+import tezfx.model.Entities.Task;
+import tezfx.model.Entities.User;
+import tezfx.model.services.sql; // You need to import your DAO
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
+import javafx.scene.effect.BoxBlur;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import javafx.scene.layout.Region;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -23,22 +32,15 @@ import java.util.Map;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 
-import static javafx.scene.layout.Region.USE_PREF_SIZE;
 
 public class HelloController {
     private static final int RECENT_PROJECTS_LIMIT = 5;
     private static final int CURRENT_USER_ID = 1;
-    private static final double PROJECT_ROW_HEIGHT = 56.0;
-    private static final double PROJECT_HEADER_HEIGHT = 46.0;
+    private static final int MAX_VISIBLE_ASSIGNEE_AVATARS = 4;
     private static final DateTimeFormatter DATE_INPUT = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter DATE_OUTPUT = DateTimeFormatter.ofPattern("dd MMM yyyy");
 
-    @FXML private TableView<Project> projectsTable;
-    @FXML private TableColumn<Project, String> nameCol;
-    @FXML private TableColumn<Project, Number> progressCol;
-    @FXML private TableColumn<Project, Number> teamCol; // Changed from String to Number
-    @FXML private TableColumn<Project, String> startDateCol;
-    @FXML private TableColumn<Project, String> endDateCol;
+    @FXML private VBox recentProjectsContainer;
     @FXML private Label tasksInProgressKpiLabel;
     @FXML private Label completedTasksKpiLabel;
     @FXML private Label totalProjectsKpiLabel;
@@ -54,116 +56,83 @@ public class HelloController {
 
     @FXML
     public void initialize() {
-        projectsTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-
-        // 1. Basic Column Mapping
-        nameCol.setCellValueFactory(data -> data.getValue().nameProperty());
-        startDateCol.setCellValueFactory(cellData -> cellData.getValue().startDateProperty());
-        endDateCol.setCellValueFactory(cellData -> cellData.getValue().endDateProperty());
-
-
-
-        // 2. Progress Bar Column
-        progressCol.setCellValueFactory(data -> data.getValue().progressProperty());
-        progressCol.setCellFactory(col -> new TableCell<Project, Number>() {
-            private final ProgressBar bar = new ProgressBar();
-            private final Label percentLabel = new Label();
-            private final HBox container = new HBox(10, bar, percentLabel);
-            @Override
-            protected void updateItem(Number value, boolean empty) {
-                super.updateItem(value, empty);
-                if (empty || value == null) {
-                    setGraphic(null);
-                } else {
-                    if (!bar.getStyleClass().contains("projects-progress-bar")) {
-                        bar.getStyleClass().add("projects-progress-bar");
-                    }
-                    bar.setProgress(value.doubleValue() / 100.0);
-                    bar.setPrefWidth(130);
-
-                    percentLabel.setText(((int) Math.round(value.doubleValue())) + "%");
-                    if (!percentLabel.getStyleClass().contains("projects-progress-text")) {
-                        percentLabel.getStyleClass().add("projects-progress-text");
-                    }
-
-                    container.setAlignment(Pos.CENTER_LEFT);
-                    if (!container.getStyleClass().contains("projects-progress-wrap")) {
-                        container.getStyleClass().add("projects-progress-wrap");
-                    }
-                    setGraphic(container);
-                }
-            }
-        });
-
-        // 3. Team/Assigned User Column
-        teamCol.setCellValueFactory(data -> data.getValue().assignedToProperty());
-        teamCol.setCellFactory(col -> new TableCell<Project, Number>() {
-            @Override
-            protected void updateItem(Number userId, boolean empty) {
-                super.updateItem(userId, empty);
-                Project rowProject = getTableRow() == null ? null : (Project) getTableRow().getItem();
-                if (empty || rowProject == null) {
-                    setGraphic(null);
-                    setText(null);
-                } else {
-                    List<User> users = assigneesByProject.getOrDefault(rowProject.getId(), List.of());
-                    if (users.isEmpty()) {
-                        users = new ArrayList<>();
-                        users.add(new User(0, "Unassigned", ""));
-                    }
-
-                    HBox wrapper = new HBox(4);
-                    wrapper.setStyle("-fx-alignment: CENTER_LEFT;");
-                    for (User user : users) {
-                        wrapper.getChildren().add(buildInitialAvatar(user.getFullName()));
-                    }
-
-                    String names = users.stream().map(User::getFullName).reduce((a, b) -> a + ", " + b).orElse("Unassigned");
-                    Tooltip.install(wrapper, new Tooltip(names));
-                    setGraphic(wrapper);
-                    setText(null);
-                }
-            }
-        });
-
-        startDateCol.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null || item.isBlank()) {
-                    setText(null);
-                } else {
-                    setText(formatDate(item));
-                }
-            }
-        });
-
-        endDateCol.setCellFactory(col -> new TableCell<>() {
-            @Override
-            protected void updateItem(String item, boolean empty) {
-                super.updateItem(item, empty);
-                if (empty || item == null || item.isBlank()) {
-                    setText(null);
-                } else {
-                    setText(formatDate(item));
-                }
-            }
-        });
-
-        // 4. LOAD DATA FROM DATABASE
-        projectsTable.setFixedCellSize(PROJECT_ROW_HEIGHT);
         loadData();
     }
     @FXML
     private void openAddProjectPopup() {
+        if (recentProjectsContainer == null || recentProjectsContainer.getScene() == null) {
+            return;
+        }
+        Node mainLayout = recentProjectsContainer.getScene().getRoot();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/add-project.fxml"));
-            Parent popup = loader.load();
+            Parent root = loader.load();
 
             AddProjectController popupcontroller = loader.getController();
-            popupcontroller.setParentController(this);
-            MainController.getStaticContentArea().getChildren().add(popup);
+            popupcontroller.setOnProjectCreated(this::loadData);
+
+            Stage popupStage = new Stage();
+            popupStage.initStyle(StageStyle.TRANSPARENT);
+
+            BoxBlur blur = new BoxBlur(8, 8, 3);
+            ColorAdjust dim = new ColorAdjust();
+            dim.setBrightness(-0.3);
+            dim.setInput(blur);
+            mainLayout.setEffect(dim);
+
+            popupStage.initModality(Modality.APPLICATION_MODAL);
+            popupStage.initOwner(recentProjectsContainer.getScene().getWindow());
+
+            Scene scene = new Scene(root);
+            scene.setFill(Color.TRANSPARENT);
+            popupStage.setScene(scene);
+            popupStage.centerOnScreen();
+            popupStage.showAndWait();
+
+            mainLayout.setEffect(null);
+            loadData();
         } catch (Exception e) {
+            mainLayout.setEffect(null);
+            e.printStackTrace();
+        }
+    }
+
+    @FXML
+    private void openPersonalTaskModal() {
+        if (tasksListContainer == null || tasksListContainer.getScene() == null) {
+            return;
+        }
+        Node mainLayout = tasksListContainer.getScene().getRoot();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/AddTaskModal.fxml"));
+            Parent root = loader.load();
+
+            AddTaskController controller = loader.getController();
+            controller.setAssignedUserId(CURRENT_USER_ID);
+            controller.setSubtitleText("Create a personal task assigned to you");
+
+            Stage popupStage = new Stage();
+            popupStage.initStyle(StageStyle.TRANSPARENT);
+
+            BoxBlur blur = new BoxBlur(8, 8, 3);
+            ColorAdjust dim = new ColorAdjust();
+            dim.setBrightness(-0.3);
+            dim.setInput(blur);
+            mainLayout.setEffect(dim);
+
+            popupStage.initModality(Modality.APPLICATION_MODAL);
+            popupStage.initOwner(tasksListContainer.getScene().getWindow());
+
+            Scene scene = new Scene(root);
+            scene.setFill(Color.TRANSPARENT);
+            popupStage.setScene(scene);
+            popupStage.centerOnScreen();
+            popupStage.showAndWait();
+
+            mainLayout.setEffect(null);
+            loadData();
+        } catch (Exception e) {
+            mainLayout.setEffect(null);
             e.printStackTrace();
         }
     }
@@ -176,13 +145,91 @@ public class HelloController {
         projectsFromDB.sort(Comparator.comparingInt(Project::getId).reversed());
         int visibleCount = Math.min(projectsFromDB.size(), RECENT_PROJECTS_LIMIT);
         List<Project> recentProjects = projectsFromDB.subList(0, visibleCount);
-        ObservableList<Project> observableList = FXCollections.observableArrayList(recentProjects);
-        projectsTable.setItems(observableList);
-        projectsTable.setPrefHeight(PROJECT_HEADER_HEIGHT + (visibleCount * PROJECT_ROW_HEIGHT));
-        projectsTable.setMinHeight(USE_PREF_SIZE);
-        projectsTable.setMaxHeight(USE_PREF_SIZE);
+        renderRecentProjects(recentProjects);
         loadCurrentUserTasks();
         loadKpis();
+    }
+
+    private void renderRecentProjects(List<Project> projects) {
+        if (recentProjectsContainer == null) {
+            return;
+        }
+        recentProjectsContainer.getChildren().clear();
+        if (projects == null || projects.isEmpty()) {
+            Label emptyLabel = new Label("No recent projects with tasks.");
+            emptyLabel.getStyleClass().add("task-time");
+            recentProjectsContainer.getChildren().add(emptyLabel);
+            return;
+        }
+
+        for (Project project : projects) {
+            recentProjectsContainer.getChildren().add(buildRecentProjectCard(project));
+        }
+    }
+
+    private VBox buildRecentProjectCard(Project project) {
+        VBox card = new VBox(10);
+        card.getStyleClass().add("recent-project-item");
+
+        HBox header = new HBox(8);
+        header.setAlignment(Pos.CENTER_LEFT);
+
+        Label name = new Label(project.getName());
+        name.getStyleClass().add("recent-project-name");
+        name.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(name, Priority.ALWAYS);
+
+        Label percent = new Label(project.getProgress() + "%");
+        percent.getStyleClass().add("recent-project-percent");
+
+        header.getChildren().addAll(name, percent);
+
+        ProgressBar bar = new ProgressBar(project.getProgress() / 100.0);
+        bar.getStyleClass().add("projects-progress-bar");
+        bar.setPrefHeight(8);
+        bar.setMaxWidth(Double.MAX_VALUE);
+
+        HBox metaRow = new HBox(10);
+        metaRow.setAlignment(Pos.CENTER_LEFT);
+
+        Label startDate = new Label("Start " + formatDate(project.getStartDate()));
+        startDate.getStyleClass().add("recent-project-meta");
+
+        Label endDate = new Label("End " + formatDate(project.getEndDate()));
+        endDate.getStyleClass().add("recent-project-meta");
+
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+
+        HBox avatars = new HBox(-6);
+        avatars.setAlignment(Pos.CENTER_LEFT);
+
+        List<User> users = assigneesByProject.getOrDefault(project.getId(), List.of());
+        if (users.isEmpty()) {
+            users = new ArrayList<>();
+            users.add(new User(0, "Unassigned", ""));
+        }
+
+        int visible = Math.min(users.size(), MAX_VISIBLE_ASSIGNEE_AVATARS);
+        for (int i = 0; i < visible; i++) {
+            StackPane avatar = buildInitialAvatar(users.get(i).getFullName());
+            if (i > 0) {
+                HBox.setMargin(avatar, new Insets(0, 0, 0, -6));
+            }
+            avatars.getChildren().add(avatar);
+        }
+        if (users.size() > MAX_VISIBLE_ASSIGNEE_AVATARS) {
+            StackPane countAvatar = buildCountAvatar("+" + (users.size() - MAX_VISIBLE_ASSIGNEE_AVATARS));
+            HBox.setMargin(countAvatar, new Insets(0, 0, 0, -6));
+            avatars.getChildren().add(countAvatar);
+        }
+        String names = users.stream().map(User::getFullName).reduce((a, b) -> a + ", " + b).orElse("Unassigned");
+        Tooltip.install(avatars, new Tooltip(names));
+
+        metaRow.getChildren().addAll(startDate, endDate, spacer, avatars);
+
+        card.getChildren().addAll(header, bar, metaRow);
+        return card;
     }
 
     private void loadKpis() {
@@ -216,8 +263,8 @@ public class HelloController {
         row.setAlignment(Pos.CENTER_LEFT);
         row.getStyleClass().add("task-row-item");
 
-        String normalizedStatus = normalizeStatus(task.getStatus());
-        boolean done = "DONE".equals(normalizedStatus);
+        String normalizedStatus = TaskValueMapper.normalizeStatus(task.getStatus());
+        boolean done = TaskValueMapper.STATUS_DONE.equals(normalizedStatus);
 
         CheckBox statusCheck = new CheckBox("");
         statusCheck.getStyleClass().add("task-check");
@@ -228,11 +275,20 @@ public class HelloController {
         titleLabel.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(titleLabel, Priority.ALWAYS);
 
-        Label assignedTo = new Label(task.getAssignedToName());
-        assignedTo.getStyleClass().add("task-assignee-pill");
+        FontIcon inProgressIcon = new FontIcon("mdi2c-clock-outline");
+        inProgressIcon.setIconSize(18);
+        inProgressIcon.getStyleClass().add("gray-icon");
+        updateInProgressIconStyle(inProgressIcon, normalizedStatus);
+
+        Label priority = new Label(TaskValueMapper.normalizePriority(task.getPriority()));
+        priority.getStyleClass().add(TaskValueMapper.priorityPillStyleClass(task.getPriority()));
+
+        Label status = new Label(TaskValueMapper.toStatusLabel(normalizedStatus));
+        status.getStyleClass().add("task-status-pill");
+        status.getStyleClass().add(TaskValueMapper.statusPillStyleClass(normalizedStatus));
 
         statusCheck.setOnAction(e -> {
-            String newStatus = statusCheck.isSelected() ? "DONE" : "TODO";
+            String newStatus = statusCheck.isSelected() ? TaskValueMapper.STATUS_DONE : TaskValueMapper.STATUS_TODO;
             boolean updated = projectDAO.updateTaskStatus(task.getId(), newStatus);
             if (!updated) {
                 statusCheck.setSelected(!statusCheck.isSelected());
@@ -241,25 +297,43 @@ public class HelloController {
             loadData();
         });
 
-        row.getChildren().addAll(statusCheck, titleLabel, assignedTo);
+        inProgressIcon.setOnMouseClicked(e -> {
+            if (TaskValueMapper.STATUS_IN_PROGRESS.equals(TaskValueMapper.normalizeStatus(task.getStatus()))) {
+                return;
+            }
+            boolean updated = projectDAO.updateTaskStatus(task.getId(), TaskValueMapper.STATUS_IN_PROGRESS);
+            if (updated) {
+                loadData();
+            }
+        });
+
+        row.getChildren().addAll(statusCheck, inProgressIcon, titleLabel, priority, status);
         return row;
     }
 
-    private String normalizeStatus(String status) {
-        if (status == null) return "TODO";
-        String normalized = status.trim().toUpperCase().replace(' ', '_').replace('-', '_');
-        if ("TO_DO".equals(normalized) || "À_FAIRE".equals(normalized)) return "TODO";
-        if ("EN_COURS".equals(normalized)) return "IN_PROGRESS";
-        if ("TERMINE".equals(normalized) || "TERMINÉ".equals(normalized)) return "DONE";
-        return normalized;
+    private void updateInProgressIconStyle(FontIcon inProgressIcon, String normalizedStatus) {
+        inProgressIcon.getStyleClass().removeAll("gray-icon", "orange-icon");
+        if (TaskValueMapper.STATUS_IN_PROGRESS.equals(normalizedStatus)) {
+            inProgressIcon.getStyleClass().add("orange-icon");
+        } else {
+            inProgressIcon.getStyleClass().add("gray-icon");
+        }
     }
 
     private StackPane buildInitialAvatar(String fullName) {
-        String safeName = (fullName == null || fullName.isBlank()) ? "U" : fullName.trim();
+        String safeName = (fullName == null || fullName.isBlank()) ? "U" : fullName;
         String initial = String.valueOf(Character.toUpperCase(safeName.charAt(0)));
         String colorClass = pickAvatarColorClass(safeName);
 
-        Label initialLabel = new Label(initial);
+        return buildAvatar(initial, colorClass);
+    }
+
+    private StackPane buildCountAvatar(String text) {
+        return buildAvatar(text, "dark");
+    }
+
+    private StackPane buildAvatar(String text, String colorClass) {
+        Label initialLabel = new Label(text);
         initialLabel.getStyleClass().add("avatar-initial");
 
         StackPane circle = new StackPane(initialLabel);

@@ -26,8 +26,15 @@
     -fx-text-fill: #374151;
 }
 .btn-secondary:hover {
-    -fx-background-color: #F9FAFB;
+    -fx-background-color: -mauve;
     -fx-border-color: -mauve;
+    -fx-text-fill: white;
+}
+.btn-secondary:hover .text {
+    -fx-fill: white;
+}
+.btn-secondary:hover .ikonli-font-icon {
+    -fx-icon-color: white;
 }
 
 /* DANGER: High emphasis destructive action */

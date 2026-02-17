@@ -8,9 +8,9 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
-import tezfx.model.Task;
-import tezfx.model.User;
-import tezfx.model.sql;
+import tezfx.model.Entities.Task;
+import tezfx.model.Entities.User;
+import tezfx.model.services.sql;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -34,8 +34,16 @@ public class UpdateTaskModalController {
 
     @FXML
     public void initialize() {
-        statusCombo.getItems().setAll("To Do", "In Progress", "Done");
-        priorityCombo.getItems().setAll("LOW", "MEDIUM", "HIGH");
+        statusCombo.getItems().setAll(
+                TaskValueMapper.toStatusLabel(TaskValueMapper.STATUS_TODO),
+                TaskValueMapper.toStatusLabel(TaskValueMapper.STATUS_IN_PROGRESS),
+                TaskValueMapper.toStatusLabel(TaskValueMapper.STATUS_DONE)
+        );
+        priorityCombo.getItems().setAll(
+                TaskValueMapper.PRIORITY_LOW,
+                TaskValueMapper.PRIORITY_MEDIUM,
+                TaskValueMapper.PRIORITY_HIGH
+        );
 
         sql dao = new sql();
         List<User> users = dao.getAllUsers();
@@ -63,8 +71,8 @@ public class UpdateTaskModalController {
         if (task.getDueDate() != null && !task.getDueDate().isBlank()) {
             dueDatePicker.setValue(LocalDate.parse(task.getDueDate()));
         }
-        statusCombo.setValue(formatStatusLabelEn(normalizeStatus(task.getStatus())));
-        priorityCombo.setValue(task.getPriority() == null ? "LOW" : task.getPriority().trim().toUpperCase());
+        statusCombo.setValue(TaskValueMapper.toStatusLabel(task.getStatus()));
+        priorityCombo.setValue(TaskValueMapper.normalizePriority(task.getPriority()));
 
         for (User user : userCombo.getItems()) {
             if (user.getId() == task.getAssignedTo()) {
@@ -89,8 +97,8 @@ public class UpdateTaskModalController {
         Task updated = new Task(
                 title,
                 desc,
-                normalizeStatus(statusCombo.getValue()),
-                priorityCombo.getValue().trim().toUpperCase(),
+                TaskValueMapper.normalizeStatus(statusCombo.getValue()),
+                TaskValueMapper.normalizePriority(priorityCombo.getValue()),
                 currentTask.getStartDate(),
                 dueDatePicker.getValue().toString(),
                 currentTask.getProjectId(),
@@ -115,22 +123,6 @@ public class UpdateTaskModalController {
         stage.close();
     }
 
-    private String normalizeStatus(String status) {
-        if (status == null) return "TODO";
-        if ("À FAIRE".equalsIgnoreCase(status)) return "TODO";
-        if ("EN COURS".equalsIgnoreCase(status)) return "IN_PROGRESS";
-        if ("TERMINE".equalsIgnoreCase(status) || "TERMINÉ".equalsIgnoreCase(status)) return "DONE";
-        String normalized = status.trim().toUpperCase().replace(' ', '_').replace('-', '_');
-        if ("TO_DO".equals(normalized)) return "TODO";
-        return normalized;
-    }
-
-    private String formatStatusLabelEn(String normalizedStatus) {
-        if ("DONE".equals(normalizedStatus)) return "Done";
-        if ("IN_PROGRESS".equals(normalizedStatus)) return "In Progress";
-        return "To Do";
-    }
-
     private boolean validateInputs(String title, String desc, User selectedUser) {
         clearErrors();
         boolean valid = true;
@@ -138,11 +130,19 @@ public class UpdateTaskModalController {
         if (title.isBlank()) {
             setError(titleErrorLabel, "Task name is required.");
             valid = false;
+        } else if (!InputValidationUtils.hasMeaningfulText(title)) {
+            setError(titleErrorLabel, "Task name must include letters or numbers.");
+            valid = false;
         } else if (title.length() < 3) {
             setError(titleErrorLabel, "Minimum 3 characters.");
             valid = false;
         } else if (title.length() > 120) {
             setError(titleErrorLabel, "Maximum 120 characters.");
+            valid = false;
+        }
+
+        if (!desc.isBlank() && !InputValidationUtils.hasMeaningfulText(desc)) {
+            setError(descErrorLabel, "Description must include letters or numbers.");
             valid = false;
         }
 

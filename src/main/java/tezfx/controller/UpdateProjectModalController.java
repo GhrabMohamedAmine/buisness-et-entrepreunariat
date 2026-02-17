@@ -9,9 +9,9 @@ import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import javafx.collections.ListChangeListener;
 import org.controlsfx.control.CheckComboBox;
-import tezfx.model.Project;
-import tezfx.model.User;
-import tezfx.model.sql;
+import tezfx.model.Entities.Project;
+import tezfx.model.Entities.User;
+import tezfx.model.services.sql;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -149,11 +149,19 @@ public class UpdateProjectModalController {
         if (name.isBlank()) {
             setError(nameErrorLabel, "Project name is required.");
             valid = false;
+        } else if (!InputValidationUtils.hasMeaningfulText(name)) {
+            setError(nameErrorLabel, "Project name must include letters or numbers.");
+            valid = false;
         } else if (name.length() < 3) {
             setError(nameErrorLabel, "Minimum 3 characters.");
             valid = false;
         } else if (name.length() > 100) {
             setError(nameErrorLabel, "Maximum 100 characters.");
+            valid = false;
+        }
+
+        if (!desc.isBlank() && !InputValidationUtils.hasMeaningfulText(desc)) {
+            setError(descErrorLabel, "Description must include letters or numbers.");
             valid = false;
         }
 

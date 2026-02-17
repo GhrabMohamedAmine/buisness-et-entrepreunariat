@@ -135,28 +135,26 @@
 
 /* ================= KPI CARDS ================= */
 
-.kpi-card {
+
+.kpi-card,
+.kpi-card-urgent {
     -fx-background-color: white;
     -fx-background-radius: 16;
     -fx-border-radius: 16;
-    -fx-border-color: #e5e7eb;
-    -fx-padding: 18;
-    -fx-spacing: 8;
+    -fx-padding: 16 18 12 18;
+    -fx-spacing: 6;
+    -fx-min-width: 220;
     -fx-pref-width: 220;
+    -fx-max-width: 220;
+    -fx-min-height: -1;
+    -fx-pref-height: -1;
+    -fx-max-height: -1;
     -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0.15, 0, 4);
     -fx-icon-color: blue;
+    -fx-alignment: CENTER_LEFT;
 }
-.kpi-card-urgent{
-    -fx-background-color: white;
-    -fx-background-radius: 16;
-    -fx-border-radius: 16;
-    -fx-border-color:#FF0000;
-    -fx-padding: 18;
-    -fx-spacing: 8;
-    -fx-pref-width: 220;
-    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0.15, 0, 4);
-    -fx-icon-color: blue;
-}
+.kpi-card { -fx-border-color: #e5e7eb; }
+.kpi-card-urgent { -fx-border-color:#FF0000; }
 
 /* KPI icon badge */
 
@@ -269,7 +267,7 @@
 }
 
 .custom-progress-bar .bar {
-    -fx-background-color: #7c4dff; /* The Nexum Purple */
+    -fx-background-color: #7C3AED;
     -fx-background-radius: 10px;
 }
 
@@ -540,6 +538,28 @@
     -fx-text-fill: #475569;
 }
 
+.task-status-pill {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-padding: 4 12;
+    -fx-background-radius: 20;
+}
+
+.task-status-todo {
+    -fx-background-color: #f3f4f6;
+    -fx-text-fill: #4b5563;
+}
+
+.task-status-progress {
+    -fx-background-color: #ffedd5;
+    -fx-text-fill: #c2410c;
+}
+
+.task-status-done {
+    -fx-background-color: #dcfce7;
+    -fx-text-fill: #166534;
+}
+
 .task-check {
     -fx-padding: 0 4 0 0;
 }
@@ -723,7 +743,7 @@
 
 .projects-progress-bar {
     -fx-pref-height: 7;
-    -fx-accent: #4f46e5;
+    -fx-accent: #7C3AED;
 }
 
 .projects-progress-bar .track {
@@ -732,7 +752,7 @@
 }
 
 .projects-progress-bar .bar {
-    -fx-background-color: linear-gradient(to right, #6366f1, #7c3aed);
+    -fx-background-color: #7C3AED;
     -fx-background-radius: 999;
 }
 
@@ -749,4 +769,53 @@
     -fx-pref-height: 0;
     -fx-max-height: 0;
     -fx-opacity: 0;
+}
+
+.recent-projects-list {
+    -fx-padding: 2 2 4 2;
+}
+
+.recent-project-item {
+    -fx-background-color: #ffffff;
+    -fx-border-color: #e7edf6;
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+    -fx-padding: 12 14;
+    -fx-spacing: 10;
+}
+
+.recent-project-item:hover {
+    -fx-background-color: #f8fbff;
+    -fx-border-color: #dbe7ff;
+}
+
+.recent-project-name {
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #0f172a;
+}
+
+.recent-project-percent {
+    -fx-font-size: 12px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #475569;
+}
+
+.recent-project-meta {
+    -fx-font-size: 11px;
+    -fx-text-fill: #64748b;
+}
+
+.tasks-filter-badge {
+    -fx-background-color: #7C3AED;
+    -fx-text-fill: white;
+    -fx-font-size: 10px;
+    -fx-font-weight: 800;
+    -fx-alignment: CENTER;
+    -fx-min-width: 16;
+    -fx-min-height: 16;
+    -fx-padding: 0 4;
+    -fx-background-radius: 999;
+    -fx-translate-x: 8;
+    -fx-translate-y: -8;
 }

@@ -17,7 +17,7 @@
 
     <Label fx:id="descriptionLabel" styleClass="project-card-description" text="Description goes here..." wrapText="true" />
 
-    <ProgressBar fx:id="progressBar" maxWidth="Infinity" progress="0.75" />
+    <ProgressBar fx:id="progressBar" maxWidth="Infinity" progress="0.75" styleClass="project-progress-bar" />
 
     <HBox alignment="CENTER_LEFT" spacing="-6">
         <children>

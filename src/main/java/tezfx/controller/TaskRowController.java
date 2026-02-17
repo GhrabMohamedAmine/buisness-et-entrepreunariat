@@ -6,7 +6,7 @@ import javafx.scene.control.Label;
 import javafx.event.ActionEvent;
 import javafx.scene.input.MouseEvent;
 import org.kordamp.ikonli.javafx.FontIcon;
-import tezfx.model.Task;
+import tezfx.model.Entities.Task;
 
 import java.util.function.Function;
 
@@ -19,7 +19,7 @@ public class TaskRowController {
     private Runnable onDelete;
     private Function<Boolean, Boolean> onStatusToggle;
     private Function<String, Boolean> onStatusChange;
-    private String currentStatus = "TODO";
+    private String currentStatus = TaskValueMapper.STATUS_TODO;
 
     public void setTaskData(Task task) {
         if (task == null) return;
@@ -30,66 +30,41 @@ public class TaskRowController {
 
         // SET THE ASSIGNED USER NAME
         // Assuming your Task model has getAssignedTo() or getAssignedUser()
-        String user = task.getAssignedToName();
         if (assignedUser != null) {
-            assignedUser.setText(task.getAssignedToName());
+            String assigneeName = task.getAssignedToName();
+            assignedUser.setText(
+                    assigneeName == null || assigneeName.isBlank() ? "Unassigned" : assigneeName
+            );
         }
 
-        String normalizedStatus = normalizeStatus(task.getStatus());
+        String normalizedStatus = TaskValueMapper.normalizeStatus(task.getStatus());
         currentStatus = normalizedStatus;
         if (doneCheck != null) {
-            doneCheck.setSelected("DONE".equals(normalizedStatus));
+            doneCheck.setSelected(TaskValueMapper.STATUS_DONE.equals(normalizedStatus));
         }
         updateStatusStyle(normalizedStatus);
         updatePriorityStyle(task.getPriority());
     }
 
     private void updateStatusStyle(String status) {
-        String normalized = normalizeStatus(status);
-        statusLabel.setText(formatStatusLabel(normalized));
+        String normalized = TaskValueMapper.normalizeStatus(status);
+        statusLabel.setText(TaskValueMapper.toStatusLabel(normalized));
         statusLabel.getStyleClass().removeAll("badge-todo", "badge-progress", "badge-done");
-
-        if ("DONE".equals(normalized)) {
-            statusLabel.getStyleClass().add("badge-done");
-        } else if ("IN_PROGRESS".equals(normalized)) {
-            statusLabel.getStyleClass().add("badge-progress");
-        } else {
-            statusLabel.getStyleClass().add("badge-todo");
-        }
+        statusLabel.getStyleClass().add(TaskValueMapper.statusBadgeStyleClass(normalized));
         updateInProgressIconStyle(normalized);
     }
 
     private void updatePriorityStyle(String priority) {
-        String normalized = priority == null ? "" : priority.trim().toUpperCase();
+        String normalized = TaskValueMapper.normalizePriority(priority);
         priorityLabel.setText(normalized);
         priorityLabel.getStyleClass().removeAll("badge-priority-low", "badge-priority-medium", "badge-priority-high");
-
-        if ("HIGH".equals(normalized)) {
-            priorityLabel.getStyleClass().add("badge-priority-high");
-        } else if ("MEDIUM".equals(normalized)) {
-            priorityLabel.getStyleClass().add("badge-priority-medium");
-        } else {
-            priorityLabel.getStyleClass().add("badge-priority-low");
-        }
-    }
-
-    private String normalizeStatus(String status) {
-        if (status == null) return "TODO";
-        String normalized = status.trim().toUpperCase().replace(' ', '_').replace('-', '_');
-        if ("TO_DO".equals(normalized)) return "TODO";
-        return normalized;
-    }
-
-    private String formatStatusLabel(String normalizedStatus) {
-        if ("DONE".equals(normalizedStatus)) return "Done";
-        if ("IN_PROGRESS".equals(normalizedStatus)) return "In Progress";
-        return "To Do";
+        priorityLabel.getStyleClass().add(TaskValueMapper.priorityBadgeStyleClass(normalized));
     }
 
     private void updateInProgressIconStyle(String normalizedStatus) {
         if (inProgressIcon == null) return;
         inProgressIcon.getStyleClass().removeAll("gray-icon", "orange-icon");
-        if ("IN_PROGRESS".equals(normalizedStatus)) {
+        if (TaskValueMapper.STATUS_IN_PROGRESS.equals(normalizedStatus)) {
             inProgressIcon.getStyleClass().add("orange-icon");
         } else {
             inProgressIcon.getStyleClass().add("gray-icon");
@@ -116,7 +91,7 @@ public class TaskRowController {
     private void onDoneToggle(ActionEvent event) {
         if (doneCheck == null) return;
         boolean selected = doneCheck.isSelected();
-        String nextStatus = selected ? "DONE" : "TODO";
+        String nextStatus = selected ? TaskValueMapper.STATUS_DONE : TaskValueMapper.STATUS_TODO;
 
         if (onStatusToggle != null) {
             boolean updated = Boolean.TRUE.equals(onStatusToggle.apply(selected));
@@ -138,21 +113,21 @@ public class TaskRowController {
 
     @FXML
     private void onInProgressClick(MouseEvent event) {
-        String normalized = normalizeStatus(currentStatus);
-        if ("IN_PROGRESS".equals(normalized)) {
+        String normalized = TaskValueMapper.normalizeStatus(currentStatus);
+        if (TaskValueMapper.STATUS_IN_PROGRESS.equals(normalized)) {
             return;
         }
 
-        boolean updated = onStatusChange != null && Boolean.TRUE.equals(onStatusChange.apply("IN_PROGRESS"));
+        boolean updated = onStatusChange != null && Boolean.TRUE.equals(onStatusChange.apply(TaskValueMapper.STATUS_IN_PROGRESS));
         if (!updated) {
             return;
         }
 
-        currentStatus = "IN_PROGRESS";
+        currentStatus = TaskValueMapper.STATUS_IN_PROGRESS;
         if (doneCheck != null) {
             doneCheck.setSelected(false);
         }
-        updateStatusStyle("IN_PROGRESS");
+        updateStatusStyle(TaskValueMapper.STATUS_IN_PROGRESS);
     }
 
     @FXML

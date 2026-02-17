@@ -11,7 +11,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import org.controlsfx.control.CheckComboBox?>
 
-<VBox prefHeight="520.0" prefWidth="620.0" spacing="18.0" styleClass="modal-card" stylesheets="@../../css/stylesheet.css, @../../css/buttons.css, @../../css/project-css.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tezfx.controller.UpdateProjectModalController">
+<VBox prefHeight="520.0" prefWidth="620.0" spacing="18.0" styleClass="modal-card" stylesheets="@../../css/stylesheet.css, @../../css/buttons.css, @../../css/project-css.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tezfx.controller.UpdateProjectModalController">
     <padding>
         <Insets bottom="28.0" left="28.0" right="28.0" top="28.0" />
     </padding>

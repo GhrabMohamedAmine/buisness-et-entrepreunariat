@@ -7,7 +7,7 @@
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.image.Image?>
 
-<VBox spacing="6" fx:controller="tezfx.controller.SidebarController" xmlns="http://javafx.com/javafx/21"
+<VBox spacing="6" fx:controller="tezfx.controller.SidebarController" xmlns="http://javafx.com/javafx/17.0.12"
       xmlns:fx="http://javafx.com/fxml/1"
       prefWidth="260"
       styleClass="sidebar-root">

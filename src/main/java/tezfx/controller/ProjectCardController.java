@@ -5,12 +5,12 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.ProgressBar;
 import javafx.fxml.FXML;
-import tezfx.model.Project;
+import tezfx.model.Entities.Project;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import tezfx.model.User;
+import tezfx.model.Entities.User;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -40,7 +40,6 @@ public class ProjectCardController {
         this.currentProject = project;
 
         // Use System.out to verify the data is reaching the card
-        System.out.println("Filling card for: " + project.getName());
         nameLabel.setText(project.getName());
         String fullDescription = project.getDescription();
         descriptionLabel.setText(truncateDescription(fullDescription));
@@ -101,7 +100,7 @@ public class ProjectCardController {
     }
 
     private StackPane buildInitialAvatar(String fullName, String colorClass) {
-        String safe = (fullName == null || fullName.isBlank()) ? "U" : fullName.trim();
+        String safe = (fullName == null || fullName.isBlank()) ? "U" : fullName;
         String initial = String.valueOf(Character.toUpperCase(safe.charAt(0)));
         return buildAvatar(initial, colorClass);
     }
@@ -134,7 +133,7 @@ public class ProjectCardController {
 
             // Get the detail controller and send the current project
             ProjectDetailsController controller = loader.getController();
-            controller.setProjectData(this.currentProject); // Pass the project object
+            controller.ProjectDataLoad(this.currentProject); // Pass the project object
 
             // Switch the main content area to this new root
             MainController.setContent(root);

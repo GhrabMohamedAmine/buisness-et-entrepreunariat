@@ -6,8 +6,7 @@
 <?import org.controlsfx.control.CheckComboBox?>
 
 <StackPane xmlns:fx="http://javafx.com/fxml" fx:controller="tezfx.controller.AddProjectController"
-           prefWidth="1000" prefHeight="800"
-           style="-fx-background-color: rgba(0, 0, 0, 0.5);">
+           style="-fx-background-color: transparent;">
 
     <VBox maxWidth="550" maxHeight="780" spacing="20"
           style="-fx-background-color: white; -fx-background-radius: 20; -fx-padding: 30; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.2), 15, 0, 0, 5);">

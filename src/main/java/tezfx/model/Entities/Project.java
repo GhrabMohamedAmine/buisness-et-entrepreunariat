@@ -1,10 +1,8 @@
-package tezfx.model;
+package tezfx.model.Entities;
 
 
 import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
-
-import java.sql.Date;
 
 public class Project {
     // Fields matching your phpMyAdmin columns

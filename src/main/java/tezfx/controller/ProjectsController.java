@@ -2,13 +2,21 @@ package tezfx.controller;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
+import javafx.scene.effect.BoxBlur;
+import javafx.scene.effect.ColorAdjust;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
-import tezfx.model.Project;
-import tezfx.model.User;
-import tezfx.model.sql;
+import javafx.scene.paint.Color;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
+import javafx.stage.StageStyle;
+import tezfx.model.Entities.Project;
+import tezfx.model.Entities.User;
+import tezfx.model.services.sql;
 
 import java.io.IOException;
 import java.util.List;
@@ -79,14 +87,39 @@ public class ProjectsController {
 
     @FXML
     private void openAddProjectPopup() {
+        if (projectsGrid == null || projectsGrid.getScene() == null) {
+            return;
+        }
+        Node mainLayout = projectsGrid.getScene().getRoot();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/add-project.fxml"));
-            Parent popup = loader.load();
+            Parent root = loader.load();
 
             AddProjectController popupController = loader.getController();
             popupController.setOnProjectCreated(this::loadData);
-            MainController.getStaticContentArea().getChildren().add(popup);
+
+            Stage popupStage = new Stage();
+            popupStage.initStyle(StageStyle.TRANSPARENT);
+
+            BoxBlur blur = new BoxBlur(8, 8, 3);
+            ColorAdjust dim = new ColorAdjust();
+            dim.setBrightness(-0.3);
+            dim.setInput(blur);
+            mainLayout.setEffect(dim);
+
+            popupStage.initModality(Modality.APPLICATION_MODAL);
+            popupStage.initOwner(projectsGrid.getScene().getWindow());
+
+            Scene scene = new Scene(root);
+            scene.setFill(Color.TRANSPARENT);
+            popupStage.setScene(scene);
+            popupStage.centerOnScreen();
+            popupStage.showAndWait();
+
+            mainLayout.setEffect(null);
+            loadData();
         } catch (Exception e) {
+            mainLayout.setEffect(null);
             e.printStackTrace();
         }
     }

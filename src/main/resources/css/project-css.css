@@ -98,7 +98,7 @@
 
 /* Typography */
 .header-title {
-    -fx-font-size: 28px;
+    -fx-font-size: 22px;
     -fx-font-weight: bold;
     -fx-text-fill: #1a202c;
 }
@@ -110,7 +110,7 @@
 
 /* Progress Bar */
 .nexum-progress .bar {
-    -fx-background-color: #7c4dff; /* Purple */
+    -fx-background-color: #7C3AED;
     -fx-background-radius: 10;
 }
 .nexum-progress .track {
@@ -124,6 +124,8 @@
     -fx-text-fill: #7c4dff;
     -fx-border-color: transparent transparent #7c4dff transparent;
     -fx-border-width: 2;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
     -fx-font-weight: bold;
     -fx-padding: 0 0 10 0;
 }
@@ -131,6 +133,8 @@
 .tab-inactive {
     -fx-background-color: transparent;
     -fx-text-fill: #718096;
+    -fx-background-radius: 0;
+    -fx-border-radius: 0;
     -fx-padding: 0 0 10 0;
 }
 
@@ -233,7 +237,7 @@ w-card {
 /* The main modal container */
 .modal-card {
     -fx-background-color: white;
-    -fx-background-radius: 25px; /* Matches your project modal */
+    -fx-background-border-radius: 25px; /* Matches your project modal */
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 20, 0, 0, 10);
 }
 
@@ -311,4 +315,79 @@ w-card {
     -fx-font-size: 16px;
     -fx-font-weight: bold;
     -fx-text-fill: #111827;
+}
+
+/* Recent Activity Cards */
+.activity-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 12;
+    -fx-border-color: #e5eaf2;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-padding: 11 12;
+    -fx-effect: dropshadow(three-pass-box, rgba(15, 23, 42, 0.06), 10, 0.1, 0, 3);
+}
+
+.activity-icon-wrap {
+    -fx-background-color: #eef2ff;
+    -fx-background-radius: 999;
+    -fx-min-width: 24;
+    -fx-min-height: 24;
+    -fx-max-width: 24;
+    -fx-max-height: 24;
+    -fx-alignment: center;
+}
+
+.activity-icon {
+    -fx-icon-color: #6366f1;
+}
+
+.activity-icon-created {
+    -fx-icon-color: #7c3aed;
+}
+
+.activity-icon-completed {
+    -fx-icon-color: #16a34a;
+}
+
+.activity-icon-updated {
+    -fx-icon-color: #f59e0b;
+}
+
+.activity-icon-deleted {
+    -fx-icon-color: #dc2626;
+}
+
+.activity-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0f172a;
+}
+
+.activity-message {
+    -fx-font-size: 12px;
+    -fx-text-fill: #334155;
+}
+
+.activity-meta {
+    -fx-font-size: 11px;
+    -fx-text-fill: #94a3b8;
+    -fx-padding: 0;
+}
+
+.activity-date-icon {
+    -fx-icon-color: #94a3b8;
+}
+
+.activity-date-wrap {
+    -fx-alignment: center-left;
+    -fx-min-height: 22;
+}
+
+.activity-date-icon-wrap {
+    -fx-alignment: center;
+    -fx-min-width: 14;
+    -fx-min-height: 14;
+    -fx-max-width: 14;
+    -fx-max-height: 14;
 }

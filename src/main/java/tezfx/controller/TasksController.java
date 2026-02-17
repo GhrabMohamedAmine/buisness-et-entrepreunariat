@@ -6,6 +6,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
@@ -21,25 +22,82 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.kordamp.ikonli.javafx.FontIcon;
-import tezfx.model.Project;
-import tezfx.model.Task;
-import tezfx.model.sql;
+import tezfx.model.Entities.Project;
+import tezfx.model.Entities.Task;
+import tezfx.model.services.sql;
 
 import java.io.IOException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.util.Locale;
 import java.util.List;
 
 public class TasksController {
     @FXML private VBox tasksGroupsContainer;
     @FXML private TextField searchField;
+    @FXML private Button filterButton;
+    @FXML private Label filterBadgeLabel;
 
     private final sql dao = new sql();
+    private static final DateTimeFormatter DUE_DATE_INPUT = DateTimeFormatter.ISO_LOCAL_DATE;
+    private static final DateTimeFormatter DUE_DATE_OUTPUT = DateTimeFormatter.ofPattern("dd MMM", Locale.ENGLISH);
+    private String selectedStatusFilter = TaskValueMapper.FILTER_ALL;
+    private String selectedPriorityFilter = TaskValueMapper.FILTER_ALL;
 
     @FXML
     public void initialize() {
         loadTasks(null);
+        updateFilterBadge();
         if (searchField != null) {
             searchField.textProperty().addListener((obs, oldValue, newValue) -> loadTasks(newValue));
+        }
+    }
+
+    @FXML
+    private void onCreateTask() {
+        openAddTaskModal(null);
+    }
+
+    @FXML
+    private void onOpenFilter() {
+        Node mainLayout = tasksGroupsContainer.getScene().getRoot();
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/TasksFilterModal.fxml"));
+            Parent root = loader.load();
+
+            TasksFilterModalController controller = loader.getController();
+            controller.setInitialFilters(selectedStatusFilter, selectedPriorityFilter);
+
+            Stage popupStage = new Stage();
+            popupStage.initStyle(StageStyle.TRANSPARENT);
+
+            BoxBlur blur = new BoxBlur(8, 8, 3);
+            ColorAdjust dim = new ColorAdjust();
+            dim.setBrightness(-0.3);
+            dim.setInput(blur);
+            mainLayout.setEffect(dim);
+
+            popupStage.initModality(Modality.APPLICATION_MODAL);
+            popupStage.initOwner(tasksGroupsContainer.getScene().getWindow());
+
+            Scene scene = new Scene(root);
+            scene.setFill(Color.TRANSPARENT);
+            popupStage.setScene(scene);
+            popupStage.centerOnScreen();
+            popupStage.showAndWait();
+
+            mainLayout.setEffect(null);
+
+            if (controller.isApplied()) {
+                selectedStatusFilter = controller.getSelectedStatusFilter();
+                selectedPriorityFilter = controller.getSelectedPriorityFilter();
+                updateFilterBadge();
+                loadTasks(currentSearchQuery());
+            }
+        } catch (IOException e) {
+            mainLayout.setEffect(null);
+            e.printStackTrace();
         }
     }
 
@@ -52,6 +110,17 @@ public class TasksController {
 
         for (Project project : projects) {
             List<Task> projectTasks = dao.getTasksByProject(project.getId());
+            if (!isAllFilter(selectedStatusFilter)) {
+                projectTasks = projectTasks.stream()
+                        .filter(task -> matchesStatusFilter(task.getStatus()))
+                        .toList();
+            }
+            if (!isAllFilter(selectedPriorityFilter)) {
+                projectTasks = projectTasks.stream()
+                        .filter(task -> matchesPriorityFilter(task.getPriority()))
+                        .toList();
+            }
+
             if (!normalizedQuery.isEmpty()) {
                 final String projectName = project.getName();
                 projectTasks = projectTasks.stream()
@@ -125,8 +194,13 @@ public class TasksController {
         title.setMaxWidth(Double.MAX_VALUE);
         HBox.setHgrow(title, Priority.ALWAYS);
 
-        Label priority = new Label(normalizePriority(task.getPriority()));
-        priority.getStyleClass().add(getPriorityStyleClass(task.getPriority()));
+        Label priority = new Label(TaskValueMapper.normalizePriority(task.getPriority()));
+        priority.getStyleClass().add(TaskValueMapper.priorityPillStyleClass(task.getPriority()));
+
+        String normalizedStatus = TaskValueMapper.normalizeStatus(task.getStatus());
+        Label status = new Label(TaskValueMapper.toStatusLabel(normalizedStatus));
+        status.getStyleClass().add("task-status-pill");
+        status.getStyleClass().add(TaskValueMapper.statusPillStyleClass(normalizedStatus));
 
         HBox dateBox = new HBox(6);
         dateBox.setAlignment(Pos.CENTER_LEFT);
@@ -136,9 +210,14 @@ public class TasksController {
         calendar.setIconSize(13);
         calendar.getStyleClass().add("task-muted-icon");
 
-        Label dueDate = new Label(task.getDueDate() == null || task.getDueDate().isBlank() ? "-" : task.getDueDate());
+        Label dueDate = new Label(formatDueDate(task.getDueDate()));
         dueDate.getStyleClass().add("task-date-text");
         dateBox.getChildren().addAll(calendar, dueDate);
+
+        FontIcon inProgressIcon = new FontIcon("mdi2c-clock-outline");
+        inProgressIcon.setIconSize(18);
+        inProgressIcon.getStyleClass().add("gray-icon");
+        updateInProgressIconStyle(inProgressIcon, normalizedStatus);
 
         Label assignedTo = new Label(task.getAssignedToName());
         assignedTo.getStyleClass().add("task-assignee-pill");
@@ -154,7 +233,7 @@ public class TasksController {
         deleteIcon.setOnMouseClicked(e -> deleteTask(task));
 
         doneCheck.setOnAction(e -> {
-            String newStatus = doneCheck.isSelected() ? "DONE" : "TODO";
+            String newStatus = doneCheck.isSelected() ? TaskValueMapper.STATUS_DONE : TaskValueMapper.STATUS_TODO;
             boolean updated = dao.updateTaskStatus(task.getId(), newStatus);
             if (!updated) {
                 doneCheck.setSelected(!doneCheck.isSelected());
@@ -163,28 +242,23 @@ public class TasksController {
             loadTasks(currentSearchQuery());
         });
 
-        row.getChildren().addAll(doneCheck, title, priority, dateBox, assignedTo, editIcon, deleteIcon);
+        inProgressIcon.setOnMouseClicked(e -> {
+            String currentStatus = TaskValueMapper.normalizeStatus(task.getStatus());
+            if (TaskValueMapper.STATUS_IN_PROGRESS.equals(currentStatus)) {
+                return;
+            }
+            boolean updated = dao.updateTaskStatus(task.getId(), TaskValueMapper.STATUS_IN_PROGRESS);
+            if (updated) {
+                loadTasks(currentSearchQuery());
+            }
+        });
+
+        row.getChildren().addAll(doneCheck, inProgressIcon, title, priority, status, dateBox, assignedTo, editIcon, deleteIcon);
         return row;
     }
 
     private boolean isDone(String status) {
-        if (status == null) return false;
-        String normalized = status.trim().toUpperCase().replace(' ', '_').replace('-', '_');
-        return "DONE".equals(normalized);
-    }
-
-    private String normalizePriority(String priority) {
-        if (priority == null || priority.isBlank()) {
-            return "LOW";
-        }
-        return priority.trim().toUpperCase();
-    }
-
-    private String getPriorityStyleClass(String priority) {
-        String normalized = normalizePriority(priority);
-        if ("HIGH".equals(normalized)) return "task-priority-high";
-        if ("MEDIUM".equals(normalized)) return "task-priority-medium";
-        return "task-priority-low";
+        return TaskValueMapper.STATUS_DONE.equals(TaskValueMapper.normalizeStatus(status));
     }
 
     private String normalizeSearch(String value) {
@@ -204,6 +278,50 @@ public class TasksController {
     private boolean containsIgnoreCase(String source, String normalizedQuery) {
         if (source == null || source.isBlank()) return false;
         return source.toLowerCase(Locale.ROOT).contains(normalizedQuery);
+    }
+
+    private boolean matchesStatusFilter(String status) {
+        return TaskValueMapper.normalizeStatus(status).equals(selectedStatusFilter);
+    }
+
+    private boolean matchesPriorityFilter(String priority) {
+        if (isAllFilter(selectedPriorityFilter)) {
+            return true;
+        }
+        return TaskValueMapper.normalizePriority(priority).equals(selectedPriorityFilter);
+    }
+
+    private void updateInProgressIconStyle(FontIcon inProgressIcon, String normalizedStatus) {
+        inProgressIcon.getStyleClass().removeAll("gray-icon", "orange-icon");
+        if (TaskValueMapper.STATUS_IN_PROGRESS.equals(normalizedStatus)) {
+            inProgressIcon.getStyleClass().add("orange-icon");
+        } else {
+            inProgressIcon.getStyleClass().add("gray-icon");
+        }
+    }
+
+    private String formatDueDate(String dueDate) {
+        if (dueDate == null || dueDate.isBlank()) {
+            return "-";
+        }
+        try {
+            return LocalDate.parse(dueDate, DUE_DATE_INPUT).format(DUE_DATE_OUTPUT);
+        } catch (DateTimeParseException e) {
+            return dueDate;
+        }
+    }
+
+    private boolean isAllFilter(String filterValue) {
+        return filterValue == null || TaskValueMapper.FILTER_ALL.equals(filterValue);
+    }
+
+    private void updateFilterBadge() {
+        if (filterBadgeLabel == null) return;
+        int activeFilters = (isAllFilter(selectedStatusFilter) ? 0 : 1) + (isAllFilter(selectedPriorityFilter) ? 0 : 1);
+        boolean visible = activeFilters > 0;
+        filterBadgeLabel.setText(String.valueOf(activeFilters));
+        filterBadgeLabel.setVisible(visible);
+        filterBadgeLabel.setManaged(visible);
     }
 
     private void openUpdateTaskModal(Task task) {
@@ -246,14 +364,15 @@ public class TasksController {
     }
 
     private void openAddTaskModal(Project project) {
-        if (project == null) return;
         Node mainLayout = tasksGroupsContainer.getScene().getRoot();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/AddTaskModal.fxml"));
             Parent root = loader.load();
 
             AddTaskController controller = loader.getController();
-            controller.setProjectId(project.getId());
+            if (project != null) {
+                controller.setProjectId(project.getId());
+            }
 
             Stage popupStage = new Stage();
             popupStage.initStyle(StageStyle.TRANSPARENT);
@@ -285,11 +404,16 @@ public class TasksController {
         if (task == null) return;
         Node mainLayout = tasksGroupsContainer.getScene().getRoot();
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/DeleteTaskModal.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/DeleteConfirmModal.fxml"));
             Parent root = loader.load();
 
-            DeleteTaskModalController controller = loader.getController();
-            controller.setTaskName(task.getTitle());
+            DeleteConfirmModalController controller = loader.getController();
+            controller.configure(
+                    "Task",
+                    task.getTitle(),
+                    "This task will be removed from your project.",
+                    "Delete Task"
+            );
 
             Stage popupStage = new Stage();
             popupStage.initStyle(StageStyle.TRANSPARENT);

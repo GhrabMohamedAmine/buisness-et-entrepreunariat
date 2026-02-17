@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<StackPane prefHeight="300.0" prefWidth="520.0" stylesheets="@../../css/stylesheet.css, @../../css/buttons.css, @../../css/project-css.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tezfx.controller.DeleteProjectModalController">
+<StackPane alignment="CENTER" prefHeight="300.0" prefWidth="520.0" style="-fx-background-color: transparent;" stylesheets="@../../css/stylesheet.css, @../../css/buttons.css, @../../css/project-css.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tezfx.controller.DeleteConfirmModalController">
     <children>
         <VBox alignment="TOP_LEFT" spacing="18.0" styleClass="delete-modal-card">
             <padding>
@@ -25,8 +25,8 @@
                     </StackPane>
                     <VBox spacing="4.0">
                         <children>
-                            <Label styleClass="delete-modal-title" text="Delete Project?" />
-                            <Label styleClass="delete-modal-subtitle" text="This action cannot be undone." />
+                            <Label fx:id="titleLabel" styleClass="delete-modal-title" text="Delete Item?" />
+                            <Label fx:id="subtitleLabel" styleClass="delete-modal-subtitle" text="This action cannot be undone." />
                         </children>
                     </VBox>
                 </children>
@@ -37,15 +37,15 @@
             <VBox spacing="8.0" styleClass="delete-modal-message-box">
                 <children>
                     <Label styleClass="delete-modal-message" text="You are about to permanently delete:" />
-                    <Label fx:id="projectNameLabel" styleClass="delete-modal-project-name" text="Project Name" wrapText="true" />
-                    <Label styleClass="delete-modal-message" text="All tasks linked to this project will be removed as well." wrapText="true" />
+                    <Label fx:id="itemNameLabel" styleClass="delete-modal-project-name" text="Item Name" wrapText="true" />
+                    <Label fx:id="consequenceLabel" styleClass="delete-modal-message" text="" wrapText="true" />
                 </children>
             </VBox>
 
             <HBox alignment="CENTER_RIGHT" spacing="12.0">
                 <children>
                     <Button minWidth="100.0" onAction="#onCancel" styleClass="btn-secondary" text="Cancel" />
-                    <Button minWidth="145.0" onAction="#onConfirmDelete" styleClass="btn-danger" text="Delete Project" />
+                    <Button fx:id="confirmButton" minWidth="145.0" onAction="#onConfirmDelete" styleClass="btn-danger" text="Delete" />
                 </children>
             </HBox>
         </VBox>
