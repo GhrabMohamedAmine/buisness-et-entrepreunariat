@@ -51,7 +51,7 @@
 
                             <HBox alignment="CENTER_LEFT" spacing="10" styleClass="search-box">
                                 <FontIcon iconLiteral="mdi2m-magnify" styleClass="muted icon"/>
-                                <TextField promptText="Search messages..." styleClass="search-field" HBox.hgrow="ALWAYS"/>
+                                <TextField promptText="" styleClass="search-field" HBox.hgrow="ALWAYS"/>
                                 <VBox.margin>
                                     <Insets top="10" bottom="10"/>
                                 </VBox.margin>
@@ -82,20 +82,21 @@
                         <!-- RIGHT CHAT AREA -->
                         <StackPane fx:id="chatAreaStack" styleClass="chat-area-stack">
 
+                            <!-- EMPTY STATE (shown when no conversation selected) -->
+                            <VBox fx:id="emptyState"
+                                  alignment="CENTER"
+                                  spacing="10"
+                                  styleClass="empty-state">
+
+                                <FontIcon fx:id="emptyStateIcon"
+                                          iconLiteral="mdi2m-message-processing-outline"
+                                          styleClass="empty-state-icon"/>
+
+                                <Label text="Découvrir et collaborer avec vos collègues"
+                                       styleClass="empty-state-text"/>
+                            </VBox>
                             <!-- Chat pane -->
                             <BorderPane minWidth="520" styleClass="chat-pane">
-
-                                <VBox fx:id="emptyState"
-                                      alignment="CENTER"
-                                      spacing="10"
-                                      StackPane.alignment="CENTER"
-                                      visible="true"
-                                      managed="true"
-                                      styleClass="empty-state">
-                                    <FontIcon iconLiteral="mdi2c-chat-outline" styleClass="empty-state-icon"/>
-                                    <Label text="Start connecting" styleClass="empty-state-text"/>
-                                </VBox>
-
                                 <!-- HEADER -->
                                 <top>
                                     <HBox fx:id="chatHeader" alignment="CENTER_LEFT" spacing="12" styleClass="chat-header">
@@ -192,13 +193,13 @@
                                                 styleClass="send-button"
                                                 onAction="#handleSend">
                                             <graphic>
-                                                <FontIcon iconLiteral="mdi2s-send" styleClass="send-icon"/>
+                                                <FontIcon fx:id="sendIcon" iconLiteral="mdi2s-send" styleClass="send-icon"/>
                                             </graphic>
                                         </Button>
                                     </HBox>
                                 </bottom>
-
                             </BorderPane>
+
 
                             <!-- ===== Drawer overlay (Messenger-style) ===== -->
                             <StackPane fx:id="drawerOverlay"
@@ -242,7 +243,7 @@
                                                                     <FontIcon iconLiteral="mdi2b-bell-off-outline" styleClass="icon"/>
                                                                 </graphic>
                                                             </Button>
-                                                            <Label text="Mute" styleClass="action-label"/>
+                                                            <Label text="Muet" styleClass="action-label"/>
                                                         </VBox>
 
                                                         <VBox alignment="CENTER" spacing="6">
@@ -251,7 +252,7 @@
                                                                     <FontIcon iconLiteral="mdi2m-magnify" styleClass="icon"/>
                                                                 </graphic>
                                                             </Button>
-                                                            <Label text="Search" styleClass="action-label"/>
+                                                            <Label text="Rechercher" styleClass="action-label"/>
                                                         </VBox>
                                                     </HBox>
                                                 </VBox>
@@ -261,7 +262,7 @@
                                                 <!-- SECTION: Chat info -->
                                                 <VBox styleClass="section">
                                                     <HBox alignment="CENTER_LEFT" spacing="10" styleClass="section-header" onMouseClicked="#toggleChatInfo">
-                                                        <Label text="Chat info" styleClass="section-title"/>
+                                                        <Label text="Informations de la discussion" styleClass="section-title"/>
                                                         <Region HBox.hgrow="ALWAYS"/>
                                                         <FontIcon fx:id="chevChatInfo" iconLiteral="mdi2c-chevron-down" styleClass="chev"/>
                                                     </HBox>
@@ -271,7 +272,7 @@
                                                         <HBox spacing="10" alignment="CENTER_LEFT" styleClass="drawer-row">
                                                             <FontIcon iconLiteral="mdi2i-identifier" styleClass="icon"/>
                                                             <VBox>
-                                                                <Label text="Conversation ID" styleClass="drawer-row-title"/>
+                                                                <Label text="ID conversation" styleClass="drawer-row-title"/>
                                                                 <Label fx:id="conversationIdLabel" text="" styleClass="muted"/>
                                                             </VBox>
                                                         </HBox>
@@ -279,7 +280,7 @@
                                                         <HBox spacing="10" alignment="CENTER_LEFT" styleClass="drawer-row">
                                                             <FontIcon iconLiteral="mdi2c-calendar-outline" styleClass="icon"/>
                                                             <VBox>
-                                                                <Label text="Created at" styleClass="drawer-row-title"/>
+                                                                <Label text="Créée le" styleClass="drawer-row-title"/>
                                                                 <Label fx:id="createdAtLabel" text="" styleClass="muted"/>
                                                             </VBox>
                                                         </HBox>
@@ -287,7 +288,7 @@
                                                         <HBox spacing="10" alignment="CENTER_LEFT" styleClass="drawer-row">
                                                             <FontIcon iconLiteral="mdi2f-forum-outline" styleClass="icon"/>
                                                             <VBox>
-                                                                <Label text="Conversation type" styleClass="drawer-row-title"/>
+                                                                <Label text="Type conversation" styleClass="drawer-row-title"/>
                                                                 <Label fx:id="conversationTypeLabel" text="" styleClass="muted"/>
                                                             </VBox>
                                                         </HBox>
@@ -295,7 +296,7 @@
                                                         <HBox spacing="10" alignment="CENTER_LEFT" styleClass="drawer-row">
                                                             <FontIcon iconLiteral="mdi2m-message-outline" styleClass="icon"/>
                                                             <VBox>
-                                                                <Label text="Total messages" styleClass="drawer-row-title"/>
+                                                                <Label text="Nombre total de messages" styleClass="drawer-row-title"/>
                                                                 <Label fx:id="totalMessagesLabel" text="" styleClass="muted"/>
                                                             </VBox>
                                                         </HBox>
@@ -304,15 +305,15 @@
                                                 </VBox>
 
                                                 <!-- SECTION: Customize chat -->
-                                                <VBox styleClass="section">
+                                                <VBox fx:id="customizeSection" styleClass="section">
                                                     <HBox alignment="CENTER_LEFT" spacing="10" styleClass="section-header" onMouseClicked="#toggleCustomize">
-                                                        <Label text="Customize chat" styleClass="section-title"/>
+                                                        <Label text="Personnaliser la discussion" styleClass="section-title"/>
                                                         <Region HBox.hgrow="ALWAYS"/>
                                                         <FontIcon fx:id="chevCustomize" iconLiteral="mdi2c-chevron-down" styleClass="chev"/>
                                                     </HBox>
 
                                                     <VBox fx:id="secCustomize" spacing="10" styleClass="section-body" visible="false" managed="false">
-                                                        <Button text="Change chat name"
+                                                        <Button text="Modifier le nom"
                                                                 styleClass="drawer-row-btn"
                                                                 onAction="#onChangeChatName">
                                                             <graphic>
@@ -320,7 +321,7 @@
                                                             </graphic>
                                                         </Button>
 
-                                                        <Button text="Change photo"
+                                                        <Button text="Modifier la photo"
                                                                 styleClass="drawer-row-btn"
                                                                 onAction="#onChangeChatPhoto">
                                                             <graphic>
@@ -328,7 +329,7 @@
                                                             </graphic>
                                                         </Button>
 
-                                                        <Button text="Edit nicknames"
+                                                        <Button text="Modifier les surnoms"
                                                                 styleClass="drawer-row-btn"
                                                                 onAction="#onEditNicknames">
                                                             <graphic>
@@ -341,7 +342,7 @@
                                                 <!-- SECTION: Chat members -->
                                                 <VBox styleClass="section">
                                                     <HBox alignment="CENTER_LEFT" spacing="10" styleClass="section-header" onMouseClicked="#toggleMembers">
-                                                        <Label text="Chat members" styleClass="section-title"/>
+                                                        <Label text="Membres" styleClass="section-title"/>
                                                         <Region HBox.hgrow="ALWAYS"/>
                                                         <FontIcon fx:id="chevMembers" iconLiteral="mdi2c-chevron-down" styleClass="chev"/>
                                                     </HBox>
@@ -349,7 +350,7 @@
                                                     <VBox fx:id="secMembers" spacing="10" styleClass="section-body" visible="false" managed="false">
                                                         <ListView fx:id="membersList" styleClass="members-list"/>
 
-                                                        <Button text="Add people" onAction="#onAddPeople" styleClass="drawer-row-btn">
+                                                        <Button fx:id="addPeopleBtn" text="Ajouter membres" onAction="#onAddPeople" styleClass="drawer-row-btn">
                                                             <graphic>
                                                                 <FontIcon iconLiteral="mdi2a-account-plus-outline" styleClass="icon"/>
                                                             </graphic>
@@ -360,26 +361,26 @@
                                                 <!-- SECTION: Media, files and links -->
                                                 <VBox styleClass="section">
                                                     <HBox alignment="CENTER_LEFT" spacing="10" styleClass="section-header" onMouseClicked="#toggleMedia">
-                                                        <Label text="Media, files and links" styleClass="section-title"/>
+                                                        <Label text="Médias, fichiers et liens" styleClass="section-title"/>
                                                         <Region HBox.hgrow="ALWAYS"/>
                                                         <FontIcon fx:id="chevMedia" iconLiteral="mdi2c-chevron-down" styleClass="chev"/>
                                                     </HBox>
 
                                                     <VBox fx:id="secMedia" spacing="8" styleClass="section-body" visible="false" managed="false">
 
-                                                        <Button text="Media" styleClass="drawer-row-btn">
+                                                        <Button text="Médias" styleClass="drawer-row-btn">
                                                             <graphic>
                                                                 <FontIcon iconLiteral="mdi2i-image-outline" styleClass="icon"/>
                                                             </graphic>
                                                         </Button>
 
-                                                        <Button text="Files" styleClass="drawer-row-btn">
+                                                        <Button text="Fichiers" styleClass="drawer-row-btn">
                                                             <graphic>
                                                                 <FontIcon iconLiteral="mdi2f-file-outline" styleClass="icon"/>
                                                             </graphic>
                                                         </Button>
 
-                                                        <Button text="Links" styleClass="drawer-row-btn">
+                                                        <Button text="Liens" styleClass="drawer-row-btn">
                                                             <graphic>
                                                                 <FontIcon iconLiteral="mdi2l-link-variant" styleClass="icon"/>
                                                             </graphic>
@@ -388,18 +389,20 @@
                                                     </VBox>
                                                 </VBox>
                                                 <!-- DELETE CHAT OPTION -->
-                                                <HBox alignment="CENTER_LEFT"
-                                                      spacing="8"
-                                                      onMouseClicked="#onDeleteConversation"
-                                                      styleClass="danger-row">
+                                                <HBox fx:id="dangerActionRow"
+                                                      alignment="CENTER_LEFT"
+                                                      spacing="10"
+                                                      styleClass="danger-row"
+                                                      onMouseClicked="#onDangerAction">
 
-                                                    <FontIcon iconLiteral="mdi2t-trash-can-outline"
-                                                              iconSize="18"
-                                                              styleClass="danger-icon"/>
+                                                    <FontIcon fx:id="dangerActionIcon"
+                                                              iconLiteral="mdi2t-trash-can-outline"
+                                                              styleClass="danger-icon"
+                                                              iconSize="18"/>
 
-                                                    <Label text="Delete conversation"
+                                                    <Label fx:id="dangerActionLabel"
+                                                           text="Supprimer la discussion"
                                                            styleClass="danger-link"/>
-
                                                 </HBox>
                                             </VBox>
                                         </content>
@@ -437,7 +440,7 @@
 
             <!-- header -->
             <HBox alignment="CENTER_LEFT" spacing="10">
-                <Label text="Change chat name" styleClass="modal-title"/>
+                <Label text="Modifier le nom de la discussion" styleClass="modal-title"/>
                 <Region HBox.hgrow="ALWAYS"/>
                 <Button onAction="#closeChatNameModal" styleClass="icon-button">
                     <graphic>
@@ -446,16 +449,16 @@
                 </Button>
             </HBox>
 
-            <Label text="Changing the name of a group chat changes it for everyone."
+            <Label text="La modification du nom d’un groupe s’applique à tous les membres."
                    wrapText="true" styleClass="modal-subtitle"/>
 
             <TextField fx:id="chatNameField"
-                       promptText="Chat name"
+                       promptText="Nom de la discussion"
                        styleClass="modal-input"/>
 
             <HBox alignment="CENTER_RIGHT" spacing="8">
-                <Button text="Cancel" onAction="#closeChatNameModal" styleClass="pill"/>
-                <Button fx:id="saveChatNameBtn" text="Save" onAction="#saveChatName" disable="true" styleClass="modal-save"/>
+                <Button text="Annuler" onAction="#closeChatNameModal" styleClass="pill"/>
+                <Button fx:id="saveChatNameBtn" text="Enregistrer" onAction="#saveChatName" disable="true" styleClass="modal-save"/>
             </HBox>
 
         </VBox>
@@ -467,7 +470,7 @@
             <!-- Header -->
             <top>
                 <HBox alignment="CENTER_LEFT" spacing="10" styleClass="modal-header">
-                    <Label text="Nicknames" styleClass="modal-title"/>
+                    <Label text="Surnoms" styleClass="modal-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Button onAction="#closeNicknamesModal" styleClass="icon-btn" text="✕"/>
                 </HBox>
@@ -487,7 +490,7 @@
             <!-- Header -->
             <top>
                 <HBox alignment="CENTER_LEFT" spacing="10" styleClass="modal-header">
-                    <Label fx:id="newMsgTitle" text="New Message" styleClass="modal-title"/>
+                    <Label fx:id="newMsgTitle" text="Nouveau message" styleClass="modal-title"/>
                     <Region HBox.hgrow="ALWAYS"/>
                     <Button text="✕" styleClass="icon-button" onAction="#closeNewMessageModal"/>
                 </HBox>
@@ -503,8 +506,8 @@
                             <FontIcon iconLiteral="mdi2a-account"
                                       iconSize="26"
                                       styleClass="choice-icon"/>
-                            <Label text="Private Chat" style="-fx-font-size: 14px; -fx-font-weight: 800;"/>
-                            <Label text="Direct message with a colleague" style="-fx-opacity: 0.75;"/>
+                            <Label text="Discussion privée" style="-fx-font-size: 14px; -fx-font-weight: 800;"/>
+                            <Label text="Message direct avec un collègue" style="-fx-opacity: 0.75;"/>
                         </VBox>
 
                         <VBox fx:id="choiceGroup" spacing="2" style="-fx-padding: 14; -fx-background-radius: 14; -fx-border-radius: 14; -fx-border-color: #e5e7eb; -fx-border-width: 1;"
@@ -512,21 +515,21 @@
                             <FontIcon iconLiteral="mdi2a-account-multiple"
                                       iconSize="26"
                                       styleClass="choice-icon"/>
-                            <Label text="Group Chat" style="-fx-font-size: 14px; -fx-font-weight: 800;"/>
-                            <Label text="Collaborate with multiple team members" style="-fx-opacity: 0.75;"/>
+                            <Label text="Discussion de groupe" style="-fx-font-size: 14px; -fx-font-weight: 800;"/>
+                            <Label text="Collaborer avec plusieurs membres" style="-fx-opacity: 0.75;"/>
                         </VBox>
                     </VBox>
 
                     <!-- STEP 2: pick users (private OR group) -->
                     <VBox fx:id="stepPickUsers" spacing="10" visible="false" managed="false">
-                        <Label text="Select Members" style="-fx-font-size: 12px; -fx-font-weight: 700; -fx-opacity: 0.85;"/>
+                        <Label text="Sélectionner des membres" style="-fx-font-size: 12px; -fx-font-weight: 700; -fx-opacity: 0.85;"/>
 
-                        <TextField fx:id="userSearchField" promptText="Search people..." />
+                        <TextField fx:id="userSearchField" promptText="Rechercher des personnes..." />
 
                         <!-- Group name only shown in GROUP mode -->
                         <HBox fx:id="groupNameRow" spacing="10" visible="false" managed="false">
-                            <Label text="Group Name" style="-fx-font-weight: 700;"/>
-                            <TextField fx:id="groupNameField" promptText="e.g. Marketing Team" HBox.hgrow="ALWAYS"/>
+                            <Label text="Nom du groupe" style="-fx-font-weight: 700;"/>
+                            <TextField fx:id="groupNameField" promptText="ex : Équipe Marketing" HBox.hgrow="ALWAYS"/>
                         </HBox>
 
                         <ListView fx:id="usersPickList"/>
@@ -538,10 +541,10 @@
             <!-- Footer buttons -->
             <bottom>
                 <HBox alignment="CENTER_RIGHT" spacing="10" style="-fx-padding: 12 0 0 0;">
-                    <Button fx:id="newMsgBackBtn" text="Back" onAction="#backNewMessage" visible="false" managed="false"/>
+                    <Button fx:id="newMsgBackBtn" text="Retour" onAction="#backNewMessage" visible="false" managed="false"/>
                     <Region HBox.hgrow="ALWAYS"/>
-                    <Button fx:id="newMsgCancelBtn" text="Cancel" onAction="#closeNewMessageModal"/>
-                    <Button fx:id="newMsgPrimaryBtn" text="Continue" onAction="#newMessagePrimary"/>
+                    <Button fx:id="newMsgCancelBtn" text="Annuler" onAction="#closeNewMessageModal"/>
+                    <Button fx:id="newMsgPrimaryBtn" text="Continuer" onAction="#newMessagePrimary"/>
                 </HBox>
             </bottom>
         </BorderPane>

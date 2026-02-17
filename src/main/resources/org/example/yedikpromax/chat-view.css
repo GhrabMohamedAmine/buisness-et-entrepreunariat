@@ -739,16 +739,25 @@
 .context-menu.danger-menu .menu-item:focused > .label {
     -fx-text-fill: #b91c1c;
 }
+.empty-state {
+    -fx-opacity: 0.95;
+}
 
+.empty-state-icon {
+    -fx-icon-size: 64px;
+    -fx-icon-color: rgba(0,0,0,0.25);
+}
 
-
-
-
-
-
-
-
-
-
-
-
+.empty-state-text {
+    -fx-font-size: 16px;
+    -fx-font-weight: 700;
+    -fx-text-fill: rgba(0,0,0,0.45);
+}
+.sender-name {
+    -fx-font-size: 11px;
+    -fx-text-fill: -color-fg-muted;
+    -fx-font-weight: 700;
+    -fx-padding: 0 0 0 8;
+}
+.seen-row { -fx-padding: 0 6 0 0; }
+.seen-more { -fx-font-size: 10px; -fx-text-fill: -color-fg-muted; -fx-font-weight: 700; }

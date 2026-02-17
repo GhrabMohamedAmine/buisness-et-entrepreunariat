@@ -78,7 +78,25 @@ public class ServiceConversation {
 
         String sql =
                 "SELECT\n" +
-                        "  c.id, c.type, c.title,c.created_at, c.avatar,\n" +
+                        "  c.id,\n" +
+                        "  c.type,\n" +
+                        "  CASE\n" +
+                        "    WHEN UPPER(c.type) = 'DM' THEN (\n" +
+                        "      SELECT COALESCE(\n" +
+                        "               NULLIF(TRIM(cp2.nickname), ''),\n" +
+                        "               CONCAT_WS(' ', u2.prenom, u2.nom)\n" +
+                        "             )\n" +
+                        "      FROM conversation_participants cp2\n" +
+                        "      JOIN utilisateurs u2 ON u2.id = cp2.user_id\n" +
+                        "      WHERE cp2.conversation_id = c.id\n" +
+                        "        AND cp2.user_id <> ?\n" +
+                        "        AND cp2.left_at IS NULL\n" +
+                        "      LIMIT 1\n" +
+                        "    )\n" +
+                        "    ELSE c.title\n" +
+                        "  END AS title,\n" +
+                        "  c.created_at,\n" +
+                        "  c.avatar,\n" +
                         "  lm.id AS last_message_id,\n" +
                         "  lm.sender_id AS last_sender_id,\n" +
                         "  lm.body AS last_body,\n" +
@@ -101,6 +119,7 @@ public class ServiceConversation {
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ps.setInt(2, userId);
+            ps.setInt(3, userId);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -280,43 +299,41 @@ public class ServiceConversation {
 
         int min = Math.min(user1, user2);
         int max = Math.max(user1, user2);
+        String dmKey = min + "_" + max;
 
-        // Support BOTH formats to not break existing data:
-        String dmKeyUnderscore = min + "_" + max; // new format
-        String dmKeyColon      = min + ":" + max; // old format already used in your code
+        // 1) Try insert first (fast path)
+        try (PreparedStatement ps = connection.prepareStatement(
+                "INSERT INTO conversations(type, dm_key, created_by) VALUES('DM', ?, ?)",
+                Statement.RETURN_GENERATED_KEYS)) {
 
-        // 1) Check existing DM by dm_key (and type)
-        String checkSql = "SELECT id FROM conversations WHERE type='DM' AND (dm_key = ? OR dm_key = ?) LIMIT 1";
-        try (PreparedStatement ps = connection.prepareStatement(checkSql)) {
-            ps.setString(1, dmKeyUnderscore);
-            ps.setString(2, dmKeyColon);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getLong(1);
-            }
-        }
-
-        // 2) Create new DM
-        String insertSql =
-                "INSERT INTO conversations(type, dm_key, created_by) VALUES('DM', ?, ?)";
-
-        long convId;
-        try (PreparedStatement ps = connection.prepareStatement(insertSql, Statement.RETURN_GENERATED_KEYS)) {
-            ps.setString(1, dmKeyUnderscore); // write using the new format
-            ps.setInt(2, user1);              // creator
+            ps.setString(1, dmKey);
+            ps.setInt(2, user1);
             ps.executeUpdate();
 
             try (ResultSet keys = ps.getGeneratedKeys()) {
                 if (!keys.next()) throw new SQLException("Cannot get DM conversation id");
-                convId = keys.getLong(1);
+                long convId = keys.getLong(1);
+
+                addParticipant(convId, user1, "MEMBER", user1);
+                addParticipant(convId, user2, "MEMBER", user1);
+
+                return convId;
             }
+
+        } catch (SQLException ex) {
+            if ("23000".equals(ex.getSQLState()) || ex.getErrorCode() == 1062) {
+                try (PreparedStatement ps2 = connection.prepareStatement(
+                        "SELECT id FROM conversations WHERE type='DM' AND dm_key=? LIMIT 1")) {
+                    ps2.setString(1, dmKey);
+                    try (ResultSet rs = ps2.executeQuery()) {
+                        if (rs.next()) return rs.getLong(1);
+                    }
+                }
+            }
+            throw ex;
         }
-
-        // 3) Insert participants (use your existing helper, idempotent and revives left users)
-        addParticipant(convId, user1, "ADMIN", user1);
-        addParticipant(convId, user2, "MEMBER", user1);
-
-        return convId;
     }
+
 
     // GROUP: create conversation then add members (+ creator as ADMIN)
     public long createGroupConversation(String title, int creatorId, List<Integer> members) throws SQLException {
@@ -347,28 +364,66 @@ public class ServiceConversation {
 
         return convId;
     }
-    public void deleteConversation(long conversationId) throws SQLException {
-        String sql = "DELETE FROM conversations WHERE id = ?";
+    public void deleteConversation(long conversationId, int actorId) throws SQLException {
 
-        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+        // must be a participant (prevents random deletes)
+        if (!isParticipant(conversationId, actorId)) return;
+
+        String type = getConversationType(conversationId); // "DM" or "GROUP"
+
+        if ("GROUP".equalsIgnoreCase(type)) {
+            String role = getRoleRaw(conversationId, actorId);
+            boolean canDelete = role != null && (
+                    role.equalsIgnoreCase("OWNER") || role.equalsIgnoreCase("ADMIN")
+            );
+            if (!canDelete) return;
+        }
+        // DM: allowed for any participant
+
+        try (PreparedStatement ps = connection.prepareStatement(
+                "DELETE FROM conversations WHERE id=?")) {
             ps.setLong(1, conversationId);
             ps.executeUpdate();
         }
     }
 
-    public void kickParticipant(long conversationId, int userId, int byUserId) throws SQLException {
-        String sql = """
-        UPDATE conversation_participants
-        SET left_at = NOW(), added_by = ?
-        WHERE conversation_id = ?
-          AND user_id = ?
-          AND left_at IS NULL
-    """;
-
+    private boolean isParticipant(long conversationId, int userId) throws SQLException {
+        String sql = "SELECT 1 FROM conversation_participants WHERE conversation_id=? AND user_id=? LIMIT 1";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setInt(1, byUserId);
-            ps.setLong(2, conversationId);
-            ps.setInt(3, userId);
+            ps.setLong(1, conversationId);
+            ps.setInt(2, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next();
+            }
+        }
+    }
+
+    private String getConversationType(long conversationId) throws SQLException {
+        String sql = "SELECT type FROM conversations WHERE id=?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, conversationId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getString("type");
+            }
+        }
+        return null;
+    }
+
+
+    public void kickParticipant(long conversationId, int actorId, int targetId) throws SQLException {
+        if (actorId == targetId) return;
+
+        // enforce role
+        String actorRole = getRoleRaw(conversationId, actorId);
+        boolean canManage = actorRole != null && (
+                actorRole.equalsIgnoreCase("ADMIN")
+        );
+        if (!canManage) return;
+
+        String sql = "DELETE FROM conversation_participants WHERE conversation_id=? AND user_id=?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, conversationId);
+            ps.setInt(2, targetId);
             ps.executeUpdate();
         }
     }
@@ -396,6 +451,67 @@ public class ServiceConversation {
         }
     }
 
+    public void leaveConversation(long conversationId, int userId) throws SQLException {
+        String sql = "DELETE FROM conversation_participants WHERE conversation_id=? AND user_id=?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, conversationId);
+            ps.setInt(2, userId);
+            ps.executeUpdate();
+        }
+    }
+
+    public String getRoleRaw(long conversationId, int userId) throws SQLException {
+        String sql = "SELECT role FROM conversation_participants WHERE conversation_id=? AND user_id=?";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, conversationId);
+            ps.setInt(2, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getString("role");
+            }
+        }
+        return "MEMBER";
+    }
+
+    public String getDmDisplayName(long conversationId, int currentUserId) throws SQLException {
+
+        String sql = """
+        SELECT COALESCE(
+                 NULLIF(TRIM(cp.nickname), ''),
+                 CONCAT_WS(' ', u.prenom, u.nom)
+               ) AS display_name
+        FROM conversation_participants cp
+        JOIN utilisateurs u ON u.id = cp.user_id
+        WHERE cp.conversation_id = ?
+          AND cp.user_id <> ?
+          AND cp.left_at IS NULL
+        LIMIT 1
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, conversationId);
+            ps.setInt(2, currentUserId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getString("display_name");
+            }
+        }
+        return "Discussion";
+    }
+
+    public void markConversationRead(long convId, int userId, long lastMsgId) throws SQLException {
+        String sql = """
+        UPDATE conversation_participants
+        SET last_read_message_id = GREATEST(IFNULL(last_read_message_id,0), ?)
+        WHERE conversation_id = ?
+          AND user_id = ?
+          AND left_at IS NULL
+    """;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, lastMsgId);
+            ps.setLong(2, convId);
+            ps.setInt(3, userId);
+            ps.executeUpdate();
+        }
+    }
 
 }
 

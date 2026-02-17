@@ -1,6 +1,9 @@
 package controller;
 
 import javafx.beans.binding.Bindings;
+import javafx.beans.binding.BooleanBinding;
+import javafx.beans.property.ObjectProperty;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -126,19 +129,25 @@ public class chatController {
     @FXML private Button newMsgPrimaryBtn;
     @FXML private Button newMsgCancelBtn;
     @FXML private ScrollPane conversationScroll;
-
-
-
-
+    @FXML private Button addPeopleBtn;
+    @FXML private Label dangerActionLabel;
+    @FXML private FontIcon dangerActionIcon;
+    @FXML private VBox customizeSection;
+    @FXML private FontIcon sendIcon;
 
     @FXML private void toggleChatInfo()   { toggleSection(secChatInfo,   chevChatInfo); }
     @FXML private void toggleCustomize()  { toggleSection(secCustomize,  chevCustomize); }
     @FXML private void toggleMembers()    { toggleSection(secMembers,    chevMembers); }
     @FXML private void toggleMedia()      { toggleSection(secMedia,      chevMedia); }
 
+    private enum Role { OWNER, ADMIN, MEMBER }
+    private boolean canManage(Role r) { return r == Role.OWNER || r == Role.ADMIN; }
+    private boolean canDelete(Role r) { return r == Role.OWNER || r == Role.ADMIN; }
     private enum NewMsgMode { PRIVATE, GROUP }
     private NewMsgMode newMsgMode = NewMsgMode.PRIVATE;
-
+    private boolean canManageMembersInSelectedConversation = false;
+    private boolean canDeleteSelectedConversation = false;
+    private long selectedConversationId = -1;
     private final ObservableList<ParticipantView> allUsers = FXCollections.observableArrayList();
     private final ObservableList<ParticipantView> filteredUsers = FXCollections.observableArrayList();
     private final ObservableList<ParticipantView> members = FXCollections.observableArrayList();
@@ -163,7 +172,12 @@ public class chatController {
     private javafx.scene.effect.GaussianBlur blur = new javafx.scene.effect.GaussianBlur(12);
     private Long nicknamesConvId = null;
     private boolean addMembersMode = false;
-    private int currentUserId = 1;
+    private final Map<Long, VBox> conversationNodeById = new HashMap<>();
+    private final ObjectProperty<Conversation> selectedConversationProperty = new SimpleObjectProperty<>(null);
+    private final Map<Long, Label> unreadBadgeByConvId = new HashMap<>();
+    private final Map<Long, Label> timeLabelByConvId  = new HashMap<>();
+    private final Map<Integer, String> senderNameCache = new HashMap<>();
+    private int currentUserId = 2;
     //==========================
     //HELPER METHODS
     //==========================
@@ -172,6 +186,102 @@ public class chatController {
         String n = p.getNickname();
         return (n == null || n.isBlank()) ? p.getUsername() : n.trim();
     }
+
+    private void setSendMode() {
+        sendButton.setText("");
+        sendButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        sendIcon.setIconLiteral("mdi2s-send");   // normal send icon
+    }
+
+    private void setEditMode() {
+        sendButton.setText("");
+        sendButton.setContentDisplay(ContentDisplay.GRAPHIC_ONLY);
+        sendIcon.setIconLiteral("mdi2c-check");  // confirm/edit icon
+    }
+
+    private void applyRoleUiForConversation(Conversation conv) throws SQLException {
+
+        boolean isGroup = "GROUP".equalsIgnoreCase(conv.getType());
+
+        boolean manage = false;
+        if (isGroup) {
+            String role = conversationService.getRoleRaw(conv.getId(), currentUserId);
+            manage = role != null && (role.equalsIgnoreCase("ADMIN") || role.equalsIgnoreCase("OWNER"));
+        }
+
+        canManageMembersInSelectedConversation = manage;
+
+        // your rule: DM delete allowed for participant, GROUP delete only admin/owner
+        canDeleteSelectedConversation = !isGroup || manage;
+
+        // Add people only for GROUP admins/owners
+        boolean showAddPeople = isGroup && manage;
+        addPeopleBtn.setVisible(showAddPeople);
+        addPeopleBtn.setManaged(showAddPeople);
+
+        // Customize section hidden for DM
+        customizeSection.setVisible(isGroup);
+        customizeSection.setManaged(isGroup);
+
+        // Danger action label + icon
+        if (canDeleteSelectedConversation) {
+            dangerActionLabel.setText("Supprimer la discussion");
+            dangerActionIcon.setIconLiteral("mdi2t-trash-can-outline");
+        } else {
+            dangerActionLabel.setText("Quitter la discussion");
+            dangerActionIcon.setIconLiteral("mdi2l-logout");
+        }
+    }
+
+    @FXML
+    private void onDangerAction() {
+        if (selectedConversation == null) return;
+
+        long convId = selectedConversation.getId();
+
+        try {
+            if (canDeleteSelectedConversation) {
+                conversationService.deleteConversation(convId, currentUserId);
+            } else {
+                conversationService.leaveConversation(convId, currentUserId);
+            }
+            // ✅ hide drawer immediately (fix)
+            closeDrawer();
+
+            // remove sidebar item without full reload
+            VBox node = conversationNodeById.remove(convId);
+            if (node != null) conversationContainer.getChildren().remove(node);
+
+            // if we were viewing it -> go back to empty state
+            if (selectedConversationId == convId) {
+                clearSelectionAndGoEmpty();
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setSelectedConversationStyle(long newId) {
+        if (selectedConversationId > 0) {
+            VBox oldNode = conversationNodeById.get(selectedConversationId);
+            if (oldNode != null) {
+                oldNode.getStyleClass().remove("chat-item-selected");
+                if (!oldNode.getStyleClass().contains("chat-item")) oldNode.getStyleClass().add("chat-item");
+            }
+        }
+
+        if (newId > 0) {
+            VBox newNode = conversationNodeById.get(newId);
+            if (newNode != null) {
+                newNode.getStyleClass().remove("chat-item");
+                if (!newNode.getStyleClass().contains("chat-item-selected")) newNode.getStyleClass().add("chat-item-selected");
+            }
+        }
+
+        selectedConversationId = newId;
+    }
+
 
 
     // =========================
@@ -183,18 +293,25 @@ public class chatController {
         newMsgPrimaryBtn.getStyleClass().add("overlay-btn-primary");
         newMsgBackBtn.getStyleClass().add("overlay-btn");
         newMsgCancelBtn.getStyleClass().add("overlay-btn");
-        setSelectedConversation(null);
+        selectedConversationProperty.set(null);
+        BooleanBinding hasSelection = selectedConversationProperty.isNotNull();
+        // show header + composer only when selected
+        chatHeader.visibleProperty().bind(hasSelection);
+        chatHeader.managedProperty().bind(chatHeader.visibleProperty());
+
+        composerBar.visibleProperty().bind(hasSelection);
+        composerBar.managedProperty().bind(composerBar.visibleProperty());
+
+        // show empty state only when NOTHING selected
+        emptyState.visibleProperty().bind(hasSelection.not());
+        emptyState.managedProperty().bind(emptyState.visibleProperty());
+
         messageInput.setOnKeyPressed(e -> {
             if (e.getCode() == javafx.scene.input.KeyCode.ESCAPE && editingMessage != null) {
                 cancelEdit();
             }
         });
         loadConversations();
-        dayTimer.scheduleAtFixedRate(new java.util.TimerTask() {
-            @Override public void run() {
-                Platform.runLater(() -> loadConversations());
-            }
-        }, 60_000, 60_000);
         membersList.getStyleClass().add("members-list");
         membersList.setCellFactory(lv -> new MemberCell());
         membersList.setItems(members);
@@ -308,7 +425,13 @@ public class chatController {
         try {
             var info = conversationService.getDetails(selectedConversation.getId());
 
-            drawerTitle.setText(info.getTitle() == null || info.getTitle().isBlank() ? "Chat" : info.getTitle());
+            String title;
+            if ("DM".equalsIgnoreCase(info.getType())) {
+                title = conversationService.getDmDisplayName(info.getId(), currentUserId);
+            } else {
+                title = (info.getTitle() == null || info.getTitle().isBlank()) ? "Discussion" : info.getTitle();
+            }
+            drawerTitle.setText(title);
             conversationIdLabel.setText(String.valueOf(info.getId()));
 
             if (info.getCreatedAt() != null) {
@@ -325,6 +448,8 @@ public class chatController {
 
             // avatar
             applyAvatar(drawerAvatarCircle, info.getAvatar(), info.getType());
+            // permissions
+            applyRoleUiForConversation(info);
             // participants
             loadMembers(selectedConversation.getId());
 
@@ -342,27 +467,26 @@ public class chatController {
                 return;
             }
 
-            // 2) fallback by type
-            String path = "assets/" + ("GROUP".equalsIgnoreCase(type) ? "group-default.png" : "user-default.png");
-            var is = getClass().getClassLoader().getResourceAsStream(path);
+            // 2) fallback by type (RESOURCE PATH)
+            String file = "GROUP".equalsIgnoreCase(type) ? "group-default.png" : "user-default.png";
+            String resourcePath = "/assets/" + file;
 
-
-            var stream = getClass().getClassLoader().getResourceAsStream(path);
-            if (stream == null) {
-                // last resort: plain color instead of crashing
+            var url = getClass().getResource(resourcePath);
+            if (url == null) {
                 circle.setFill(javafx.scene.paint.Color.LIGHTGRAY);
+                System.err.println("Missing resource: " + resourcePath);
                 return;
             }
 
-            Image img = new Image(stream, 0, 0, true, true);
+            Image img = new Image(url.toExternalForm(), 0, 0, true, true);
             circle.setFill(new ImagePattern(img));
 
         } catch (Exception ex) {
-            // last resort: never break UI for an image
             circle.setFill(javafx.scene.paint.Color.LIGHTGRAY);
             ex.printStackTrace();
         }
     }
+
 
 
     private void setSelectedConversation(Conversation conv) {
@@ -454,47 +578,34 @@ public class chatController {
     // LOAD CONVERSATIONS
     // =========================
     private void loadConversations() {
-        double oldV = (conversationScroll == null) ? 0.0 : conversationScroll.getVvalue();
-        long selectedId = (selectedConversation == null) ? -1 : selectedConversation.getId();
+        conversationContainer.getChildren().clear();
+        conversationNodeById.clear();
 
         try {
             List<Conversation> list = conversationService.listForUser(currentUserId);
 
-            List<VBox> items = new ArrayList<>(list.size());
             for (Conversation conv : list) {
                 VBox item = buildConversationItem(conv);
 
-                // mark selected item by id (works after rebuild)
-                if (conv.getId() == selectedId) {
-                    item.getStyleClass().remove("chat-item");
-                    item.getStyleClass().add("chat-item-selected");
-                }
-
-                items.add(item);
+                conversationNodeById.put(conv.getId(), item);
+                conversationContainer.getChildren().add(item);
             }
 
-            // setAll avoids the visible "blank moment" (less flicker)
-            conversationContainer.getChildren().setAll(items);
+            // re-apply selection if still visible
+            if (selectedConversationId > 0) {
+                setSelectedConversationStyle(selectedConversationId);
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
-
-        // restore scroll AFTER layout
-        Platform.runLater(() -> {
-            if (conversationScroll != null) conversationScroll.setVvalue(oldV);
-        });
     }
 
     private VBox buildConversationItem(Conversation conv) {
         boolean hasUnread = conv.getUnreadCount() > 0;
 
         VBox wrapper = new VBox();
-        wrapper.getStyleClass().add(
-                (selectedConversation != null && selectedConversation.getId() == conv.getId())
-                        ? "chat-item-selected"
-                        : "chat-item"
-        );
+        wrapper.getStyleClass().add("chat-item");  // ALWAYS
         wrapper.setPadding(new Insets(12));
 
         HBox row = new HBox(12);
@@ -532,16 +643,28 @@ public class chatController {
         time.getStyleClass().add(hasUnread ? "chat-time-unread" : "chat-time");
         rightBox.getChildren().add(time);
 
-        if (hasUnread) {
-            Label badge = new Label(String.valueOf(conv.getUnreadCount()));
-            badge.getStyleClass().add("chat-badge"); // purple bubble + white text
-            rightBox.getChildren().add(badge);
-        }
+        Label badge = new Label(String.valueOf(conv.getUnreadCount()));
+        badge.getStyleClass().add("chat-badge");
 
+        // show/hide (IMPORTANT: managed too)
+        badge.setVisible(hasUnread);
+        badge.setManaged(hasUnread);
+
+        rightBox.getChildren().add(badge);
+
+        timeLabelByConvId.put(conv.getId(), time);
+        unreadBadgeByConvId.put(conv.getId(), badge);
         row.getChildren().addAll(avatar, textBox, spacer, rightBox);
         wrapper.getChildren().add(row);
 
-        wrapper.setOnMouseClicked(e -> selectConversation(conv));
+        wrapper.setOnMouseClicked(e -> {
+            try {
+                selectConversation(conv);
+            } catch (SQLException ex) {
+                throw new RuntimeException(ex);
+            }
+            clearUnreadUI(conv.getId());
+        });
         return wrapper;
     }
 
@@ -597,42 +720,64 @@ public class chatController {
         try {
             List<Message> messages = messageService.listByConversation(conversationId, 100);
             if (messages.isEmpty()) return;
+            boolean isGroup = selectedConversation != null
+                    && "GROUP".equalsIgnoreCase(selectedConversation.getType());
 
             long otherLastRead = messageService.getMaxReadByOthers(conversationId, currentUserId);
 
             for (Message msg : messages) {
                 boolean outgoing = msg.getSenderId() == currentUserId;
 
-                // Row (left/right)
                 HBox row = new HBox();
                 row.setAlignment(outgoing ? Pos.TOP_RIGHT : Pos.TOP_LEFT);
 
-                // Bubble container
                 VBox bubbleBox = new VBox(6);
                 bubbleBox.setAlignment(outgoing ? Pos.TOP_RIGHT : Pos.TOP_LEFT);
 
-                // Bubble text
+                // GROUP incoming: sender name above bubble
+                if (isGroup && !outgoing) {
+                    Label sender = new Label(senderName(msg.getSenderId()));
+                    sender.getStyleClass().add("sender-name");
+                    bubbleBox.getChildren().add(sender);
+                }
+
+                // Bubble
                 Label bubble = new Label(msg.getBody());
                 bubble.setWrapText(true);
                 bubble.setMaxWidth(480);
                 bubble.getStyleClass().add(outgoing ? "bubble-out" : "bubble-in");
+                bubbleBox.getChildren().add(bubble);
 
-                // Meta (time + ticks)
-                HBox meta = new HBox(6);
-                meta.setAlignment(outgoing ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
+                // Context menu only for my outgoing messages
+                if (outgoing) {
+                    attachBubbleMenu(bubble, msg);
+                    showBubbleMenu(bubble, msg);
+                }
 
+                // Footer line: [seen bubbles  time] OR [time ticks] for DM
+                HBox footer = new HBox(6);
+                footer.setAlignment(outgoing ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
+
+                // Optional "édité"
                 if (msg.getEditedAt() != null) {
                     Label edited = new Label("édité");
                     edited.getStyleClass().add(outgoing ? "edited-out" : "edited-in");
-                    meta.getChildren().add(edited);
+                    footer.getChildren().add(edited);
                 }
 
+                // GROUP outgoing: add seen bubbles on the left of time (same line)
+                if (isGroup && outgoing) {
+                    HBox seenRow = buildSeenRow(conversationId, msg.getId(), currentUserId);
+                    footer.getChildren().add(seenRow);
+                }
+
+                // Time
                 Label time = new Label(formatBubbleTime(msg.getCreatedAt()));
                 time.getStyleClass().add(outgoing ? "timestamp-out" : "timestamp");
+                footer.getChildren().add(time);
 
-                meta.getChildren().add(time);
-
-                if (outgoing) {
+                // DM outgoing: add ticks after time (same line)
+                if (!isGroup && outgoing) {
                     FontIcon ticks = new FontIcon("mdi2c-check-all");
                     ticks.setIconSize(14);
                     if (msg.getId() <= otherLastRead) {
@@ -640,12 +785,11 @@ public class chatController {
                     } else {
                         ticks.setStyle("-fx-icon-color: #9aa0a6; -fx-font-family: 'Material Design Icons';");
                     }
-                    meta.getChildren().add(ticks);
-                    attachBubbleMenu(bubble, msg);
-                    showBubbleMenu(bubble, msg);
+                    footer.getChildren().add(ticks);
                 }
 
-                bubbleBox.getChildren().addAll(bubble, meta);
+                bubbleBox.getChildren().add(footer);
+
                 row.getChildren().add(bubbleBox);
                 messagesContainer.getChildren().add(row);
             }
@@ -656,6 +800,64 @@ public class chatController {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    private String senderName(int id) {
+        return senderNameCache.computeIfAbsent(id, k -> {
+            try {
+                return messageService.getSenderDisplayName(k);
+            } catch (SQLException e) {
+                return "Utilisateur";
+            }
+        });
+    }
+
+    private HBox buildSeenRow(long convId, long messageId, int currentUserId) {
+        HBox seenRow = new HBox(4);
+        seenRow.setAlignment(Pos.CENTER_RIGHT);
+        seenRow.getStyleClass().add("seen-row");
+
+        try {
+            // returns users (except me) who have last_read_message_id >= messageId
+            List<ParticipantView> readers = messageService.listReadersForMessage(convId, messageId, currentUserId);
+
+            int max = 6;
+            int shown = 0;
+
+            StringBuilder names = new StringBuilder();
+
+            for (ParticipantView p : readers) {
+                if (shown >= max) break;
+
+                Circle mini = new Circle(7);
+                // simplest: default-user.png always (no DB user avatar needed)
+                applyAvatar(mini, null, "DM"); // uses your default-user.png logic
+                // if you later have user avatar bytes, swap to applyUserAvatar(mini, p.getUserId())
+
+                seenRow.getChildren().add(mini);
+
+                if (names.length() > 0) names.append(", ");
+                names.append(p.getUsername());
+
+                shown++;
+            }
+
+            int remaining = readers.size() - shown;
+            if (remaining > 0) {
+                Label more = new Label("+" + remaining);
+                more.getStyleClass().add("seen-more");
+                seenRow.getChildren().add(more);
+            }
+
+            if (readers.size() > 0) {
+                Tooltip.install(seenRow, new Tooltip("Vu par: " + names));
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        return seenRow;
     }
 
     private void attachBubbleMenu(Label bubble, Message msg) {
@@ -691,18 +893,14 @@ public class chatController {
         editingMessage = msg;
         messageInput.setText(msg.getBody());
         messageInput.requestFocus();
-
-        // Optional: visual hint in UI
-        sendButton.setText("✔");
+        setEditMode();
     }
 
     private void cancelEdit() {
         editingMessage = null;
         messageInput.clear();
-        sendButton.setText("➤");
+        setSendMode();
     }
-
-
 
     // =========================
     // SEND MESSAGE
@@ -726,7 +924,7 @@ public class chatController {
                 }
 
                 editingMessage.setBody(body);
-                editingMessage.setSenderId(currentUserId); // ownership check
+                editingMessage.setSenderId(currentUserId);
                 messageService.modifier(editingMessage);
 
                 loadMessages(editingMessage.getConversationId());
@@ -1073,8 +1271,9 @@ public class chatController {
             Image img = getDefaultUserAvatar();
             if (img != null) avatar.setFill(new ImagePattern(img));
 
-            MenuItem kick = new MenuItem("Kick from group");
+            MenuItem kick = new MenuItem("Exclure du groupe");
             kick.getStyleClass().add("danger-item");
+
             ContextMenu menu = new ContextMenu(kick);
             menu.getStyleClass().add("danger-menu");
 
@@ -1086,8 +1285,8 @@ public class chatController {
                 boolean isGroup = "GROUP".equalsIgnoreCase(selectedConversation.getType());
                 boolean isSelf  = item.getUserId() == currentUserId;
 
-                // Only for group & not self
-                if (!isGroup || isSelf) {
+                // ✅ Only for group, only admins/owners, never self
+                if (!isGroup || isSelf || !canManageMembersInSelectedConversation) {
                     ev.consume();
                     return;
                 }
@@ -1096,11 +1295,11 @@ public class chatController {
                     try {
                         conversationService.kickParticipant(
                                 selectedConversation.getId(),
-                                item.getUserId(),
-                                currentUserId
+                                currentUserId,
+                                item.getUserId()
                         );
-                        refreshDrawer();          // reload members
-                        loadConversations();      // update list if needed
+                        refreshDrawer();
+                        loadConversations();
                     } catch (SQLException e) {
                         e.printStackTrace();
                     }
@@ -1217,7 +1416,7 @@ public class chatController {
             try {
                 long convId = conversationService
                         .createPrivateConversation(currentUserId, selected.getUserId());
-
+                loadConversations();
                 openConversationById(convId);
                 closeNewMessageModal();
 
@@ -1265,20 +1464,69 @@ public class chatController {
         }
     }
 
-    private void selectConversation(Conversation conv) {
-        setSelectedConversation(conv);
+    private void selectConversation(Conversation conv) throws SQLException {
+        if (conv == null) return;
+
         selectedConversation = conv;
+        selectedConversationProperty.set(conv); //UI binding
+
+        setSelectedConversationStyle(conv.getId());
 
         applyAvatar(chatAvatarCircle, conv.getAvatar(), conv.getType());
         loadMessages(conv.getId());
 
-        chatTitle.setText(conv.getTitle() == null ? "Chat" : conv.getTitle());
-        chatSubtitle.setText("Active conversation");
-        refreshDrawer();
 
-        // refresh list to reflect selected style
-        loadConversations();
+        try {
+            if ("DM".equalsIgnoreCase(conv.getType())) {
+                chatTitle.setText(conversationService.getDmDisplayName(conv.getId(), currentUserId));
+            } else {
+                chatTitle.setText((conv.getTitle() == null || conv.getTitle().isBlank())
+                        ? "Discussion"
+                        : conv.getTitle());
+            }
+        } catch (SQLException e) {
+            chatTitle.setText("Discussion");
+        }
+
+        chatSubtitle.setText("Conversation active");
+        Long lastMsgId = conv.getLastMessageId();
+        if (lastMsgId > 0) {
+            conversationService.markConversationRead(conv.getId(), currentUserId, lastMsgId);
+        }
+        clearUnreadUI(conv.getId());
+        refreshDrawer();
     }
+
+    private void clearUnreadUI(long convId) {
+        Label badge = unreadBadgeByConvId.get(convId);
+        if (badge != null) {
+            badge.setText("0");          // optional
+            badge.setVisible(false);
+            badge.setManaged(false);
+        }
+
+        Label time = timeLabelByConvId.get(convId);
+        if (time != null) {
+            time.getStyleClass().remove("chat-time-unread");
+            if (!time.getStyleClass().contains("chat-time")) {
+                time.getStyleClass().add("chat-time");
+            }
+        }
+    }
+
+
+
+    private void clearSelectionAndGoEmpty() {
+        selectedConversation = null;
+        selectedConversationProperty.set(null);
+
+        // remove sidebar highlight safely
+        setSelectedConversationStyle(-1);
+
+        // clear message view (use your real container)
+        messagesContainer.getChildren().clear();
+    }
+
 
     private void openConversationById(long convId) {
         try {
@@ -1313,24 +1561,24 @@ public class chatController {
         backIcon.setIconSize(16);
         newMsgBackBtn.setGraphic(backIcon);
         if (newMsgMode == NewMsgMode.PRIVATE) {
-            newMsgTitle.setText("Select User");
+            newMsgTitle.setText("Sélectionner des membres");
             groupNameRow.setVisible(false);
             groupNameRow.setManaged(false);
 
             usersPickList.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.SINGLE);
-            newMsgPrimaryBtn.setText("Start Chat");
+            newMsgPrimaryBtn.setText("selctionner");
             FontIcon sendIcon = new FontIcon("mdi2s-send");
             sendIcon.setIconSize(16);
             newMsgPrimaryBtn.setGraphic(sendIcon);
 
 
         } else {
-            newMsgTitle.setText("Create Group");
+            newMsgTitle.setText("Crée un groupe");
             groupNameRow.setVisible(true);
             groupNameRow.setManaged(true);
 
             usersPickList.getSelectionModel().setSelectionMode(javafx.scene.control.SelectionMode.MULTIPLE);
-            newMsgPrimaryBtn.setText("Create Group");
+            newMsgPrimaryBtn.setText("créer un groupe");
             FontIcon groupIcon = new FontIcon("mdi2a-account-multiple-plus");
             groupIcon.setIconSize(16);
             newMsgPrimaryBtn.setGraphic(groupIcon);
@@ -1353,8 +1601,8 @@ public class chatController {
         newMsgBackBtn.setVisible(false);
         newMsgBackBtn.setManaged(false);
 
-        newMsgPrimaryBtn.setText("Continue");
-        newMsgTitle.setText("New Message");
+        newMsgPrimaryBtn.setText("Continuer");
+        newMsgTitle.setText("Nouveau message");
 
         userSearchField.clear();
         usersPickList.getSelectionModel().clearSelection();
@@ -1462,29 +1710,6 @@ public class chatController {
         }
     }
 
-    // =========================
-    // DELETE
-    // =========================
-    @FXML
-    private void onDeleteConversation() {
-        if (selectedConversation == null) return;
-
-        Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
-        alert.setTitle("Delete conversation");
-        alert.setHeaderText("Delete this conversation?");
-        alert.setContentText("This action cannot be undone.");
-
-        if (alert.showAndWait().orElse(ButtonType.CANCEL) == ButtonType.OK) {
-            try {
-                conversationService.deleteConversation(selectedConversation.getId());
-                closeDrawer();
-                setSelectedConversation(null);
-                loadConversations();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-    }
     // =========================
     // ADD MEMBER TO GROUP
     // =========================

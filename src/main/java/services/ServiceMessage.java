@@ -1,6 +1,7 @@
 package services;
 
 import model.Message;
+import model.ParticipantView;
 import utils.DBConnection;
 
 import java.sql.*;
@@ -108,7 +109,7 @@ public class ServiceMessage implements IService<Message> {
     public void markRead(long conversationId, int userId, long lastReadMessageId) throws SQLException {
         String sql =
                 "UPDATE conversation_participants " +
-                        "SET last_read_message_id=? " +
+                        "SET last_read_message_id = GREATEST(IFNULL(last_read_message_id,0), ?) " +
                         "WHERE conversation_id=? AND user_id=? AND left_at IS NULL";
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
             ps.setLong(1, lastReadMessageId);
@@ -132,6 +133,46 @@ public class ServiceMessage implements IService<Message> {
                 return rs.getLong("other_last_read");
             }
         }
+    }
+
+    public List<ParticipantView> listReadersForMessage(long convId, long messageId, int currentUserId) throws SQLException {
+        List<ParticipantView> out = new ArrayList<>();
+        String sql = """
+        SELECT u.id,
+               CONCAT(u.prenom, ' ', u.nom) AS username
+        FROM conversation_participants cp
+        JOIN utilisateurs u ON u.id = cp.user_id
+        WHERE cp.conversation_id = ?
+          AND cp.left_at IS NULL
+          AND cp.user_id <> ?
+          AND IFNULL(cp.last_read_message_id, 0) >= ?
+        ORDER BY u.prenom, u.nom
+    """;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, convId);
+            ps.setInt(2, currentUserId);
+            ps.setLong(3, messageId);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    out.add(new ParticipantView(
+                            rs.getInt("id"),
+                            rs.getString("username")
+                    ));
+                }
+            }
+        }
+        return out;
+    }
+
+    public String getSenderDisplayName(int senderId) throws SQLException {
+        String sql = "SELECT CONCAT(prenom, ' ', nom) AS name FROM utilisateurs WHERE id = ? LIMIT 1";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, senderId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getString("name");
+            }
+        }
+        return "Utilisateur";
     }
 
 }
