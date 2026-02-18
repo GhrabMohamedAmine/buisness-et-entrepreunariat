@@ -165,7 +165,7 @@
                                             <Insets top="12" right="16" bottom="12" left="16"/>
                                         </padding>
 
-                                        <Button styleClass="icon-button">
+                                        <Button styleClass="icon-button" onAction="#handleAttachFile">
                                             <graphic>
                                                 <FontIcon iconLiteral="mdi2p-paperclip" styleClass="icon"/>
                                             </graphic>

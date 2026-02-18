@@ -7,80 +7,67 @@ import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
-import javafx.scene.layout.*;
+import javafx.scene.image.ImageView;
 import javafx.scene.shape.Circle;
+import javafx.scene.shape.Rectangle;
 import model.Conversation;
 import model.Message;
 import services.ServiceConversation;
 import services.ServiceMessage;
 import org.kordamp.ikonli.javafx.FontIcon;
-
 import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import javafx.scene.layout.StackPane;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.control.TextField;
-import javafx.scene.effect.GaussianBlur;
-import javafx.scene.input.MouseButton;
-import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
-import javafx.fxml.FXML;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.util.Duration;
-import javafx.event.ActionEvent;
-import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
-import javafx.stage.Window;
-import javafx.scene.input.KeyCode;
-import javafx.geometry.Pos;
 import javafx.scene.paint.Color;
 import javafx.scene.image.Image;
 import javafx.scene.paint.ImagePattern;
 import java.io.ByteArrayInputStream;
-
-import javafx.scene.layout.GridPane;
 import javafx.stage.FileChooser;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.geometry.Insets;
-import javafx.geometry.Pos;
-import javafx.scene.Scene;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-import javafx.scene.control.TextField;
-import javafx.scene.input.KeyCode;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.Region;
-import javafx.collections.FXCollections;
-import javafx.collections.ObservableList;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
-import javafx.stage.Modality;
-import javafx.stage.Stage;
-import javafx.stage.StageStyle;
-
-
+import java.io.*;
 import model.ParticipantView;
-
-
-import java.nio.file.Files;
 import java.util.*;
-
-
 import java.sql.SQLException;
+import java.nio.file.Files;
+import java.awt.Desktop;
+import java.net.URI;
+import java.nio.file.Path;
+import com.sun.jna.NativeLibrary;
+import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
+import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
+import java.nio.file.Path;
 import javafx.application.Platform;
+import javafx.embed.swing.SwingNode;
+import javafx.scene.Node;
+import javafx.scene.control.Label;
+import javafx.scene.layout.StackPane;
+import javafx.scene.shape.Rectangle;
+import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
+import javax.swing.SwingUtilities;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class chatController {
 
@@ -177,10 +164,26 @@ public class chatController {
     private final Map<Long, Label> unreadBadgeByConvId = new HashMap<>();
     private final Map<Long, Label> timeLabelByConvId  = new HashMap<>();
     private final Map<Integer, String> senderNameCache = new HashMap<>();
-    private int currentUserId = 2;
+    private static boolean VLC_INIT_DONE = false;
+    private int currentUserId = 1;
     //==========================
     //HELPER METHODS
     //==========================
+
+    private static void initVlcOnce() {
+        Path vlcDir = Path.of(System.getProperty("user.dir"), "vlc").toAbsolutePath();
+
+        System.setProperty("jna.library.path", vlcDir.toString());
+        System.setProperty("VLC_PLUGIN_PATH", vlcDir.resolve("plugins").toString());
+
+        boolean ok = new NativeDiscovery().discover();
+        System.out.println("VLC discover ok=" + ok + " dir=" + vlcDir);
+    }
+
+    private static void vlcEdt(Runnable r) {
+        javax.swing.SwingUtilities.invokeLater(r);
+    }
+
 
     private static String displayName(ParticipantView p) {
         String n = p.getNickname();
@@ -290,6 +293,7 @@ public class chatController {
 
     @FXML
     public void initialize() {
+        initVlcOnce();
         newMsgPrimaryBtn.getStyleClass().add("overlay-btn-primary");
         newMsgBackBtn.getStyleClass().add("overlay-btn");
         newMsgCancelBtn.getStyleClass().add("overlay-btn");
@@ -682,7 +686,7 @@ public class chatController {
     // LOAD MESSAGES
     // =========================
 
-    private void showBubbleMenu(Label bubble, Message msg) {
+    private void showBubbleMenu(Node bubble, Message msg) {
         ContextMenu menu = new ContextMenu();
         menu.getStyleClass().add("bubble-menu");
 
@@ -742,17 +746,13 @@ public class chatController {
                 }
 
                 // Bubble
-                Label bubble = new Label(msg.getBody());
-                bubble.setWrapText(true);
-                bubble.setMaxWidth(480);
-                bubble.getStyleClass().add(outgoing ? "bubble-out" : "bubble-in");
-                bubbleBox.getChildren().add(bubble);
-
-                // Context menu only for my outgoing messages
+                Node bubbleNode = buildMessageNode(msg, outgoing);
+                bubbleBox.getChildren().add(bubbleNode);
                 if (outgoing) {
-                    attachBubbleMenu(bubble, msg);
-                    showBubbleMenu(bubble, msg);
+                    attachBubbleMenu(bubbleNode, msg);
+                    showBubbleMenu(bubbleNode, msg);
                 }
+
 
                 // Footer line: [seen bubbles  time] OR [time ticks] for DM
                 HBox footer = new HBox(6);
@@ -860,7 +860,7 @@ public class chatController {
         return seenRow;
     }
 
-    private void attachBubbleMenu(Label bubble, Message msg) {
+    private void attachBubbleMenu(Node bubble, Message msg) {
         ContextMenu menu = new ContextMenu();
         menu.getStyleClass().add("bubble-menu");
 
@@ -1490,7 +1490,7 @@ public class chatController {
 
         chatSubtitle.setText("Conversation active");
         Long lastMsgId = conv.getLastMessageId();
-        if (lastMsgId > 0) {
+        if (lastMsgId != null && lastMsgId > 0) {
             conversationService.markConversationRead(conv.getId(), currentUserId, lastMsgId);
         }
         clearUnreadUI(conv.getId());
@@ -1748,6 +1748,427 @@ public class chatController {
         usersPickList.getSelectionModel().clearSelection();
     }
 
+    // =========================
+    // METIER
+    // =========================
+
+    @FXML
+    private void handleAttachFile() {
+        if (selectedConversation == null) return;
+
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Choose file(s)");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("All files", "*.*"));
+
+        var owner = composerBar.getScene().getWindow(); // or any node you have
+        List<File> files = fc.showOpenMultipleDialog(owner);
+        if (files == null || files.isEmpty()) return;
+
+        try {
+            for (File f : files) {
+                sendAttachment(f);
+            }
+            loadMessages(selectedConversation.getId());
+            loadConversations();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendAttachment(File f) throws Exception {
+        String mime = Files.probeContentType(f.toPath());
+        if (mime == null) mime = "application/octet-stream";
+
+        long size = Files.size(f.toPath());
+        String name = f.getName();
+
+        Message msg = new Message();
+        msg.setConversationId(selectedConversation.getId());
+        msg.setSenderId(currentUserId);
+        msg.setBody(name);               // show filename in chat list fallback
+        msg.setKind("ATTACHMENT");
+
+        long messageId = messageService.ajouter(msg); // now returns id
+
+        try (InputStream in = new BufferedInputStream(new FileInputStream(f))) {
+            messageService.insertAttachmentBlob(messageId, name, mime, size, in);
+        }
+    }
+
+    private Node buildMessageNode(Message msg, boolean outgoing) throws SQLException {
+        String kind = msg.getKind();
+        if ("ATTACHMENT".equalsIgnoreCase(kind)) {
+            return buildAttachmentBubble(msg, outgoing);
+        }
+        return buildTextBubbleWithLinks(msg.getBody(), outgoing);
+    }
+
+    private Node buildTextBubbleWithLinks(String text, boolean outgoing) {
+        if (text == null) text = "";
+
+        var p = java.util.regex.Pattern.compile("(https?://\\S+)");
+        var m = p.matcher(text);
+
+        javafx.scene.text.TextFlow flow = new javafx.scene.text.TextFlow();
+        flow.setMaxWidth(480);
+
+        int last = 0;
+        while (m.find()) {
+            if (m.start() > last) flow.getChildren().add(new javafx.scene.text.Text(text.substring(last, m.start())));
+            String url = m.group(1);
+            String vid = extractYoutubeId(url);
+            if (vid != null) {
+                flow.getChildren().add(buildYoutubePreviewCard(url, outgoing));
+            } else {
+                Hyperlink link = new Hyperlink(prettifyUrl(url));
+                link.setTooltip(new Tooltip(url));
+                link.getStyleClass().add("link-pill");
+                link.setOnAction(e -> openInBrowser(url));
+                flow.getChildren().add(link);
+            }
+
+            last = m.end();
+        }
+        if (last < text.length()) flow.getChildren().add(new javafx.scene.text.Text(text.substring(last)));
+
+        VBox bubble = new VBox(flow);
+        bubble.setMaxWidth(480);
+        bubble.getStyleClass().add(outgoing ? "bubble-out" : "bubble-in");
+        return bubble;
+    }
+
+    private String prettifyUrl(String url) {
+        try {
+            URI u = new URI(url);
+            String host = (u.getHost() == null) ? url : u.getHost().replaceFirst("^www\\.", "");
+            String path = (u.getRawPath() == null) ? "" : u.getRawPath();
+            String shortPath = path.length() > 22 ? path.substring(0, 22) + "…" : path;
+            return host + (shortPath.isBlank() ? "" : " " + shortPath);
+        } catch (Exception e) {
+            return url.length() > 34 ? url.substring(0, 34) + "…" : url;
+        }
+    }
+
+    private void openInBrowser(String url) {
+        try {
+            Desktop.getDesktop().browse(new URI(url));
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private Node buildAttachmentBubble(Message msg, boolean outgoing) throws SQLException {
+        var meta = messageService.getAttachmentMeta(msg.getId());
+        if (meta == null) {
+            Label fallback = new Label(msg.getBody());
+            fallback.getStyleClass().add(outgoing ? "bubble-out" : "bubble-in");
+            return fallback;
+        }
+
+        String mime = meta.mimeType();
+        if (mime.startsWith("image/")) return buildInlineImage(meta, outgoing);
+        if (mime.startsWith("video/")) return buildInlineVideo(meta, outgoing);
+        return buildFileCard(meta, outgoing);
+    }
+
+    private Node buildInlineImage(ServiceMessage.AttachmentMeta meta, boolean outgoing) {
+        try {
+            byte[] data = messageService.readAttachmentBytes(meta.id());
+            Image img = new Image(new ByteArrayInputStream(data));
+
+            ImageView iv = new ImageView(img);
+            iv.setPreserveRatio(true);
+            iv.setFitWidth(420);
+            iv.setSmooth(true);
+            iv.setCache(true);
+
+            StackPane media = new StackPane(iv);
+            media.getStyleClass().addAll("media-bubble", outgoing ? "media-out" : "media-in");
+
+            // Clip rounded corners (clean outline)
+            Rectangle clip = new Rectangle();
+            clip.setArcWidth(18);
+            clip.setArcHeight(18);
+            clip.widthProperty().bind(media.widthProperty());
+            clip.heightProperty().bind(media.heightProperty());
+            media.setClip(clip);
+
+            media.setOnMouseClicked(e -> openAttachment(meta));
+            return media;
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return buildFileCard(meta, outgoing);
+        }
+    }
+
+
+    private Node buildFileCard(ServiceMessage.AttachmentMeta meta, boolean outgoing) {
+        Label name = new Label(meta.fileName());
+        name.getStyleClass().add("file-name");
+
+        Label info = new Label(humanSize(meta.sizeBytes()) + " • " + meta.mimeType());
+        info.getStyleClass().add("file-meta");
+
+        FontIcon icon = new FontIcon("mdi2f-file-outline");
+        icon.getStyleClass().add("file-icon");
+
+        VBox texts = new VBox(2, name, info);
+        HBox card = new HBox(12, icon, texts);
+        card.getStyleClass().addAll("file-card", outgoing ? "file-card-out" : "file-card-in");
+
+        card.setOnMouseClicked(e -> openAttachment(meta));
+        card.setCursor(javafx.scene.Cursor.HAND);
+
+        return card;
+    }
+
+
+    private void openAttachment(ServiceMessage.AttachmentMeta meta) {
+        try {
+            byte[] data = messageService.readAttachmentBytes(meta.id());
+
+            String safe = meta.fileName().replaceAll("[\\\\/:*?\"<>|]", "_");
+            Path tmp = Files.createTempFile("yedik_", "_" + safe);
+            Files.write(tmp, data);
+
+            Desktop.getDesktop().open(tmp.toFile());
+        } catch (Exception ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private String humanSize(long bytes) {
+        double b = bytes;
+        String[] u = {"B","KB","MB","GB"};
+        int i = 0;
+        while (b >= 1024 && i < u.length-1) { b /= 1024; i++; }
+        return String.format(java.util.Locale.US, "%.1f %s", b, u[i]);
+    }
+
+    private static final java.net.http.HttpClient HTTP = java.net.http.HttpClient.newHttpClient();
+    private final java.util.Map<String, YoutubeMeta> ytCache = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private record YoutubeMeta(String title, String thumbUrl, String site) {}
+
+    private String extractYoutubeId(String url) {
+        try {
+            java.net.URI u = new java.net.URI(url);
+            String host = u.getHost() == null ? "" : u.getHost().toLowerCase();
+            String path = u.getPath() == null ? "" : u.getPath();
+
+            if (host.contains("youtu.be")) {
+                String id = path.startsWith("/") ? path.substring(1) : path;
+                int cut = id.indexOf('?');
+                return cut > 0 ? id.substring(0, cut) : id;
+            }
+
+            if (host.contains("youtube.com")) {
+                String q = u.getRawQuery();
+                if (q == null) return null;
+                for (String part : q.split("&")) {
+                    if (part.startsWith("v=")) return part.substring(2);
+                }
+            }
+            return null;
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private void fetchYoutubeMetaAsync(String url, java.util.function.Consumer<YoutubeMeta> onDone) {
+        if (ytCache.containsKey(url)) {
+            onDone.accept(ytCache.get(url));
+            return;
+        }
+
+        String vid = extractYoutubeId(url);
+        String thumb = (vid == null) ? null : ("https://img.youtube.com/vi/" + vid + "/hqdefault.jpg");
+
+        try {
+            String oembed = "https://www.youtube.com/oembed?url=" +
+                    java.net.URLEncoder.encode(url, java.nio.charset.StandardCharsets.UTF_8) +
+                    "&format=json";
+
+            var req = java.net.http.HttpRequest.newBuilder(new java.net.URI(oembed)).GET().build();
+
+            HTTP.sendAsync(req, java.net.http.HttpResponse.BodyHandlers.ofString())
+                    .thenApply(r -> r.body())
+                    .thenApply(json -> {
+                        // minimal JSON parse without extra libs:
+                        String title = extractJsonString(json, "title");
+                        return new YoutubeMeta(title != null ? title : "YouTube", thumb, "youtube.com");
+                    })
+                    .exceptionally(ex -> new YoutubeMeta("YouTube", thumb, "youtube.com"))
+                    .thenAccept(meta -> {
+                        ytCache.put(url, meta);
+                        javafx.application.Platform.runLater(() -> onDone.accept(meta));
+                    });
+
+        } catch (Exception e) {
+            onDone.accept(new YoutubeMeta("YouTube", thumb, "youtube.com"));
+        }
+    }
+
+    private String extractJsonString(String json, String key) {
+        // naive but works for oEmbed response
+        String needle = "\"" + key + "\":";
+        int i = json.indexOf(needle);
+        if (i < 0) return null;
+        int q1 = json.indexOf('"', i + needle.length());
+        if (q1 < 0) return null;
+        int q2 = json.indexOf('"', q1 + 1);
+        if (q2 < 0) return null;
+        return json.substring(q1 + 1, q2);
+    }
+
+    private Node buildYoutubePreviewCard(String url, boolean outgoing) {
+        // skeleton card (instant)
+        var title = new Label("Loading…");
+        title.getStyleClass().add("lp-title");
+
+        var domain = new Label("youtube.com");
+        domain.getStyleClass().add("lp-domain");
+
+        var thumb = new javafx.scene.image.ImageView();
+        thumb.setFitWidth(320);
+        thumb.setFitHeight(180);
+        thumb.setPreserveRatio(false);
+        thumb.getStyleClass().add("lp-thumb");
+
+        var play = new Label("▶");
+        play.getStyleClass().add("lp-play");
+
+        var thumbWrap = new StackPane(thumb, play);
+        thumbWrap.getStyleClass().add("lp-thumb-wrap");
+
+        var body = new VBox(6, title, domain);
+        body.getStyleClass().add("lp-body");
+
+        var card = new VBox(thumbWrap, body);
+        card.getStyleClass().addAll("link-card", outgoing ? "link-card-out" : "link-card-in");
+        card.setOnMouseClicked(e -> openInBrowser(url));
+        card.setCursor(javafx.scene.Cursor.HAND);
+
+        // async fill
+        fetchYoutubeMetaAsync(url, meta -> {
+            title.setText(meta.title());
+            domain.setText(meta.site());
+            if (meta.thumbUrl() != null) {
+                thumb.setImage(new javafx.scene.image.Image(meta.thumbUrl(), true));
+            }
+        });
+
+        return card;
+    }
+
+    private Node buildInlineVideo(ServiceMessage.AttachmentMeta meta, boolean outgoing) {
+
+        initVlcOnce();
+
+        Label overlay = new Label("▶");
+        overlay.getStyleClass().add("vid-play");
+
+        Label loading = new Label("Chargement…");
+        loading.getStyleClass().add("vid-loading");
+
+        StackPane player = new StackPane(loading, overlay);
+        player.getStyleClass().addAll("media-bubble", outgoing ? "media-out" : "media-in");
+        player.setPrefWidth(420);
+
+        Rectangle clip = new Rectangle();
+        clip.setArcWidth(18);
+        clip.setArcHeight(18);
+        clip.widthProperty().bind(player.widthProperty());
+        clip.heightProperty().bind(player.heightProperty());
+        player.setClip(clip);
+
+        AtomicReference<EmbeddedMediaPlayerComponent> compRef = new AtomicReference<>();
+        AtomicReference<Path> tmpRef = new AtomicReference<>();
+        AtomicBoolean disposed = new AtomicBoolean(false);
+
+        CompletableFuture
+                .supplyAsync(() -> {
+                    try {
+                        byte[] data = messageService.readAttachmentBytes(meta.id());
+                        String safe = meta.fileName().replaceAll("[\\\\/:*?\"<>|]", "_");
+                        Path tmp = Files.createTempFile("yedik_vlc_", "_" + safe);
+                        Files.write(tmp, data);
+                        return tmp;
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                })
+                .thenAccept(tmp -> {
+                    tmpRef.set(tmp);
+
+                    SwingUtilities.invokeLater(() -> {
+
+                        EmbeddedMediaPlayerComponent comp = new EmbeddedMediaPlayerComponent();
+                        compRef.set(comp);
+
+                        SwingNode swingNode = new SwingNode();
+                        swingNode.setContent(comp);
+
+                        Platform.runLater(() -> {
+                            player.getChildren().setAll(swingNode, overlay);
+
+                            player.setOnMouseClicked(e -> {
+                                if (disposed.get()) return;
+
+                                EmbeddedMediaPlayerComponent c = compRef.get();
+                                if (c == null) return;
+
+                                vlcEdt(() -> {
+                                    try {
+                                        boolean isPlaying = c.mediaPlayer().status().isPlaying();
+
+                                        if (isPlaying) {
+                                            c.mediaPlayer().controls().pause();
+                                            Platform.runLater(() -> overlay.setVisible(true));
+                                        } else {
+                                            c.mediaPlayer().media().play(tmp.toAbsolutePath().toString());
+                                            Platform.runLater(() -> overlay.setVisible(false));
+                                        }
+                                    } catch (Throwable t) {
+                                        t.printStackTrace();
+                                    }
+                                });
+                            });
+                        });
+                    });
+                })
+                .exceptionally(ex -> {
+                    Platform.runLater(() -> {
+                        ex.printStackTrace();
+                        player.getChildren().setAll(buildFileCard(meta, outgoing));
+                    });
+                    return null;
+                });
+
+        // SAFE cleanup
+        player.sceneProperty().addListener((obs, oldScene, newScene) -> {
+            if (oldScene != null && newScene == null) {
+                disposed.set(true);
+
+                EmbeddedMediaPlayerComponent comp = compRef.getAndSet(null);
+                Path tmp = tmpRef.getAndSet(null);
+
+                if (comp != null) {
+                    vlcEdt(() -> {
+                        try { comp.mediaPlayer().controls().stop(); } catch (Throwable ignored) {}
+                        try { comp.release(); } catch (Throwable ignored) {}
+                    });
+                }
+
+                if (tmp != null) {
+                    try { Files.deleteIfExists(tmp); } catch (Exception ignored) {}
+                }
+            }
+        });
+
+        return player;
+    }
 
 
 }

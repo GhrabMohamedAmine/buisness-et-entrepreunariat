@@ -13,7 +13,11 @@ module org.example.yedikpromax {
     requires com.almasb.fxgl.all;
     requires atlantafx.base;
     requires java.sql;
-
+    requires java.desktop;
+    requires java.net.http;
+    requires com.sun.jna;
+    requires uk.co.caprica.vlcj;
+    requires javafx.swing;
     opens org.example.yedikpromax to javafx.fxml;
     exports org.example.yedikpromax;
     exports controller;

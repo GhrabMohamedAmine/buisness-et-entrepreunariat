@@ -4,11 +4,14 @@ import model.Message;
 import model.ParticipantView;
 import utils.DBConnection;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
 public class ServiceMessage implements IService<Message> {
+    public record AttachmentMeta(long id, String fileName, String mimeType, long sizeBytes) {}
 
     private final Connection connection;
 
@@ -16,9 +19,9 @@ public class ServiceMessage implements IService<Message> {
         connection = DBConnection.getInstance().getConnection();
     }
 
-    public void ajouter(Message message) throws SQLException {
+    public long ajouter(Message message) throws SQLException {
 
-        String insert = "INSERT INTO messages(conversation_id, sender_id, body) VALUES(?,?,?)";
+        String insert = "INSERT INTO messages(conversation_id, sender_id, body, kind) VALUES (?,?,?,?)";
 
         long newMessageId;
 
@@ -26,10 +29,11 @@ public class ServiceMessage implements IService<Message> {
             ps.setLong(1, message.getConversationId());
             ps.setInt(2, message.getSenderId());
             ps.setString(3, message.getBody());
+            ps.setString(4, message.getKind() == null ? "TEXT" : message.getKind());
             ps.executeUpdate();
 
             try (ResultSet rs = ps.getGeneratedKeys()) {
-                rs.next();
+                if (!rs.next()) throw new SQLException("Insert message failed: no generated key returned.");
                 newMessageId = rs.getLong(1);
             }
         }
@@ -40,10 +44,9 @@ public class ServiceMessage implements IService<Message> {
             ps2.setLong(2, message.getConversationId());
             ps2.executeUpdate();
         }
+
+        return newMessageId;
     }
-
-
-
 
     @Override
     public void modifier(Message message) throws SQLException {
@@ -72,17 +75,10 @@ public class ServiceMessage implements IService<Message> {
         }
     }
 
-
-
-    @Override
-    public List<Message> recuperer() throws SQLException {
-        return new ArrayList<>();
-    }
-
     public List<Message> listByConversation(long conversationId, int limit) throws SQLException {
         List<Message> out = new ArrayList<>();
         String sql =
-                "SELECT id, conversation_id, sender_id, body, created_at, edited_at\n" +
+                "SELECT id, conversation_id, sender_id, body, kind, created_at, edited_at\n" +
                         "FROM messages\n" +
                         "WHERE conversation_id = ?\n" +
                         "ORDER BY created_at ASC\n" +
@@ -98,13 +94,15 @@ public class ServiceMessage implements IService<Message> {
                             rs.getInt("sender_id"),
                             rs.getString("body"),
                             rs.getTimestamp("created_at"),
-                            rs.getTimestamp("edited_at")
+                            rs.getTimestamp("edited_at"),
+                            rs.getString("kind")
                     ));
                 }
             }
         }
         return out;
     }
+
 
     public void markRead(long conversationId, int userId, long lastReadMessageId) throws SQLException {
         String sql =
@@ -174,5 +172,54 @@ public class ServiceMessage implements IService<Message> {
         }
         return "Utilisateur";
     }
+
+    public void insertAttachmentBlob(long messageId,
+                                     String fileName,
+                                     String mimeType,
+                                     long sizeBytes,
+                                     InputStream inputStream) throws SQLException {
+        String sql = """
+        INSERT INTO message_attachments(message_id, file_name, mime_type, size_bytes, data)
+        VALUES (?,?,?,?,?)
+    """;
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, messageId);
+            ps.setString(2, fileName);
+            ps.setString(3, mimeType);
+            ps.setLong(4, sizeBytes);
+            ps.setBinaryStream(5, inputStream, sizeBytes);
+            ps.executeUpdate();
+        }
+    }
+
+    public AttachmentMeta getAttachmentMeta(long messageId) throws SQLException {
+        String sql = "SELECT id, file_name, mime_type, size_bytes FROM message_attachments WHERE message_id = ? LIMIT 1";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, messageId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return null;
+                return new AttachmentMeta(
+                        rs.getLong("id"),
+                        rs.getString("file_name"),
+                        rs.getString("mime_type"),
+                        rs.getLong("size_bytes")
+                );
+            }
+        }
+    }
+
+    public byte[] readAttachmentBytes(long attachmentId) throws SQLException, IOException {
+        String sql = "SELECT data FROM message_attachments WHERE id = ? LIMIT 1";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, attachmentId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return null;
+                try (InputStream in = rs.getBinaryStream(1)) {
+                    return in.readAllBytes();
+                }
+            }
+        }
+    }
+
 
 }

@@ -7,16 +7,18 @@ public class Message {
     private String body;
     private Timestamp createdAt;
     private Timestamp editedAt;
+    private String kind;
 
     public Message() {}
 
-    public Message(long id, long conversationId, int senderId, String body, Timestamp createdAt, Timestamp editedAt) {
+    public Message(long id, long conversationId, int senderId, String body, Timestamp createdAt, Timestamp editedAt, String kind) {
         this.id = id;
         this.conversationId = conversationId;
         this.senderId = senderId;
         this.body = body;
         this.createdAt = createdAt;
         this.editedAt = editedAt;
+        this.kind = kind;
     }
 
     public Message(long conversationId, int senderId, String body) {
@@ -43,8 +45,11 @@ public class Message {
     public Timestamp getEditedAt() { return editedAt; }
     public void setEditedAt(Timestamp editedAt) { this.editedAt = editedAt; }
 
+    public String getKind() { return kind; }
+    public void setKind(String kind) { this.kind = kind; }
+
     @Override
     public String toString() {
-        return "Message{id=" + id + ", conversationId=" + conversationId + ", senderId=" + senderId + ", body='" + body + "', createdAt=" + createdAt + ", editedAt=" + editedAt + "}";
+        return "Message{id=" + id + ", conversationId=" + conversationId + ", senderId=" + senderId + ", body='" + body + "', createdAt=" + createdAt + ", editedAt=" + editedAt + ", kind='" + kind + "'}";
     }
 }
