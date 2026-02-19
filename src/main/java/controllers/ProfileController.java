@@ -28,14 +28,15 @@ import java.util.Optional;
 import java.util.ResourceBundle;
 
 public class ProfileController implements Initializable {
-
-    // --- Elements venant de Profile1.fxml (Le conteneur principal) ---
     @FXML
     private StackPane contentArea;
     @FXML private Label topName;
     @FXML private Circle topAvatar;
-
-    // --- Elements venant de Profile2.fxml (Le formulaire) ---
+    @FXML private Label lblErrorNom;
+    @FXML private Label lblErrorPrenom;
+    @FXML private Label lblErrorEmail;
+    @FXML private Label lblErrorPhone;
+    @FXML private Label lblErrorDept;
     @FXML private TextField tfNom;
     @FXML private TextField tfPrenom;
     @FXML private TextField tfEmail;
@@ -45,8 +46,8 @@ public class ProfileController implements Initializable {
     @FXML private TextField tfDateInscription;
 
     // --- Gestion de l'image ---
-    @FXML private Circle profileCircle; // Lié au cercle dans le FXML
-    private String selectedImagePath;   // Stocke le chemin de la nouvelle image
+    @FXML private Circle profileCircle;
+    private String selectedImagePath;
 
     private UserService userService;
     private User userConnecte;
@@ -170,22 +171,96 @@ public class ProfileController implements Initializable {
     // --- ACTION : Sauvegarder ---
     @FXML
     private void sauvegarderModifications() {
-        try {
-            // Mise à jour de l'objet User
-            userConnecte.setName(tfNom.getText());
-            userConnecte.setFirstName(tfPrenom.getText());
-            userConnecte.setEmail(tfEmail.getText());
-            userConnecte.setPhone(tfTelephone.getText());
-            userConnecte.setDepartment(tfDepartement.getText());
+        // 1. Nettoyer les erreurs précédentes
+        clearErrors();
+        boolean isValid = true;
 
-            // Sauvegarde de l'image si elle a changé
+        // 2. Récupérer les valeurs
+        String nom = tfNom.getText();
+        String prenom = tfPrenom.getText();
+        String email = tfEmail.getText();
+        String phone = tfTelephone.getText();
+        String dept = tfDepartement.getText();
+
+        // --- VALIDATION (REGEX) ---
+
+        // Regex pour Nom, Prénom, Département (Lettres, espaces, tirets)
+        String nameRegex = "^[a-zA-ZÀ-ÿ\\s\\-]+$";
+
+        // Nom
+        if (nom.isEmpty()) {
+            showInlineError(lblErrorNom, "Le nom est requis.");
+            isValid = false;
+        } else if (!nom.matches(nameRegex)) {
+            showInlineError(lblErrorNom, "Lettres uniquement.");
+            isValid = false;
+        }
+
+        // Prénom
+        if (prenom.isEmpty()) {
+            showInlineError(lblErrorPrenom, "Le prénom est requis.");
+            isValid = false;
+        } else if (!prenom.matches(nameRegex)) {
+            showInlineError(lblErrorPrenom, "Lettres uniquement.");
+            isValid = false;
+        }
+
+        // Email
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[a-zA-Z]{2,}$";
+        if (email.isEmpty()) {
+            showInlineError(lblErrorEmail, "L'email est requis.");
+            isValid = false;
+        } else if (!email.matches(emailRegex)) {
+            showInlineError(lblErrorEmail, "Format email invalide.");
+            isValid = false;
+        }
+
+        // Téléphone (Chiffres, espaces, +)
+        String phoneRegex = "^[0-9\\s+]+$";
+        if (phone.isEmpty()) {
+            showInlineError(lblErrorPhone, "Le téléphone est requis.");
+            isValid = false;
+        } else if (!phone.matches(phoneRegex)) {
+            showInlineError(lblErrorPhone, "Chiffres et '+' uniquement.");
+            isValid = false;
+        }
+
+        // Département
+        if (dept.isEmpty()) {
+            showInlineError(lblErrorDept, "Le département est requis.");
+            isValid = false;
+        } else if (!dept.matches(nameRegex)) {
+            showInlineError(lblErrorDept, "Lettres uniquement.");
+            isValid = false;
+        }
+
+        // Si une erreur est détectée, on arrête ici
+        if (!isValid) {
+            return;
+        }
+
+        // --- SAUVEGARDE EN BASE DE DONNÉES ---
+        try {
+            // Mise à jour de l'objet User localement
+            userConnecte.setName(nom);
+            userConnecte.setFirstName(prenom);
+            userConnecte.setEmail(email);
+            userConnecte.setPhone(phone);
+            userConnecte.setDepartment(dept);
+
+            // Mise à jour de l'image si changée
             if (selectedImagePath != null) {
                 userConnecte.setImageLink(selectedImagePath);
             }
 
             // Appel au service BDD
-            userService.modifierProfil(userConnecte);
+            userService.modifierProfil(userConnecte); // [cite: 58]
+
+            // Succès
             showAlert(Alert.AlertType.INFORMATION, "Succès", "Profil mis à jour avec succès.");
+
+            // Mise à jour optionnelle de l'affichage du haut (Header) si présent
+            setupTopProfile();
 
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Erreur BDD", "Impossible de modifier le profil : " + e.getMessage());
@@ -282,5 +357,20 @@ public class ProfileController implements Initializable {
             System.err.println("Impossible de charger le fichier FXML : " + fxmlPath);
             e.printStackTrace();
         }
+    }
+    // Affiche le message d'erreur et rend le label visible
+    private void showInlineError(Label label, String text) {
+        label.setText(text);
+        label.setVisible(true);
+        label.setManaged(true);
+    }
+
+    // Cache toutes les erreurs
+    private void clearErrors() {
+        if(lblErrorNom != null) { lblErrorNom.setVisible(false); lblErrorNom.setManaged(false); }
+        if(lblErrorPrenom != null) { lblErrorPrenom.setVisible(false); lblErrorPrenom.setManaged(false); }
+        if(lblErrorEmail != null) { lblErrorEmail.setVisible(false); lblErrorEmail.setManaged(false); }
+        if(lblErrorPhone != null) { lblErrorPhone.setVisible(false); lblErrorPhone.setManaged(false); }
+        if(lblErrorDept != null) { lblErrorDept.setVisible(false); lblErrorDept.setManaged(false); }
     }
 }

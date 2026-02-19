@@ -41,10 +41,6 @@ public class SignInController {
                 // 2. Get the current user
                 User currentUser = UserService.getCurrentUser();
 
-                // ---------------------------------------------------------
-                // NEW: Check Status Condition
-                // ---------------------------------------------------------
-                // NOTE: Ensure your User entity has getStatut() or getStatus()
                 String status = currentUser.getStatus();
 
                 if (status == null || (!status.equalsIgnoreCase("actif") && !status.equalsIgnoreCase("active"))) {

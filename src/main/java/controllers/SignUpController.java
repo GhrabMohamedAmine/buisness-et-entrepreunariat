@@ -26,8 +26,11 @@ import java.time.LocalDate;
 import java.util.ResourceBundle;
 
 public class SignUpController implements Initializable {
-
-    // --- Champs existants ---
+    @FXML private Label firstNameError;
+    @FXML private Label lastNameError;
+    @FXML private Label emailError;
+    @FXML private Label phoneError;
+    @FXML private Label deptError;
     @FXML private TextField firstNameField;
     @FXML private TextField lastNameField;
     @FXML private TextField emailField;
@@ -80,65 +83,99 @@ public class SignUpController implements Initializable {
         }
     }
 
-    // --- MÉTHODE MISE À JOUR : INSCRIPTION ---
     @FXML
     void handleSignUp(ActionEvent event) {
+        // 1. Réinitialiser les erreurs précédentes
+        clearErrors();
+        boolean isValid = true; // On part du principe que c'est valide
+
         // Récupération des valeurs
         String nom = lastNameField.getText();
         String prenom = firstNameField.getText();
         String email = emailField.getText();
         String phone = phoneField.getText();
-        // Valeur par défaut si null
-        String role = (roleComboBox.getValue() != null) ? roleComboBox.getValue() : "Employer";
         String dept = deptField.getText();
         String mdp = passwordField.getText();
+
+        String role = (roleComboBox.getValue() != null) ? roleComboBox.getValue() : "Employer";
         String dateInscription = LocalDate.now().toString();
 
-        // Validation simple
-        if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || mdp.isEmpty()) {
-            showAlert("Champs manquants", "Veuillez remplir au moins le nom, prénom, email et mot de passe.");
+        // --- VALIDATION NOM ---
+        String nameRegex = "^[a-zA-ZÀ-ÿ\\s\\-]+$";
+        if (nom.isEmpty()) {
+            showInlineError(lastNameError, "Le nom est requis.");
+            isValid = false;
+        } else if (!nom.matches(nameRegex)) {
+            showInlineError(lastNameError, "Lettres uniquement.");
+            isValid = false;
+        }
+
+        // --- VALIDATION PRÉNOM ---
+        if (prenom.isEmpty()) {
+            showInlineError(firstNameError, "Le prénom est requis.");
+            isValid = false;
+        } else if (!prenom.matches(nameRegex)) {
+            showInlineError(firstNameError, "Lettres uniquement.");
+            isValid = false;
+        }
+
+        // --- VALIDATION EMAIL ---
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[a-zA-Z]{2,}$";
+        if (email.isEmpty()) {
+            showInlineError(emailError, "L'email est requis.");
+            isValid = false;
+        } else if (!email.matches(emailRegex)) {
+            showInlineError(emailError, "Format email invalide.");
+            isValid = false;
+        }
+
+        // --- VALIDATION TÉLÉPHONE ---
+        String phoneRegex = "^[0-9\\s+]+$";
+        if (phone.isEmpty()) {
+            showInlineError(phoneError, "Le téléphone est requis.");
+            isValid = false;
+        } else if (!phone.matches(phoneRegex)) {
+            showInlineError(phoneError, "Chiffres et '+' uniquement.");
+            isValid = false;
+        }
+
+        // --- VALIDATION DÉPARTEMENT ---
+        if (dept.isEmpty()) {
+            showInlineError(deptError, "Le département est requis.");
+            isValid = false;
+        } else if (!dept.matches(nameRegex)) {
+            showInlineError(deptError, "Lettres uniquement.");
+            isValid = false;
+        }
+
+        // --- VALIDATION MOT DE PASSE (Optionnel, juste vide pour l'instant) ---
+        if (mdp.isEmpty()) {
+            showAlert("Erreur", "Le mot de passe est obligatoire."); // On garde le pop-up ou on ajoute un label pour le MDP aussi
+            isValid = false;
+        }
+
+        // SI UNE ERREUR A ÉTÉ DÉTECTÉE, ON ARRÊTE TOUT ICI
+        if (!isValid) {
             return;
         }
 
-        // Gestion de l'image par défaut si l'utilisateur n'en a pas choisi
-        if (imagePath == null) {
-            imagePath = "";
-        }
+        // --- SUITE DU TRAITEMENT (Création User) ---
+        if (imagePath == null) imagePath = "";
 
-        // Création de l'utilisateur avec le NOUVEAU constructeur (incluant imagePath à la fin)
-        User newUser = new User(
-                0,              // ID (auto-incrémenté en DB)
-                nom,
-                prenom,
-                email,
-                phone,
-                role,
-                dept,
-                "Actif",        // Statut par défaut
-                dateInscription,
-                imagePath       // Le lien de l'image
-        );
+        User newUser = new User(0, nom, prenom, email, phone, role, dept, "Actif", dateInscription, imagePath);
 
         try {
-            // Appel au service pour sauvegarder
             userService.signupAndLogin(newUser, mdp);
-
-            // Succès
-            System.out.println("Succès : Utilisateur " + email + " inscrit avec l'image : " + imagePath);
-
-            // Redirection vers la suite (ex: SignUp2 ou Dashboard)
             switchScene(event, "/SignUp/SignUp2.fxml");
-
         } catch (SQLException e) {
             e.printStackTrace();
+            // Ici on garde le pop-up car c'est une erreur système (base de données), pas une erreur de saisie
             showAlert("Erreur SQL", "Impossible de créer le compte : " + e.getMessage());
         } catch (Exception e) {
             e.printStackTrace();
-            showAlert("Erreur", "Une erreur inattendue est survenue.");
         }
     }
 
-    // --- Navigation et Utilitaires ---
 
     @FXML
     void handleBack(ActionEvent event) {
@@ -200,5 +237,20 @@ public class SignUpController implements Initializable {
 
     public void goToDashboard(MouseEvent event) {
         switchScen(event, "/Profile/Profile1.fxml");
+    }
+    // Méthode pour afficher une erreur sous un champ spécifique
+    private void showInlineError(Label errorLabel, String message) {
+        errorLabel.setText(message);
+        errorLabel.setVisible(true);
+        errorLabel.setManaged(true); // Le label reprend sa place
+    }
+
+    // Méthode pour tout nettoyer avant une nouvelle vérification
+    private void clearErrors() {
+        if(firstNameError != null) { firstNameError.setVisible(false); firstNameError.setManaged(false); }
+        if(lastNameError != null) { lastNameError.setVisible(false); lastNameError.setManaged(false); }
+        if(emailError != null) { emailError.setVisible(false); emailError.setManaged(false); }
+        if(phoneError != null) { phoneError.setVisible(false); phoneError.setManaged(false); }
+        if(deptError != null) { deptError.setVisible(false); deptError.setManaged(false); }
     }
 }

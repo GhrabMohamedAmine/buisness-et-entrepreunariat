@@ -47,28 +47,30 @@
                         </HBox>
                         <HBox spacing="15.0">
                             <VBox spacing="5.0" HBox.hgrow="ALWAYS">
-
                                 <Label styleClass="input-label" text="Prénom" />
                                 <TextField fx:id="firstNameField" promptText="Sarah" styleClass="login-input" />
+                                <Label fx:id="firstNameError" text="Format invalide" textFill="red" visible="false" style="-fx-font-size: 10px;" managed="false"/>
                             </VBox>
 
                             <VBox spacing="5.0" HBox.hgrow="ALWAYS">
                                 <Label styleClass="input-label" text="Nom" />
                                 <TextField fx:id="lastNameField" promptText="Connor" styleClass="login-input" />
+                                <Label fx:id="lastNameError" text="Format invalide" textFill="red" visible="false" style="-fx-font-size: 10px;" managed="false"/>
 
                             </VBox>
                         </HBox>
 
                         <VBox spacing="5.0">
                             <Label styleClass="input-label" text="Adresse Email" />
-
                             <TextField fx:id="emailField" promptText="sarah@company.com" styleClass="login-input" />
+                            <Label fx:id="emailError" text="Format invalide" textFill="red" visible="false" style="-fx-font-size: 10px;" managed="false"/>
                         </VBox>
 
                         <VBox spacing="5.0">
                             <Label styleClass="input-label" text="Téléphone"
                             />
                             <TextField fx:id="phoneField" promptText="+216 22 333 444" styleClass="login-input" />
+                            <Label fx:id="phoneError" text="Format invalide" textFill="red" visible="false" style="-fx-font-size: 10px;" managed="false"/>
                         </VBox>
 
                         <HBox spacing="15.0">
@@ -95,6 +97,7 @@
                                 <Label styleClass="input-label" text="Département" />
 
                                 <TextField fx:id="deptField" promptText="ex: Ingénierie" styleClass="login-input" />
+                                <Label fx:id="deptError" text="Format invalide" textFill="red" visible="false" style="-fx-font-size: 10px;" managed="false"/>
                             </VBox>
                         </HBox>
 

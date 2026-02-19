@@ -34,12 +34,18 @@ public class ReclamationController implements Initializable {
     @FXML private Circle topAvatar;
     @FXML
     private TableView<Reclamation> reclamationTable;
-
     @FXML
     private TableColumn<Reclamation, String> colTitre, colCategorie, colProjet, colStatut, colDate;
-
     @FXML
     private TableColumn<Reclamation, Void> colReponse;
+    @FXML private TextField titreField;
+    @FXML private TextField categorieField;
+    @FXML private TextField projetField;
+    @FXML private ComboBox<String> statutCombo;
+
+    @FXML private Label titreError;
+    @FXML private Label categorieError;
+    @FXML private Label projetError;
 
 
 
@@ -73,12 +79,13 @@ public class ReclamationController implements Initializable {
     public void initialize(URL url, ResourceBundle resourceBundle) {
         // Initialisation du service
         reclamationService = new ReclamationService();
-
+        if (topName != null ) {
+            loadCurrentUserProfile();
+        }
         if (reclamationTable != null) {
             setupTable();
             loadData(); // Chargement des données réelles
         }
-        loadCurrentUserProfile();
     }
 
     private void loadData() {
@@ -250,17 +257,15 @@ public class ReclamationController implements Initializable {
         }
     }
 
-    @FXML private TextField titreField;
-    @FXML private TextField categorieField;
-    @FXML private TextField projetField;
-    @FXML private ComboBox<String> statutCombo;
-    @FXML private Button submitBtn;
+
 
     // NOTE : J'ai supprimé @FXML private TextField dateField; car il n'existe plus dans le FXML
 
     @FXML
     public void saveReclamation(ActionEvent event) {
-        // 1. Récupération des données saisies
+        if (!validerSaisie()) {
+            return;
+        }
         String titre = titreField.getText();
         String cat = categorieField.getText();
         String proj = projetField.getText();
@@ -285,7 +290,7 @@ public class ReclamationController implements Initializable {
     public void closePopup(ActionEvent event) {
         ((Node) event.getSource()).getScene().getWindow().hide();
     }
-    // 1. Variable pour stocker l'ID de la réclamation en cours de modification
+    // 1. Variable pour stocker l'updateReclamationID de la réclamation en cours de modification
     private int idAModifier = 0;
 
     // 2. Méthode pour pré-remplir les champs (appelée à l'ouverture du popup)
@@ -302,6 +307,9 @@ public class ReclamationController implements Initializable {
     // 3. Méthode appelée par le bouton "Modifier/Valider" du popup
     @FXML
     public void updateReclamation(ActionEvent event) {
+        if (!validerSaisie()) {
+            return;
+        }
         // Récupérer les nouvelles valeurs
         String titre = titreField.getText();
         String cat = categorieField.getText();
@@ -345,5 +353,59 @@ public class ReclamationController implements Initializable {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+    private void showInlineError(Label label, String text) {
+        if (label != null) {
+            label.setText(text);
+            label.setVisible(true);
+            label.setManaged(true);
+        }
+    }
+
+    private void clearErrors() {
+        if (titreError != null) { titreError.setVisible(false); titreError.setManaged(false); }
+        if (categorieError != null) { categorieError.setVisible(false); categorieError.setManaged(false); }
+        if (projetError != null) { projetError.setVisible(false); projetError.setManaged(false); }
+    }
+
+    // --- FONCTION DE VALIDATION ---
+    private boolean validerSaisie() {
+        clearErrors();
+        boolean isValid = true;
+
+        String titre = titreField.getText();
+        String cat = categorieField.getText();
+        String projet = projetField.getText();
+
+        // 1. Validation Titre (Requis + Min 3 caractères)
+        if (titre == null || titre.trim().isEmpty()) {
+            showInlineError(titreError, "Le titre est obligatoire.");
+            isValid = false;
+        } else if (titre.length() < 3) {
+            showInlineError(titreError, "Le titre est trop court.");
+            isValid = false;
+        }
+
+        // 2. Validation Catégorie (Lettres et espaces uniquement)
+        // Regex: ^[a-zA-ZÀ-ÿ\s]+$
+        if (cat == null || cat.trim().isEmpty()) {
+            showInlineError(categorieError, "La catégorie est requise.");
+            isValid = false;
+        } else if (!cat.matches("^[a-zA-ZÀ-ÿ\\s]+$")) {
+            showInlineError(categorieError, "Lettres uniquement.");
+            isValid = false;
+        }
+
+        // 3. Validation Projet (Alphanumérique : Lettres, Chiffres, Espaces, Tirets)
+        // Regex: ^[a-zA-Z0-9\s\-]+$
+        if (projet == null || projet.trim().isEmpty()) {
+            showInlineError(projetError, "Le projet est requis.");
+            isValid = false;
+        } else if (!projet.matches("^[a-zA-Z0-9\\s\\-]+$")) {
+            showInlineError(projetError, "Caractères non autorisés.");
+            isValid = false;
+        }
+
+        return isValid;
     }
 }

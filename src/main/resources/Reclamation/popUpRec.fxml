@@ -11,12 +11,15 @@
       xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="controllers.ReclamationController">
 
+    <padding>
+        <Insets top="25" right="30" bottom="25" left="30"/>
+    </padding>
     <HBox alignment="CENTER_LEFT">
         <Label text="Nouvelle Réclamation" styleClass="modal-title" />
         <Region HBox.hgrow="ALWAYS" />
         <Button styleClass="close-btn" onAction="#closePopup">
             <graphic>
-                <FontIcon iconLiteral="mdi2p-paperclip" iconSize="24" iconColor="#9CA3AF" />
+                <FontIcon iconLiteral="mdi2c-close" iconSize="24" iconColor="#9CA3AF" />
             </graphic>
         </Button>
     </HBox>
@@ -31,17 +34,23 @@
                 <Label text="*" styleClass="required-star" />
             </HBox>
             <TextField fx:id="titreField" promptText="Titre de la réclamation" styleClass="form-input" />
+
+            <Label fx:id="titreError" text="Titre invalide" textFill="red" visible="false" managed="false" style="-fx-font-size: 10px;"/>
         </VBox>
 
         <HBox spacing="15">
             <VBox spacing="5" HBox.hgrow="ALWAYS">
                 <Label text="Catégorie" styleClass="form-label" />
                 <TextField fx:id="categorieField" promptText="Ex: Technique" styleClass="form-input" />
+
+                <Label fx:id="categorieError" text="Invalide" textFill="red" visible="false" managed="false" style="-fx-font-size: 10px;"/>
             </VBox>
 
             <VBox spacing="5" HBox.hgrow="ALWAYS">
                 <Label text="Projet lié" styleClass="form-label" />
                 <TextField fx:id="projetField" promptText="Ex: Projet A" styleClass="form-input" />
+
+                <Label fx:id="projetError" text="Invalide" textFill="red" visible="false" managed="false" style="-fx-font-size: 10px;"/>
             </VBox>
         </HBox>
 
@@ -73,7 +82,4 @@
         <Button fx:id="submitBtn" text="Envoyer" styleClass="btn-primary" onAction="#saveReclamation" />
     </HBox>
 
-    <padding>
-        <Insets top="24" right="24" bottom="24" left="24" />
-    </padding>
 </VBox>

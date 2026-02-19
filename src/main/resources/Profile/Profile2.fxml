@@ -57,40 +57,46 @@
                             <ColumnConstraints hgrow="ALWAYS" percentWidth="50" />
                         </columnConstraints>
 
-                        <VBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                        <VBox spacing="5" GridPane.columnIndex="0" GridPane.rowIndex="0">
                             <Label styleClass="field-label" text="Nom" />
                             <TextField fx:id="tfNom" promptText="Votre nom" styleClass="input-field" />
+                            <Label fx:id="lblErrorNom" text="Erreur" textFill="red" visible="false" managed="false" style="-fx-font-size: 10px;"/>
                         </VBox>
-                        <VBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="0">
+
+                        <VBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="0">
                             <Label styleClass="field-label" text="Prénom" />
                             <TextField fx:id="tfPrenom" promptText="Votre prénom" styleClass="input-field" />
+                            <Label fx:id="lblErrorPrenom" text="Erreur" textFill="red" visible="false" managed="false" style="-fx-font-size: 10px;"/>
                         </VBox>
 
-                        <VBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="1">
+                        <VBox spacing="5" GridPane.columnIndex="0" GridPane.rowIndex="1">
                             <Label styleClass="field-label" text="Adresse Email" />
                             <TextField fx:id="tfEmail" promptText="exemple@email.com" styleClass="input-field" />
-                        </VBox>
-                        <VBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="1">
-                            <Label styleClass="field-label" text="Téléphone" />
-                            <TextField fx:id="tfTelephone" promptText="+216 ..." styleClass="input-field" />
+                            <Label fx:id="lblErrorEmail" text="Erreur" textFill="red" visible="false" managed="false" style="-fx-font-size: 10px;"/>
                         </VBox>
 
-                        <VBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="2">
+                        <VBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="1">
+                            <Label styleClass="field-label" text="Téléphone" />
+                            <TextField fx:id="tfTelephone" promptText="+216 ..." styleClass="input-field" />
+                            <Label fx:id="lblErrorPhone" text="Erreur" textFill="red" visible="false" managed="false" style="-fx-font-size: 10px;"/>
+                        </VBox>
+
+                        <VBox spacing="5" GridPane.columnIndex="0" GridPane.rowIndex="2">
                             <Label styleClass="field-label" text="Département" />
                             <TextField fx:id="tfDepartement" promptText="IT, RH, Marketing..." styleClass="input-field" />
+                            <Label fx:id="lblErrorDept" text="Erreur" textFill="red" visible="false" managed="false" style="-fx-font-size: 10px;"/>
                         </VBox>
-                        <VBox spacing="8" GridPane.columnIndex="1" GridPane.rowIndex="2">
+
+                        <VBox spacing="5" GridPane.columnIndex="1" GridPane.rowIndex="2">
                             <Label styleClass="field-label" text="Rôle (Lecture seule)" />
                             <TextField fx:id="tfRole" disable="true" styleClass="input-field" style="-fx-opacity: 0.7;" />
                         </VBox>
 
-                        <VBox spacing="8" GridPane.columnIndex="0" GridPane.rowIndex="3">
+                        <VBox spacing="5" GridPane.columnIndex="0" GridPane.rowIndex="3">
                             <Label styleClass="field-label" text="Date d'inscription" />
                             <TextField fx:id="tfDateInscription" disable="true" styleClass="input-field" style="-fx-opacity: 0.7;" />
                         </VBox>
-
                     </GridPane>
-
                     <Separator />
 
                     <HBox alignment="CENTER_RIGHT" spacing="15">
