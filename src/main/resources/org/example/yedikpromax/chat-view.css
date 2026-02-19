@@ -464,6 +464,17 @@
     -fx-text-fill: #7c3aed;
     -fx-opacity: 0.85;
 }
+.bubble-out .label {
+    -fx-text-fill: white;
+}
+/* TextFlow Text nodes */
+.bubble-out Text {
+    -fx-fill: white;
+}
+
+.bubble-in Text {
+    -fx-fill: #000000;
+}
 
 .edited-in {
     -fx-font-size: 9px;

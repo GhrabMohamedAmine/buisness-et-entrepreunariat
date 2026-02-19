@@ -189,7 +189,7 @@ public class chatController {
 
 
 
-    private int currentUserId = 1;
+    private int currentUserId = 2;
     //==========================
     //HELPER METHODS
     //==========================
@@ -1858,7 +1858,12 @@ public class chatController {
 
         int last = 0;
         while (m.find()) {
-            if (m.start() > last) flow.getChildren().add(new javafx.scene.text.Text(text.substring(last, m.start())));
+            if (m.start() > last) {
+                javafx.scene.text.Text t = new javafx.scene.text.Text(text.substring(last, m.start()));
+                t.setFill(outgoing ? javafx.scene.paint.Color.WHITE : javafx.scene.paint.Color.BLACK);
+                flow.getChildren().add(t);
+            }
+
             String url = m.group(1);
             String vid = extractYoutubeId(url);
             if (vid != null) {
@@ -1873,7 +1878,12 @@ public class chatController {
 
             last = m.end();
         }
-        if (last < text.length()) flow.getChildren().add(new javafx.scene.text.Text(text.substring(last)));
+
+        if (last < text.length()) {
+            javafx.scene.text.Text t = new javafx.scene.text.Text(text.substring(last));
+            t.setFill(outgoing ? javafx.scene.paint.Color.WHITE : javafx.scene.paint.Color.BLACK);
+            flow.getChildren().add(t);
+        }
 
         VBox bubble = new VBox(flow);
         bubble.setMaxWidth(480);
