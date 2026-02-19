@@ -9,7 +9,7 @@
 <VBox spacing="10"
       xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="esprit.tn.pi_kavafx.controllers.FormationController">
+      fx:controller="controllers.formation_quiz_result.FormationController">
     <TextField fx:id="questionField" promptText="Question"/>
     <TextField fx:id="r1" promptText="Réponse 1"/>
     <TextField fx:id="r2" promptText="Réponse 2"/>

@@ -1,0 +1,127 @@
+/* Équivalent du sélecteur universel * et de body */
+.container {
+    -fx-background-color: #f0f2f5; /* Couleur de fond de la fenêtre */
+    -fx-font-family: "Segoe UI", "Roboto", "Helvetica", "Arial", sans-serif;
+}
+
+/* La carte principale (votre .container HTML) */
+.login-card {
+    -fx-background-color: white;
+    -fx-background-radius: 20px;
+    /* Équivalent de box-shadow: 0 10px 30px rgba(0,0,0,0.1) */
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 30, 0, 0, 10);
+}
+
+/* Panneau de Gauche */
+.left-panel {
+    -fx-background-radius: 20 0 0 20;
+    -fx-padding: 60px;
+}
+
+/* Équivalent de h1 */
+.title-label {
+    -fx-font-size: 32px; /* Correspond à 2.2rem environ */
+    -fx-text-fill: #1a1a1a;
+    -fx-font-weight: bold;
+}
+
+/* Équivalent de .description */
+.description {
+    -fx-text-fill: #666666;
+    -fx-line-spacing: 1.6em;
+    -fx-font-size: 14px;
+}
+
+/* Bouton Primaire (Violet Nexum) */
+.btn-primary {
+    -fx-background-color: #8A2BE2;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8px;
+    -fx-padding: 12 28;
+    -fx-cursor: hand;
+    /* Ombre du bouton */
+    -fx-effect: dropshadow(three-pass-box, rgba(138, 43, 226, 0.3), 15, 0, 0, 4);
+}
+
+.btn-primary:hover {
+    -fx-background-color: #7221C0;
+}
+
+/* Bouton Secondaire */
+.btn-secondary {
+    -fx-background-color: transparent;
+    -fx-text-fill: #666666;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.btn-secondary:hover {
+    -fx-text-fill: #8A2BE2;
+}
+
+/* Panneau de Droite (Image et Dégradé) */
+.right-panel {
+    -fx-background-radius: 0 20 20 0;
+    /* Dégradé linéaire de secours (135deg) */
+    -fx-background-color: linear-gradient(from 0% 0% to 100% 100%, #2e1a47 0%, #4b2c85 100%);
+
+    /* Image d'illustration */
+    /* Assurez-vous d'avoir l'image localement ou utilisez l'URL complète */
+    -fx-background-image: url('illustration_sphere.png');
+    -fx-background-size: cover;
+    -fx-background-position: center;
+    -fx-background-repeat: no-repeat;
+}
+/* Styles pour le formulaire de connexion */
+.btn-back {
+    -fx-background-color: transparent;
+    -fx-text-fill: #6b7280;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.input-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #374151;
+}
+
+.login-input {
+    -fx-background-color: #f9fafb;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 10;
+}
+
+.login-input:focused {
+    -fx-border-color: -color-nexum-violet;
+    -fx-background-color: white;
+}
+
+.forgot-link, .signup-link {
+    -fx-text-fill: -color-nexum-violet;
+    -fx-font-weight: bold;
+    -fx-underline: false;
+}
+
+.btn-primary-large {
+    -fx-background-color: -color-nexum-violet;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-background-radius: 10;
+    -fx-padding: 12;
+    -fx-cursor: hand;
+}
+
+.btn-primary-large:hover {
+    -fx-background-color: -color-nexum-violet-hover;
+}
+.root {
+    /* Couleurs Nexum extraites de l'image */
+    -color-nexum-violet: #7c3aed;
+    -color-nexum-violet-hover: #6d28d9;
+    -fx-background-color: #f0f2f5;
+}

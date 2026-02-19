@@ -6,7 +6,7 @@
 
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="esprit.tn.pi_kavafx.controllers.FormationAddController"
+      fx:controller="controllers.formation_quiz_result.FormationAddController"
       spacing="12"
  >
 
@@ -14,11 +14,11 @@
         <Insets top="22" right="22" bottom="22" left="22"/>
     </padding>
 
-    <Label text="Ajouter une formation" styleClass="page-title"/>
-    <Label text="Ajoutez le titre, la description et 3 vidéos." styleClass="page-subtitle"/>
-
     <TextField fx:id="titreField" promptText="Titre"/>
+    <Label fx:id="titreError" styleClass="error-label"/>
+
     <TextArea fx:id="descField" promptText="Description" prefRowCount="4"/>
+    <Label fx:id="descError" styleClass="error-label"/>
 
     <HBox spacing="10">
         <Button fx:id="btnVideo1" text="Choisir vidéo 1" onAction="#chooseVideo1" styleClass="btn-outline"/>

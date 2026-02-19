@@ -6,25 +6,28 @@
 
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="esprit.tn.pi_kavafx.controllers.ClientResultsController"
-      spacing="16">
+      fx:controller="controllers.formation_quiz_result.ClientResultsController"
+      spacing="14">
 
     <padding>
-        <Insets top="25" right="25" bottom="25" left="25"/>
+        <Insets top="22" right="22" bottom="22" left="22"/>
     </padding>
 
     <Label text="Mes Résultats" styleClass="page-title"/>
     <Label text="Historique de vos quiz passés" styleClass="page-subtitle"/>
 
-    <TableView fx:id="table" VBox.vgrow="ALWAYS">
+    <ScrollPane fitToWidth="true"
+                style="-fx-background-color:transparent;"
+                VBox.vgrow="ALWAYS">
 
-        <columns>
-            <TableColumn fx:id="colFormation" text="Formation" prefWidth="250"/>
-            <TableColumn fx:id="colScore" text="Score" prefWidth="120"/>
-            <TableColumn fx:id="colTotal" text="Total" prefWidth="120"/>
-            <TableColumn fx:id="colDate" text="Date" prefWidth="200"/>
-        </columns>
+        <content>
+            <FlowPane fx:id="cardsFlow"
+                      hgap="14"
+                      vgap="14"
+                      prefWrapLength="980"
+                      style="-fx-background-color:transparent;"/>
+        </content>
 
-    </TableView>
+    </ScrollPane>
 
 </VBox>

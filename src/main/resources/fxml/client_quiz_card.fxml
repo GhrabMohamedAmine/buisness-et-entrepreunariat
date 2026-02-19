@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controllers.formation_quiz_result.ClientQuizCardController"
+      spacing="14"
+      styleClass="client-quiz-card"
+      prefWidth="520">
+
+    <!-- QUESTION -->
+    <Label fx:id="questionLabel"
+           styleClass="client-question"
+           wrapText="true"/>
+
+    <!-- IMAGE -->
+    <StackPane styleClass="client-image-box">
+        <ImageView fx:id="quizImage"
+                   fitWidth="500"
+                   fitHeight="240"
+                   preserveRatio="false"
+                   visible="false"/>
+    </StackPane>
+
+    <!-- ANSWERS -->
+    <VBox spacing="10">
+        <Button fx:id="a1" styleClass="answer-btn"/>
+        <Button fx:id="a2" styleClass="answer-btn"/>
+        <Button fx:id="a3" styleClass="answer-btn"/>
+    </VBox>
+
+</VBox>

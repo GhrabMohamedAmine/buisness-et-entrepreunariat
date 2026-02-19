@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controllers.formation_quiz_result.ResultCardController"
+            prefWidth="300"
+            prefHeight="200"
+            styleClass="card">
+
+    <children>
+
+        <VBox spacing="10"
+              AnchorPane.topAnchor="16"
+              AnchorPane.leftAnchor="16"
+              AnchorPane.rightAnchor="16"
+              AnchorPane.bottomAnchor="16">
+
+            <!-- Formation title -->
+            <Label fx:id="formationTitle"
+                   text="Titre formation"
+                   wrapText="true"
+                   styleClass="card-title"/>
+
+            <Separator/>
+
+            <!-- Score row -->
+            <HBox spacing="10" alignment="CENTER_LEFT">
+                <Label text="Score :" styleClass="card-desc"/>
+                <Label fx:id="scoreLabel" style="-fx-font-weight:900; -fx-text-fill:#7F22FE;"/>
+                <Label text="/" styleClass="card-desc"/>
+                <Label fx:id="totalLabel" styleClass="card-desc"/>
+            </HBox>
+
+            <!-- Progress -->
+            <ProgressBar fx:id="progressBar"
+                         prefWidth="260"
+                         progress="0.5"/>
+
+            <!-- Date -->
+            <Label fx:id="dateLabel"
+                   text="Date"
+                   styleClass="card-desc"/>
+
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <!-- Status -->
+            <VBox spacing="8">
+
+                <HBox alignment="CENTER_RIGHT">
+                    <Label fx:id="statusLabel"
+                           text="Réussi"
+                           style="-fx-font-weight:900;"/>
+                </HBox>
+
+                <HBox spacing="8" alignment="CENTER_RIGHT">
+                    <Button fx:id="viewBtn"
+                            text="👁 Voir certificat"
+                            styleClass="btn-outline"/>
+
+                    <Button fx:id="downloadBtn"
+                            text="⬇ Télécharger PDF"
+                            styleClass="btn-primary"/>
+                </HBox>
+
+            </VBox>
+
+
+        </VBox>
+
+    </children>
+</AnchorPane>

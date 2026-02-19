@@ -3,35 +3,14 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
 
 <BorderPane xmlns="http://javafx.com/javafx"
             xmlns:fx="http://javafx.com/fxml"
-            fx:controller="esprit.tn.pi_kavafx.controllers.ClientLayoutController">
+            fx:controller="controllers.formation_quiz_result.ClientLayoutController">
 
     <!-- ===== SIDEBAR ETUDIANT ===== -->
-    <left>
-        <VBox styleClass="sidebar" spacing="20">
-            <padding>
-                <Insets top="30" right="20" bottom="30" left="20"/>
-            </padding>
-
-            <Label text="👨‍🎓 Espace Étudiant"
-                   styleClass="sidebar-title"/>
-
-            <Button text="📚 Catalogue"
-                    styleClass="sidebar-btn"
-                    onAction="#goCatalogue"/>
-
-            <Button text="🏆 Mes Résultats"
-                    styleClass="sidebar-btn"
-                    onAction="#goResults"/>
-
-            <Button text="⬅ Retour Accueil"
-                    styleClass="sidebar-btn"
-                    onAction="#goHome"/>
-
-        </VBox>
-    </left>
 
     <center>
         <StackPane fx:id="contentArea"/>

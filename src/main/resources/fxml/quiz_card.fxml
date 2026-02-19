@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+
+<VBox xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controllers.formation_quiz_result.QuizCardController"
+      spacing="12"
+      prefWidth="300"
+      styleClass="quiz-card">
+
+    <!-- HEADER QUESTION -->
+    <VBox spacing="6">
+        <Label text="QUIZ"
+               styleClass="quiz-badge"/>
+
+        <Label fx:id="questionLabel"
+               styleClass="quiz-question"
+               wrapText="true"/>
+    </VBox>
+
+    <!-- IMAGE CONTAINER (FIXED SIZE) -->
+    <StackPane fx:id="imageContainer" styleClass="quiz-image-container">
+
+        <ImageView fx:id="quizImage"
+                   fitWidth="280"
+                   fitHeight="160"
+                   preserveRatio="false"
+                   smooth="true"
+                   visible="false"/>
+
+        <!-- overlay gradient -->
+        <Pane styleClass="quiz-image-overlay"/>
+
+    </StackPane>
+
+    <!-- ANSWERS -->
+    <VBox spacing="8">
+        <Label fx:id="r1" styleClass="quiz-answer"/>
+        <Label fx:id="r2" styleClass="quiz-answer"/>
+        <Label fx:id="r3" styleClass="quiz-answer"/>
+    </VBox>
+
+    <!-- ACTIONS -->
+    <HBox spacing="10" alignment="CENTER_RIGHT">
+        <Button fx:id="editBtn" text="Modifier" styleClass="btn-edit"/>
+        <Button fx:id="deleteBtn" text="Supprimer" styleClass="btn-delete"/>
+    </HBox>
+
+</VBox>
