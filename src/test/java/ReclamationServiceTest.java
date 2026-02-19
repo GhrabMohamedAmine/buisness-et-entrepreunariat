@@ -31,20 +31,24 @@ public class ReclamationServiceTest {
         System.out.println("--- PRÉPARATION : Création et Connexion User ---");
 
         // 1. Création d'un User de test
-        // Adaptez le constructeur selon votre entité User (ici constructeur à 10 args vu précédemment)
         User user = new User(0, "Tester", "Reclam", TEST_EMAIL, "00000000",
                 "Client", "IT", "Actif", "2024-01-01", "img.png");
 
-        // 2. CRUCIAL : signupAndLogin va insérer le user ET définir currentUser
-        // C'est indispensable car votre méthode 'add' fait : UserService.getCurrentUser()
-        userService.signupAndLogin(user, "password123");
+        // 2. ÉTAPE DE SIGNUP : On insère le user en base de données
+        // On utilise la nouvelle méthode 'signup' (qui ne connecte plus l'utilisateur)
+        userService.signup(user, "password123");
 
-        // 3. On récupère l'ID du user connecté
+        // 3. ÉTAPE DE LOGIN : On authentifie manuellement pour définir le 'currentUser'
+        // C'est indispensable car 'add' dépend de UserService.getCurrentUser()
+        boolean loginSuccess = userService.authenticate(TEST_EMAIL, "password123");
+        assertTrue(loginSuccess, "L'authentification doit réussir après le signup !");
+
+        // 4. On récupère l'ID du user désormais connecté
         User connectedUser = UserService.getCurrentUser();
         assertNotNull(connectedUser, "Le user doit être connecté pour tester les réclamations !");
 
         currentUserId = connectedUser.getId();
-        System.out.println("✅ User connecté ID : " + currentUserId);
+        System.out.println("✅ User enregistré et connecté avec succès. ID : " + currentUserId);
     }
 
     @Test

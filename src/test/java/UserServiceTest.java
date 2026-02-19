@@ -26,23 +26,31 @@ public class UserServiceTest {
     @Test
     @Order(1)
     @DisplayName("1. Inscription (Création)")
-    public void testSignupAndLogin() throws SQLException {
+    public void testSignup() throws SQLException {
         User newUser = new User(
                 0, "Wayne", "Bruce", TEST_EMAIL, "99999999",
                 "Client", "IT", "Actif", "2024-01-01", "batman.png"
         );
 
-        userService.signupAndLogin(newUser, "password123");
+        // 1. Appeler la méthode mise à jour qui ne fait que l'insertion
+        userService.signup(newUser, "password123");
 
-        // Vérification immédiate via recupererTous
+        // 2. Vérification immédiate via recupererTous
         List<User> users = userService.recupererTous();
         Optional<User> userFound = users.stream()
                 .filter(u -> u.getEmail().equals(TEST_EMAIL))
                 .findFirst();
 
+        // 3. Assertions
         assertTrue(userFound.isPresent(), "L'inscription a échoué (User non trouvé)");
+
+        // Vérifier que l'ID a bien été généré et injecté dans l'objet par getGeneratedKeys
         createdUserId = userFound.get().getId();
-        System.out.println("✅ Inscription OK. ID = " + createdUserId);
+
+        // Vérifier que l'utilisateur n'est PAS connecté automatiquement (currentUser doit être null ou différent)
+        assertNull(UserService.getCurrentUser(), "Le user ne devrait pas être connecté automatiquement après le signup");
+
+        System.out.println("✅ Inscription réussie en base de données. ID = " + createdUserId);
     }
 
     @Test

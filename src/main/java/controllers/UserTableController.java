@@ -23,6 +23,7 @@ import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
 import services.UserService;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
@@ -32,46 +33,18 @@ import java.util.ResourceBundle;
 
 public class UserTableController implements Initializable {
 
-
     @FXML private Label topName;
     @FXML private Circle topAvatar;
     @FXML private TableView<User> userTable;
 
-    // Modification ici : <User, User> pour accéder à l'objet complet (Image + Nom)
     @FXML private TableColumn<User, User> colUser;
-
     @FXML private TableColumn<User, String> colEmail, colPhone, colRole, colDept, colStatus, colJoined;
     @FXML private TableColumn<User, Void> colActions;
 
-    // ObservableList pour mettre à jour l'interface automatiquement
     private ObservableList<User> userList = FXCollections.observableArrayList();
-
-    // Service pour la base de données
     private final UserService userService = new UserService();
 
-    private void loadCurrentUserProfile() {
-        User currentUser = UserService.getCurrentUser();
-
-        if (currentUser != null) {
-            // 1. Update the Name (Alex -> Real Name)
-            String fullName = currentUser.getFirstName() + " " + currentUser.getName();
-            topName.setText(fullName);
-
-            // 2. Update the Avatar Circle
-            String imagePath = currentUser.getImageLink();
-            if (imagePath != null && !imagePath.isEmpty()) {
-                try {
-                    Image img = new Image(imagePath, 32, 32, true, true);
-                    if (!img.isError()) {
-                        topAvatar.setFill(new ImagePattern(img));
-                    }
-                } catch (Exception e) {
-                    System.out.println("Error loading profile image: " + e.getMessage());
-                }
-            }
-        }
-    }
-    // --- LISTE DES RÔLES ---
+    // Liste des rôles (identique)
     private final ObservableList<String> roleOptions = FXCollections.observableArrayList(
             "Admin",
             "Manager",
@@ -89,16 +62,45 @@ public class UserTableController implements Initializable {
         loadCurrentUserProfile();
     }
 
+    /**
+     * Charge le profil de l'utilisateur connecté (nom + avatar)
+     */
+    private void loadCurrentUserProfile() {
+        User currentUser = UserService.getCurrentUser();
+
+        if (currentUser != null) {
+            String fullName = currentUser.getFirstName() + " " + currentUser.getName();
+            topName.setText(fullName);
+
+            byte[] imageData = currentUser.getImageData();
+            if (imageData != null && imageData.length > 0) {
+                try (ByteArrayInputStream bais = new ByteArrayInputStream(imageData)) {
+                    Image img = new Image(bais, 32, 32, true, true);
+                    if (!img.isError()) {
+                        topAvatar.setFill(new ImagePattern(img));
+                    } else {
+                        topAvatar.setFill(Color.web("#E0E7FF")); // défaut
+                    }
+                } catch (Exception e) {
+                    System.out.println("Erreur chargement image profil : " + e.getMessage());
+                    topAvatar.setFill(Color.web("#E0E7FF"));
+                }
+            } else {
+                topAvatar.setFill(Color.web("#E0E7FF"));
+            }
+        }
+    }
+
+    /**
+     * Configuration des colonnes du tableau
+     */
     private void setupColumns() {
-        // --- Colonnes Texte Standard ---
         colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
         colPhone.setCellValueFactory(new PropertyValueFactory<>("phone"));
         colDept.setCellValueFactory(new PropertyValueFactory<>("department"));
         colJoined.setCellValueFactory(new PropertyValueFactory<>("joinedDate"));
 
-        // =========================================================================
-        // --- 1. COLONNE USER (AVEC IMAGE) - C'est ici que j'ai ajouté l'image ---
-        // =========================================================================
+        // --- Colonne utilisateur avec avatar (image depuis BLOB) ---
         colUser.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue()));
         colUser.setCellFactory(column -> new TableCell<User, User>() {
             @Override
@@ -111,38 +113,32 @@ public class UserTableController implements Initializable {
                     HBox box = new HBox(10);
                     box.setAlignment(Pos.CENTER_LEFT);
 
-                    // Création du cercle pour l'image
                     Circle avatar = new Circle(18);
                     avatar.setStroke(Color.web("#E5E7EB"));
                     avatar.setStrokeWidth(1);
 
-                    // --- LOGIQUE DE CHARGEMENT DE L'IMAGE ---
-                    String imagePath = user.getImageLink();
+                    // Chargement de l'image depuis les données binaires
+                    byte[] imageData = user.getImageData();
                     boolean imageLoaded = false;
 
-                    if (imagePath != null && !imagePath.isEmpty()) {
-                        try {
-                            // On charge l'image en arrière-plan
-                            Image img = new Image(imagePath, 40, 40, true, true);
+                    if (imageData != null && imageData.length > 0) {
+                        try (ByteArrayInputStream bais = new ByteArrayInputStream(imageData)) {
+                            Image img = new Image(bais, 40, 40, true, true);
                             if (!img.isError()) {
                                 avatar.setFill(new ImagePattern(img));
                                 imageLoaded = true;
                             }
                         } catch (Exception e) {
-                            // En cas d'erreur de chemin, on garde le défaut
-                            System.err.println("Erreur image pour " + user.getName() + ": " + e.getMessage());
+                            System.err.println("Erreur image pour " + user.getName() + " : " + e.getMessage());
                         }
                     }
 
-                    // Si pas d'image ou erreur, on met une couleur par défaut
                     if (!imageLoaded) {
-                        avatar.setFill(Color.web("#E0E7FF"));
+                        avatar.setFill(Color.web("#E0E7FF")); // fond gris clair par défaut
                     }
 
-                    // Concaténation Nom + Prénom
                     String fullName = (user.getFirstName() != null ? user.getFirstName() : "")
                             + " " + (user.getName() != null ? user.getName() : "");
-
                     Label nameLabel = new Label(fullName.trim());
                     nameLabel.setStyle("-fx-font-weight: bold; -fx-text-fill: #111827; -fx-font-size: 13px;");
 
@@ -152,9 +148,7 @@ public class UserTableController implements Initializable {
             }
         });
 
-        // =========================================================================
-        // --- 2. COLONNE RÔLE (Votre code intact) ---
-        // =========================================================================
+        // --- Colonne Rôle (ComboBox) ---
         colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
         colRole.setCellFactory(column -> new TableCell<User, String>() {
             private final ComboBox<String> roleCombo = new ComboBox<>(roleOptions);
@@ -162,9 +156,8 @@ public class UserTableController implements Initializable {
             {
                 roleCombo.getStyleClass().add("role-combo");
                 roleCombo.setOnAction(event -> {
-                    // Attention : ici on utilise getTableView().getItems().get(getIndex()) car updateItem ne donne que le String
                     if (getTableRow() != null && getTableRow().getItem() != null) {
-                        User user = (User) getTableRow().getItem();
+                        User user = getTableRow().getItem();
                         String newRole = roleCombo.getValue();
                         if (newRole != null && !newRole.equals(user.getRole())) {
                             handleRoleUpdate(user, newRole);
@@ -185,9 +178,7 @@ public class UserTableController implements Initializable {
             }
         });
 
-        // =========================================================================
-        // --- 3. COLONNE STATUT (Votre code intact avec les Pills) ---
-        // =========================================================================
+        // --- Colonne Statut (Pills) ---
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colStatus.setCellFactory(column -> new TableCell<User, String>() {
             @Override
@@ -198,7 +189,6 @@ public class UserTableController implements Initializable {
                 } else {
                     Label badge = new Label(status);
                     badge.getStyleClass().add("status-pill");
-
                     badge.getStyleClass().removeAll("pill-active", "pill-pending", "pill-suspended");
 
                     switch (status.toLowerCase()) {
@@ -219,9 +209,7 @@ public class UserTableController implements Initializable {
             }
         });
 
-        // =========================================================================
-        // --- 4. COLONNE ACTIONS (Votre code intact avec les Icônes) ---
-        // =========================================================================
+        // --- Colonne Actions (boutons) ---
         colActions.setCellFactory(param -> new TableCell<User, Void>() {
             private final Button deleteBtn = new Button();
             private final Button statusBtn = new Button();
@@ -278,13 +266,13 @@ public class UserTableController implements Initializable {
         });
     }
 
-    // --- LOGIQUE METIER (Intacte) ---
+    // --- Méthodes métier (inchangées) ---
 
     private void handleRoleUpdate(User user, String newRole) {
         try {
             userService.modifierRole(user.getId(), newRole);
             user.setRole(newRole);
-            System.out.println("Role mis à jour : " + newRole);
+            System.out.println("Rôle mis à jour : " + newRole);
         } catch (SQLException e) {
             e.printStackTrace();
             showAlert("Erreur", "Impossible de modifier le rôle : " + e.getMessage());
@@ -294,13 +282,7 @@ public class UserTableController implements Initializable {
 
     private void handleStatusSwitch(User user) {
         String currentStatus = user.getStatus().toLowerCase();
-        String newStatus;
-
-        if (currentStatus.equals("active") || currentStatus.equals("actif")) {
-            newStatus = "Suspendu";
-        } else {
-            newStatus = "Active";
-        }
+        String newStatus = (currentStatus.equals("active") || currentStatus.equals("actif")) ? "Suspendu" : "Active";
 
         try {
             userService.modifierStatut(user.getId(), newStatus);
@@ -336,7 +318,7 @@ public class UserTableController implements Initializable {
             userList.addAll(users);
             userTable.setItems(userList);
         } catch (SQLException e) {
-            System.err.println("Erreur chargement utilisateurs: " + e.getMessage());
+            System.err.println("Erreur chargement utilisateurs : " + e.getMessage());
             e.printStackTrace();
         }
     }
@@ -348,7 +330,7 @@ public class UserTableController implements Initializable {
         alert.show();
     }
 
-    // --- NAVIGATION (Intacte) ---
+    // --- Navigation ---
 
     @FXML
     public void handleReclamationsNavigation(ActionEvent event) {
@@ -356,7 +338,6 @@ public class UserTableController implements Initializable {
     }
 
     public void handleLogout(ActionEvent event) {
-        // Décommentez si vous avez la méthode static UserService.logout()
         UserService.logout();
         switchScene(event, "/Start/1ere.fxml");
     }
@@ -368,7 +349,7 @@ public class UserTableController implements Initializable {
             stage.setScene(new Scene(root));
             stage.show();
         } catch (IOException e) {
-            System.err.println("Erreur chargement FXML: " + fxmlPath);
+            System.err.println("Erreur chargement FXML : " + fxmlPath);
             e.printStackTrace();
         }
     }

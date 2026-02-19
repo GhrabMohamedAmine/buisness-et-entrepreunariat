@@ -24,6 +24,7 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import services.ReclamationService;
 import services.UserService;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.util.Optional;
@@ -33,14 +34,9 @@ public class UserReclamationController implements Initializable {
 
     @FXML private Label topName;
     @FXML private Circle btnProfil;
-    @FXML
-    private FlowPane ticketsContainer; // Le conteneur des cartes
-
-    @FXML
-    private Label lblOpen, lblProgress, lblSolved; // Les stats
-
-    @FXML
-    private TextField searchField;
+    @FXML private FlowPane ticketsContainer;
+    @FXML private Label lblOpen, lblProgress, lblSolved;
+    @FXML private TextField searchField;
 
     private ReclamationService service;
     private User currentUser;
@@ -48,32 +44,32 @@ public class UserReclamationController implements Initializable {
 
     private void loadCurrentUserProfile() {
         User currentUser = UserService.getCurrentUser();
-
         if (currentUser != null) {
-            // 1. Update the Name (Alex -> Real Name)
             String fullName = currentUser.getFirstName() + " " + currentUser.getName();
             topName.setText(fullName);
 
-            // 2. Update the Avatar Circle
-            String imagePath = currentUser.getImageLink();
-            if (imagePath != null && !imagePath.isEmpty()) {
-                try {
-                    Image img = new Image(imagePath, 32, 32, true, true);
+            byte[] imageData = currentUser.getImageData();
+            if (imageData != null && imageData.length > 0) {
+                try (ByteArrayInputStream bais = new ByteArrayInputStream(imageData)) {
+                    Image img = new Image(bais, 32, 32, true, true);
                     if (!img.isError()) {
                         btnProfil.setFill(new ImagePattern(img));
+                    } else {
+                        btnProfil.setFill(javafx.scene.paint.Color.web("#E0E7FF"));
                     }
                 } catch (Exception e) {
-                    System.out.println("Error loading profile image: " + e.getMessage());
+                    System.out.println("Erreur chargement image profil : " + e.getMessage());
+                    btnProfil.setFill(javafx.scene.paint.Color.web("#E0E7FF"));
                 }
+            } else {
+                btnProfil.setFill(javafx.scene.paint.Color.web("#E0E7FF"));
             }
         }
     }
+
     @Override
     public void initialize(URL location, ResourceBundle resources) {
         service = new ReclamationService();
-
-        // 1. Récupérer l'utilisateur connecté depuis ton UserService
-        // Assure-toi que UserService.getCurrentUser() renvoie bien l'objet statique
         currentUser = UserService.getCurrentUser();
 
         if (currentUser == null) {
@@ -81,51 +77,39 @@ public class UserReclamationController implements Initializable {
             return;
         }
 
-        // 2. Charger les données et afficher
         loadData();
         loadCurrentUserProfile();
 
-        // 3. Ajouter la recherche dynamique
         searchField.textProperty().addListener((observable, oldValue, newValue) -> {
             filterReclamations(newValue);
         });
     }
 
     private void loadData() {
-        // Vider l'affichage actuel
         ticketsContainer.getChildren().clear();
-
-        // Récupérer SEULEMENT les réclamations de ce user
         myReclamations = service.getReclamationsByUserId(currentUser.getId());
 
         int open = 0, progress = 0, solved = 0;
-
-        // Boucle pour créer les cartes
         for (Reclamation r : myReclamations) {
-            // Calcul des stats
             if ("En attente".equalsIgnoreCase(r.getStatut())) open++;
             else if ("En cours".equalsIgnoreCase(r.getStatut())) progress++;
             else if ("Résolu".equalsIgnoreCase(r.getStatut())) solved++;
 
-            // Création graphique de la carte
             VBox card = createTicketCard(r);
             ticketsContainer.getChildren().add(card);
         }
 
-        // Mise à jour des labels de stats
         lblOpen.setText(String.valueOf(open));
         lblProgress.setText(String.valueOf(progress));
         lblSolved.setText(String.valueOf(solved));
     }
 
-    // --- CRÉATION DYNAMIQUE DES CARTES (DESIGN JAVA) ---
     private VBox createTicketCard(Reclamation r) {
         VBox card = new VBox();
         card.getStyleClass().add("ticket-card");
         card.setPrefWidth(280);
         card.setMinHeight(180);
 
-        // 1. En-tête (Titre + Badge Statut)
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER_LEFT);
         header.setSpacing(10);
@@ -138,7 +122,6 @@ public class UserReclamationController implements Initializable {
         Label status = new Label(r.getStatut());
         status.getStyleClass().add("status-pill");
 
-        // Couleur selon statut
         String s = r.getStatut().toLowerCase();
         if (s.contains("cours")) status.getStyleClass().add("status-progress");
         else if (s.contains("rèsolu") || s.contains("resolu")) status.getStyleClass().add("status-resolved");
@@ -148,37 +131,41 @@ public class UserReclamationController implements Initializable {
         HBox.setHgrow(spacer, Priority.ALWAYS);
         header.getChildren().addAll(title, spacer, status);
 
-        // 2. Sous-titre (Catégorie / Projet)
         Label subtitle = new Label(r.getCategorie() + " • " + r.getProjet());
         subtitle.getStyleClass().add("ticket-subtitle");
 
-        // 3. Description (On met juste un placeholder ou le début du contenu si dispo)
         Label desc = new Label("Ticket créé le " + r.getDate());
         desc.getStyleClass().add("ticket-desc");
         desc.setWrapText(true);
-        VBox.setVgrow(desc, Priority.ALWAYS); // Pousse le footer vers le bas
+        VBox.setVgrow(desc, Priority.ALWAYS);
 
-        // 4. Footer (Boutons Actions)
         HBox footer = new HBox();
         footer.setAlignment(Pos.CENTER_RIGHT);
         footer.setStyle("-fx-padding: 15 0 0 0; -fx-border-color: #F3F4F6; -fx-border-width: 1 0 0 0;");
         footer.setSpacing(8);
 
-        // Bouton Modifier (Seulement si pas résolu, par exemple)
         Button btnEdit = new Button();
         btnEdit.getStyleClass().add("icon-btn");
         FontIcon editIcon = new FontIcon("mdi2p-pencil-outline");
         editIcon.setIconColor(Color.web("#6B7280"));
         btnEdit.setGraphic(editIcon);
-        btnEdit.setOnAction(e -> openModifyModal(r)); // Action Modifier
 
-        // Bouton Supprimer
+        // Désactiver si statut != "En attente"
+        boolean modifiable = "En attente".equals(r.getStatut());
+        btnEdit.setDisable(!modifiable);
+        if (!modifiable) {
+            btnEdit.setTooltip(new Tooltip("Impossible de modifier une réclamation dont le statut n'est pas 'En attente'"));
+        } else {
+            btnEdit.setTooltip(new Tooltip("Modifier la réclamation"));
+        }
+        btnEdit.setOnAction(e -> openModifyModal(r));
+
         Button btnDelete = new Button();
         btnDelete.getStyleClass().add("icon-btn");
         FontIcon delIcon = new FontIcon("mdi2t-trash-can-outline");
         delIcon.setIconColor(Color.web("#EF4444"));
         btnDelete.setGraphic(delIcon);
-        btnDelete.setOnAction(e -> handleDelete(r)); // Action Supprimer
+        btnDelete.setOnAction(e -> handleDelete(r));
 
         footer.getChildren().addAll(btnEdit, btnDelete);
 
@@ -186,25 +173,18 @@ public class UserReclamationController implements Initializable {
         return card;
     }
 
-    // --- ACTIONS & POPUPS ---
-
     @FXML
     public void openNewReclamationModal(ActionEvent event) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/Reclamation/popUpRec.fxml"));
-            // Attention : Vérifie le chemin exact de ton FXML
             Parent root = loader.load();
-
-            // Note: Le controller lié à popUpRec (ReclamationController) va gérer l'ajout.
-            // S'il utilise UserService.getCurrentUser(), ça ajoutera bien au bon user.
 
             Stage stage = new Stage();
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.setTitle("Nouveau Ticket");
             stage.setScene(new Scene(root));
-            stage.showAndWait(); // On attend la fermeture
+            stage.showAndWait();
 
-            // Une fois fermé, on recharge la grille pour voir le nouveau ticket
             loadData();
 
         } catch (IOException e) {
@@ -213,13 +193,20 @@ public class UserReclamationController implements Initializable {
     }
 
     private void openModifyModal(Reclamation r) {
+        // Vérification du statut avant ouverture
+        if (!"En attente".equals(r.getStatut())) {
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Modification impossible");
+            alert.setHeaderText(null);
+            alert.setContentText("Seules les réclamations avec le statut 'En attente' peuvent être modifiées.");
+            alert.showAndWait();
+            return;
+        }
+
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/Reclamation/popUpmodif.fxml"));
             Parent root = loader.load();
 
-            // On doit passer les données au contrôleur de modification
-            // Je suppose que ton ReclamationController a une méthode initData(Reclamation r)
-            // Si c'est un autre controller, change le type ici.
             ReclamationController controller = loader.getController();
             controller.initData(r);
 
@@ -229,7 +216,6 @@ public class UserReclamationController implements Initializable {
             stage.setScene(new Scene(root));
             stage.showAndWait();
 
-            // Recharger après modif
             loadData();
 
         } catch (IOException e) {
@@ -245,12 +231,11 @@ public class UserReclamationController implements Initializable {
 
         Optional<ButtonType> result = alert.showAndWait();
         if (result.isPresent() && result.get() == ButtonType.OK) {
-            service.delete(r.getId()); // Assure-toi d'avoir delete(int id) dans le service
-            loadData(); // Rafraîchir l'affichage
+            service.delete(r.getId());
+            loadData();
         }
     }
 
-    // Petite méthode pour la recherche locale (filtrage visuel)
     private void filterReclamations(String query) {
         ticketsContainer.getChildren().clear();
         for (Reclamation r : myReclamations) {
@@ -260,6 +245,7 @@ public class UserReclamationController implements Initializable {
             }
         }
     }
+
     private void switchScene(MouseEvent event, String fxmlPath) {
         try {
             Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));

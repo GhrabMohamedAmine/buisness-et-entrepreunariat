@@ -33,7 +33,7 @@ public class UserService {
                     rs.getString("departement"),
                     rs.getString("statut"),
                     rs.getString("date_inscription"),
-                    rs.getString("imagelink") // Ajout ici
+                    rs.getBytes("imagelink")// Ajout ici
             );
             return true;
         }
@@ -41,8 +41,7 @@ public class UserService {
     }
 
 
-    public void signupAndLogin(User user, String password) throws SQLException {
-        // Ajout de imagelink dans la requête INSERT
+    public void signup(User user, String password) throws SQLException {
         String req = "INSERT INTO utilisateurs (nom, prenom, email, telephone, role, departement, statut, date_inscription, password, imagelink) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
 
@@ -56,7 +55,7 @@ public class UserService {
         ps.setString(7, user.getStatus());
         ps.setString(8, user.getJoinedDate());
         ps.setString(9, password);
-        ps.setString(10, user.getImageLink()); // Ajout ici
+        ps.setBytes(10, user.getImageData());
 
         ps.executeUpdate();
 
@@ -64,7 +63,6 @@ public class UserService {
         if (rs.next()) {
             user.setId(rs.getInt(1));
         }
-        currentUser = user;
     }
 
     public static User getCurrentUser() {
@@ -92,7 +90,7 @@ public class UserService {
                     rs.getString("departement"),
                     rs.getString("statut"),
                     rs.getString("date_inscription"),
-                    rs.getString("imagelink") // Ajout ici
+                    rs.getBytes("imagelink") // Ajout ici
             ));
         }
         return utilisateurs;
@@ -133,8 +131,7 @@ public class UserService {
         ps.setString(4, user.getPhone());
         ps.setString(5, user.getDepartment());
 
-        // Sauvegarde du chemin de l'image
-        ps.setString(6, user.getImageLink());
+        ps.setBytes(6, user.getImageData());
 
         ps.setInt(7, user.getId());
 
