@@ -9,6 +9,7 @@ import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseEvent;
@@ -65,7 +66,6 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
-
 import javax.swing.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -182,6 +182,11 @@ public class chatController {
     private javafx.scene.Scene inlineEscScene;
     private javafx.beans.value.ChangeListener<Boolean> inlineOwnerFocusListener;
     private javafx.stage.Window inlineOwnerWindow;
+    private javax.swing.Timer inlineSwingTimer;
+    private double lastX = Double.NaN, lastY = Double.NaN, lastW = Double.NaN, lastH = Double.NaN;
+    private javafx.event.EventHandler<javafx.scene.input.MouseEvent> inlineClickAwayFilter;
+    private javafx.scene.Scene inlineClickAwayScene;
+
 
 
     private int currentUserId = 1;
@@ -444,7 +449,9 @@ public class chatController {
 
     private void openDrawer() {
         if (drawerOpen) return;
-
+        if (inlineSwingWindow != null) {
+            suspendInlineOverlayVideoSwing(true);
+        }
         drawerOverlay.setVisible(true);
         drawerOverlay.setManaged(true);
 
@@ -2132,28 +2139,34 @@ public class chatController {
 
     private void openInlineOverlayVideoSwing(java.nio.file.Path file, javafx.scene.Node anchor, String title) {
         if (file == null || anchor == null) return;
+
         initVlcOnce();
 
         javafx.geometry.Bounds b = anchor.localToScreen(anchor.getBoundsInLocal());
         if (b == null) return;
 
-        // Toggle behavior: if already open on the SAME bubble -> close; else replace
-        if (inlineSwingWindow != null && inlineSwingWindow.isVisible()) {
-            if (inlineAnchor == anchor) {
-                closeInlineOverlayVideoSwing();
-                return;
+        // Same bubble: visible -> pause+hide, hidden -> show+play
+        if (inlineSwingWindow != null && inlineAnchor == anchor) {
+            if (inlineSwingWindow.isVisible()) {
+                suspendInlineOverlayVideoSwing(true);
             } else {
-                closeInlineOverlayVideoSwing(); // close previous then open new
+                suspendInlineOverlayVideoSwing(false);
             }
+            return;
+        }
+
+        // Different bubble: fully close then open new
+        if (inlineSwingWindow != null) {
+            closeInlineOverlayVideoSwing();
         }
 
         inlineCurrentFile = file;
         inlineAnchor = anchor;
 
-        // Attach ESC (event filter, not setOnKeyPressed)
+        // Attach ESC close (do NOT overwrite scene handlers)
         javafx.scene.Scene sc = anchor.getScene();
         if (sc != null) {
-            detachInlineEsc(); // safety
+            detachInlineEsc();
             inlineEscScene = sc;
             inlineEscFilter = ev -> {
                 if (ev.getCode() == javafx.scene.input.KeyCode.ESCAPE) {
@@ -2164,10 +2177,13 @@ public class chatController {
             sc.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, inlineEscFilter);
         }
 
-        // Close if owner window loses focus (attach once, detach on close)
+        // Click-away pause+hide
+        attachInlineClickAway(anchor);
+
+        // Close when owner window loses focus
         javafx.stage.Window w = sc != null ? sc.getWindow() : null;
         if (w != null) {
-            detachInlineFocus(); // safety
+            detachInlineFocus();
             inlineOwnerWindow = w;
             inlineOwnerFocusListener = (o, old, focused) -> {
                 if (!focused) closeInlineOverlayVideoSwing();
@@ -2175,27 +2191,121 @@ public class chatController {
             w.focusedProperty().addListener(inlineOwnerFocusListener);
         }
 
-        // Create/Show Swing overlay on EDT
+        // Create window on Swing EDT
         javax.swing.SwingUtilities.invokeLater(() -> {
             inlineSwingComp = new uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent();
 
             inlineSwingWindow = new javax.swing.JWindow();
             inlineSwingWindow.setAlwaysOnTop(true);
-            inlineSwingWindow.setBackground(new java.awt.Color(0, 0, 0, 255)); // opaque black
-            inlineSwingWindow.getContentPane().setLayout(new java.awt.BorderLayout());
-            inlineSwingWindow.getContentPane().add(inlineSwingComp, java.awt.BorderLayout.CENTER);
+            inlineSwingWindow.setBackground(new java.awt.Color(0, 0, 0, 255));
 
-            inlineSwingWindow.setBounds(
-                    (int) Math.round(b.getMinX()),
-                    (int) Math.round(b.getMinY()),
-                    (int) Math.max(50, Math.round(b.getWidth())),
-                    (int) Math.max(50, Math.round(b.getHeight()))
-            );
+            // Root layers
+            javax.swing.JLayeredPane layers = new javax.swing.JLayeredPane();
+            layers.setLayout(null);
+            inlineSwingWindow.setContentPane(layers);
 
+            // Video fills window
+            java.awt.Component video = inlineSwingComp;
+            layers.add(video, javax.swing.JLayeredPane.DEFAULT_LAYER);
+
+            // Top bar (play/pause)
+            javax.swing.JPanel topBar = new javax.swing.JPanel(new java.awt.FlowLayout(java.awt.FlowLayout.RIGHT, 8, 8));
+            topBar.setOpaque(false);
+
+            javax.swing.JButton btnPlayPause = new javax.swing.JButton("⏸");
+            btnPlayPause.setFocusable(false);
+            btnPlayPause.setBorderPainted(false);
+            btnPlayPause.setContentAreaFilled(false);
+            btnPlayPause.setForeground(java.awt.Color.WHITE);
+            btnPlayPause.setFont(btnPlayPause.getFont().deriveFont(18f));
+            topBar.add(btnPlayPause);
+
+            // Bottom bar (seek)
+            javax.swing.JPanel bottomBar = new javax.swing.JPanel(new java.awt.BorderLayout(8, 0));
+            bottomBar.setOpaque(false);
+
+            javax.swing.JSlider seek = new javax.swing.JSlider(0, 1000, 0);
+            seek.setOpaque(false);
+            seek.setFocusable(false);
+            bottomBar.add(seek, java.awt.BorderLayout.CENTER);
+
+            layers.add(topBar, javax.swing.JLayeredPane.PALETTE_LAYER);
+            layers.add(bottomBar, javax.swing.JLayeredPane.PALETTE_LAYER);
+
+            // Always show bars while visible (no hover logic)
+            topBar.setVisible(true);
+            bottomBar.setVisible(true);
+
+            // Initial bounds from JavaFX anchor
+            int x = (int) Math.round(b.getMinX());
+            int y = (int) Math.round(b.getMinY());
+            int ww = (int) Math.max(50, Math.round(b.getWidth()));
+            int hh = (int) Math.max(50, Math.round(b.getHeight()));
+            inlineSwingWindow.setBounds(x, y, ww, hh);
+
+            java.util.function.Consumer<java.awt.Dimension> relayout = (dim) -> {
+                int W = dim.width, H = dim.height;
+                video.setBounds(0, 0, W, H);
+                topBar.setBounds(0, 0, W, 44);
+                bottomBar.setBounds(10, H - 34, W - 20, 24);
+            };
+            relayout.accept(inlineSwingWindow.getSize());
+
+            // Show window then play
             inlineSwingWindow.setVisible(true);
-
-            // Play AFTER visible so native handle exists
             inlineSwingComp.mediaPlayer().media().play(file.toAbsolutePath().toString());
+
+            // Play/pause button
+            btnPlayPause.addActionListener(ev -> {
+                if (inlineSwingComp == null) return;
+                boolean playing = inlineSwingComp.mediaPlayer().status().isPlaying();
+                if (playing) {
+                    inlineSwingComp.mediaPlayer().controls().pause();
+                    btnPlayPause.setText("▶");
+                } else {
+                    inlineSwingComp.mediaPlayer().controls().play();
+                    btnPlayPause.setText("⏸");
+                }
+            });
+
+            // Seek logic
+            java.util.concurrent.atomic.AtomicBoolean dragging = new java.util.concurrent.atomic.AtomicBoolean(false);
+
+            seek.addChangeListener(e -> {
+                if (inlineSwingComp == null) return;
+
+                if (seek.getValueIsAdjusting()) {
+                    dragging.set(true);
+                } else if (dragging.get()) {
+                    float pos = seek.getValue() / 1000f;
+                    inlineSwingComp.mediaPlayer().controls().setPosition(pos);
+                    dragging.set(false);
+                }
+            });
+
+            // Timer update (seek + icon)
+            if (inlineSwingTimer != null) {
+                inlineSwingTimer.stop();
+                inlineSwingTimer = null;
+            }
+            inlineSwingTimer = new javax.swing.Timer(200, e -> {
+                if (inlineSwingComp == null) return;
+                if (dragging.get()) return;
+
+                float pos = inlineSwingComp.mediaPlayer().status().position(); // 0..1
+                seek.setValue((int) Math.round(pos * 1000));
+
+                boolean playing = inlineSwingComp.mediaPlayer().status().isPlaying();
+                btnPlayPause.setText(playing ? "⏸" : "▶");
+            });
+            inlineSwingTimer.start();
+
+            // Relayout on resize
+            inlineSwingWindow.addComponentListener(new java.awt.event.ComponentAdapter() {
+                @Override public void componentResized(java.awt.event.ComponentEvent e) {
+                    relayout.accept(inlineSwingWindow.getSize());
+                }
+            });
         });
 
         // Track anchor while scrolling/resizing (JavaFX thread)
@@ -2208,13 +2318,27 @@ public class chatController {
                 javafx.geometry.Bounds bb = a.localToScreen(a.getBoundsInLocal());
                 if (bb == null) return;
 
+                double nx = bb.getMinX();
+                double ny = bb.getMinY();
+                double nw = Math.max(50, bb.getWidth());
+                double nh = Math.max(50, bb.getHeight());
+
+                // Skip tiny changes
+                if (!Double.isNaN(lastX)) {
+                    if (Math.abs(nx - lastX) < 1 && Math.abs(ny - lastY) < 1 &&
+                            Math.abs(nw - lastW) < 1 && Math.abs(nh - lastH) < 1) {
+                        return;
+                    }
+                }
+                lastX = nx; lastY = ny; lastW = nw; lastH = nh;
+
                 javax.swing.SwingUtilities.invokeLater(() -> {
                     if (inlineSwingWindow == null) return;
                     inlineSwingWindow.setBounds(
-                            (int) Math.round(bb.getMinX()),
-                            (int) Math.round(bb.getMinY()),
-                            (int) Math.max(50, Math.round(bb.getWidth())),
-                            (int) Math.max(50, Math.round(bb.getHeight()))
+                            (int) Math.round(nx),
+                            (int) Math.round(ny),
+                            (int) Math.round(nw),
+                            (int) Math.round(nh)
                     );
                 });
             }
@@ -2226,13 +2350,21 @@ public class chatController {
     private void closeInlineOverlayVideoSwing() {
         if (inlineTracker != null) { inlineTracker.stop(); inlineTracker = null; }
 
+        lastX = lastY = lastW = lastH = Double.NaN;
+
         detachInlineEsc();
         detachInlineFocus();
+        detachInlineClickAway();
 
         inlineAnchor = null;
         inlineCurrentFile = null;
 
         javax.swing.SwingUtilities.invokeLater(() -> {
+            if (inlineSwingTimer != null) {
+                inlineSwingTimer.stop();
+                inlineSwingTimer = null;
+            }
+
             try {
                 if (inlineSwingComp != null) {
                     try { inlineSwingComp.mediaPlayer().controls().stop(); } catch (Throwable ignored) {}
@@ -2240,6 +2372,7 @@ public class chatController {
                 }
             } finally {
                 inlineSwingComp = null;
+
                 if (inlineSwingWindow != null) {
                     inlineSwingWindow.setVisible(false);
                     inlineSwingWindow.dispose();
@@ -2247,6 +2380,13 @@ public class chatController {
                 }
             }
         });
+    }
+
+    private static boolean isDescendant(javafx.scene.Node node, javafx.scene.Node ancestor) {
+        for (javafx.scene.Node n = node; n != null; n = n.getParent()) {
+            if (n == ancestor) return true;
+        }
+        return false;
     }
 
     private void detachInlineEsc() {
@@ -2265,7 +2405,61 @@ public class chatController {
         inlineOwnerFocusListener = null;
     }
 
+    private void detachInlineClickAway() {
+        if (inlineClickAwayScene != null && inlineClickAwayFilter != null) {
+            inlineClickAwayScene.removeEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, inlineClickAwayFilter);
+        }
+        inlineClickAwayScene = null;
+        inlineClickAwayFilter = null;
+    }
 
+    private void attachInlineClickAway(javafx.scene.Node anchor) {
+        if (anchor == null) return;
+        javafx.scene.Scene sc = anchor.getScene();
+        if (sc == null) return;
+
+        detachInlineClickAway();
+
+        inlineClickAwayScene = sc;
+        inlineClickAwayFilter = ev -> {
+            if (inlineAnchor == null) return;
+            if (inlineSwingWindow == null) return;
+
+            javafx.scene.Node target = (ev.getTarget() instanceof javafx.scene.Node) ? (javafx.scene.Node) ev.getTarget() : null;
+
+            // If click is outside the anchor bubble -> pause + hide
+            if (target != null && !isDescendant(target, inlineAnchor)) {
+                if (inlineSwingWindow.isVisible()) {
+                    suspendInlineOverlayVideoSwing(true);
+                }
+            }
+        };
+
+        sc.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, inlineClickAwayFilter);
+    }
+
+
+    private void suspendInlineOverlayVideoSwing(boolean suspend) {
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            if (inlineSwingWindow == null || inlineSwingComp == null) return;
+
+            try {
+                if (suspend) {
+                    try { inlineSwingComp.mediaPlayer().controls().pause(); } catch (Throwable ignored) {}
+                    inlineSwingWindow.setVisible(false);
+
+                    if (inlineSwingTimer != null) inlineSwingTimer.stop();
+                } else {
+                    inlineSwingWindow.setVisible(true);
+
+                    // Resume playback (or keep paused if you prefer)
+                    try { inlineSwingComp.mediaPlayer().controls().play(); } catch (Throwable ignored) {}
+
+                    if (inlineSwingTimer != null && !inlineSwingTimer.isRunning()) inlineSwingTimer.start();
+                }
+            } catch (Throwable ignored) {}
+        });
+    }
 
     private javafx.scene.Node buildInlineVideo(ServiceMessage.AttachmentMeta meta, boolean outgoing) {
 
@@ -2295,7 +2489,7 @@ public class chatController {
         overlay.getStyleClass().add("media-overlay");
         overlay.setPickOnBounds(true);
 
-        // Host content (we keep it simple: black box / optional thumbnail later)
+        // Host content (black box for now)
         javafx.scene.layout.StackPane videoHost = new javafx.scene.layout.StackPane();
         videoHost.setMinSize(0, 0);
         videoHost.prefWidthProperty().bind(player.widthProperty());
@@ -2326,14 +2520,20 @@ public class chatController {
                     if (disposed.get()) return;
                     tmpRef.set(tmp);
 
-                    // Enable clicking only after file is ready
                     javafx.event.EventHandler<javafx.scene.input.MouseEvent> open = ev -> {
                         if (disposed.get()) return;
                         java.nio.file.Path p = tmpRef.get();
                         if (p == null) return;
 
-                        // This opens the real VLC window aligned on top of this bubble
+                        // Open Swing/VLC overlay aligned to this bubble
                         openInlineOverlayVideoSwing(p, player, meta.fileName());
+
+                        // ✅ CRITICAL: give focus back to JavaFX so ESC + click-away filters work
+                        javafx.scene.Scene sc = player.getScene();
+                        if (sc != null) {
+                            javafx.stage.Window win = sc.getWindow();
+                            if (win != null) win.requestFocus();
+                        }
 
                         ev.consume();
                     };
@@ -2371,6 +2571,7 @@ public class chatController {
 
         return player;
     }
+
 
 
 }
