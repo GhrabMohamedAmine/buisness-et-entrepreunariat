@@ -260,3 +260,37 @@
     -fx-background-color: #F3F4F6;
     -fx-background-radius: 50%;
 }
+/* ===== Styles pour la sélection de fichier ===== */
+.file-choose-btn {
+    -fx-background-color: #F3F4F6;      /* Gris clair */
+    -fx-text-fill: #374151;              /* Texte foncé */
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-padding: 8 16;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+}
+
+.file-choose-btn:hover {
+    -fx-background-color: #E5E7EB;       /* Gris un peu plus foncé au survol */
+}
+
+.file-choose-btn:pressed {
+    -fx-background-color: #D1D5DB;
+}
+
+.file-name-label {
+    -fx-text-fill: #6B7280;               /* Gris moyen */
+    -fx-font-size: 13px;
+    -fx-padding: 0 0 0 5;
+    -fx-wrap-text: true;
+    -fx-max-width: 200;                    /* Pour éviter qu'il ne s'étire trop */
+}
+
+/* Optionnel : si vous voulez un style pour un fichier sélectionné */
+.file-name-label:filled {
+    -fx-text-fill: #111827;                /* Noir quand un fichier est choisi */
+    -fx-font-weight: bold;
+}

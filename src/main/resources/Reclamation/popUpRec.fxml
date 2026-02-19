@@ -14,6 +14,7 @@
     <padding>
         <Insets top="25" right="30" bottom="25" left="30"/>
     </padding>
+
     <HBox alignment="CENTER_LEFT">
         <Label text="Nouvelle Réclamation" styleClass="modal-title" />
         <Region HBox.hgrow="ALWAYS" />
@@ -28,32 +29,31 @@
 
     <VBox spacing="15">
 
+        <!-- Titre -->
         <VBox spacing="5">
             <HBox spacing="2">
                 <Label text="Titre" styleClass="form-label" />
                 <Label text="*" styleClass="required-star" />
             </HBox>
             <TextField fx:id="titreField" promptText="Titre de la réclamation" styleClass="form-input" />
-
             <Label fx:id="titreError" text="Titre invalide" textFill="red" visible="false" managed="false" style="-fx-font-size: 10px;"/>
         </VBox>
 
+        <!-- Catégorie et Projet -->
         <HBox spacing="15">
             <VBox spacing="5" HBox.hgrow="ALWAYS">
                 <Label text="Catégorie" styleClass="form-label" />
                 <TextField fx:id="categorieField" promptText="Ex: Technique" styleClass="form-input" />
-
                 <Label fx:id="categorieError" text="Invalide" textFill="red" visible="false" managed="false" style="-fx-font-size: 10px;"/>
             </VBox>
-
             <VBox spacing="5" HBox.hgrow="ALWAYS">
                 <Label text="Projet lié" styleClass="form-label" />
                 <TextField fx:id="projetField" promptText="Ex: Projet A" styleClass="form-input" />
-
                 <Label fx:id="projetError" text="Invalide" textFill="red" visible="false" managed="false" style="-fx-font-size: 10px;"/>
             </VBox>
         </HBox>
 
+        <!-- Statut -->
         <VBox spacing="5">
             <Label text="Statut" styleClass="form-label" />
             <ComboBox fx:id="statutCombo" maxWidth="Infinity" styleClass="form-combo">
@@ -71,12 +71,15 @@
             </ComboBox>
         </VBox>
 
-        <VBox alignment="CENTER" spacing="10" styleClass="attachment-drop-zone">
-            <FontIcon iconLiteral="mdi2p-paperclip" iconSize="24" iconColor="#9CA3AF" />
-            <Label text="Ajouter une pièce jointe (optionnel)" styleClass="attachment-label" />
-        </VBox>
+        <!-- Pièce jointe (NOUVEAU) -->
+        <HBox spacing="10" alignment="CENTER_LEFT">
+            <Button fx:id="btnChoisirFichier" text="Choisir un fichier" styleClass="file-choose-btn" onAction="#choisirFichier" />
+            <Label fx:id="lblNomFichier" text="Aucun fichier" styleClass="file-name-label" />
+        </HBox>
+
     </VBox>
 
+    <!-- Boutons d'action -->
     <HBox spacing="12" alignment="CENTER_RIGHT">
         <Button text="Annuler" styleClass="btn-secondary" onAction="#closePopup" />
         <Button fx:id="submitBtn" text="Envoyer" styleClass="btn-primary" onAction="#saveReclamation" />

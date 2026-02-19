@@ -5,7 +5,8 @@ import javafx.beans.property.StringProperty;
 
 public class Reclamation {
     private int id;
-    private int userId; // <--- NOUVEAU CHAMP : Clé étrangère
+    private int userId;
+    private byte[] fichier;  // Nouveau champ pour la pièce jointe
 
     private final StringProperty titre = new SimpleStringProperty();
     private final StringProperty categorie = new SimpleStringProperty();
@@ -26,12 +27,21 @@ public class Reclamation {
     public int getUserId() { return userId; }
     public void setUserId(int userId) { this.userId = userId; }
 
-    // Reste des getters/setters...
+    // --- Getter/Setter pour fichier ---
+    public byte[] getFichier() { return fichier; }
+    public void setFichier(byte[] fichier) { this.fichier = fichier; }
+
+    // --- Autres getters/setters ---
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     public String getTitre() { return titre.get(); }
+    public void setTitre(String titre) { this.titre.set(titre); }
     public String getCategorie() { return categorie.get(); }
+    public void setCategorie(String categorie) { this.categorie.set(categorie); }
     public String getProjet() { return projet.get(); }
+    public void setProjet(String projet) { this.projet.set(projet); }
     public String getStatut() { return statut.get(); }
+    public void setStatut(String statut) { this.statut.set(statut); }
     public String getDate() { return date.get(); }
+    public void setDate(String date) { this.date.set(date); }
 }

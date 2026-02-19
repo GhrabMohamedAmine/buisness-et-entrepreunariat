@@ -18,6 +18,7 @@ import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -25,42 +26,60 @@ import services.ReclamationService;
 import services.UserService;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.ResourceBundle;
 
 public class ReclamationController implements Initializable {
 
     @FXML private Label topName;
     @FXML private Circle topAvatar;
-    @FXML
-    private TableView<Reclamation> reclamationTable;
-    @FXML
-    private TableColumn<Reclamation, String> colTitre, colCategorie, colProjet, colStatut, colDate;
-    @FXML
-    private TableColumn<Reclamation, Void> colReponse;
+    @FXML private TableView<Reclamation> reclamationTable;
+    @FXML private TableColumn<Reclamation, String> colTitre, colCategorie, colProjet, colStatut, colDate;
+    @FXML private TableColumn<Reclamation, Void> colReponse;
     @FXML private TextField titreField;
     @FXML private TextField categorieField;
     @FXML private TextField projetField;
     @FXML private ComboBox<String> statutCombo;
 
+    // Nouveaux éléments pour le fichier
+    @FXML private Button btnChoisirFichier;
+    @FXML private Label lblNomFichier;
+
     @FXML private Label titreError;
     @FXML private Label categorieError;
     @FXML private Label projetError;
 
-    // Ajout du service
     private ReclamationService reclamationService;
     private ObservableList<Reclamation> reclamationList;
 
+    // Pour la modification
+    private int idAModifier = 0;
+    private File selectedFile;              // Fichier sélectionné
+    private Reclamation currentReclamation; // Réclamation en cours de modification
+
+    // =========================================================================
+    // Initialisation
+    // =========================================================================
+    @Override
+    public void initialize(URL url, ResourceBundle resourceBundle) {
+        reclamationService = new ReclamationService();
+        if (topName != null) {
+            loadCurrentUserProfile();
+        }
+        if (reclamationTable != null) {
+            setupTable();
+            loadData();
+        }
+    }
+
     private void loadCurrentUserProfile() {
         User currentUser = UserService.getCurrentUser();
-
         if (currentUser != null) {
-            // 1. Mise à jour du nom
             String fullName = currentUser.getFirstName() + " " + currentUser.getName();
             topName.setText(fullName);
-
-            // 2. Mise à jour de l'avatar avec les données binaires
             byte[] imageData = currentUser.getImageData();
             if (imageData != null && imageData.length > 0) {
                 try (ByteArrayInputStream bais = new ByteArrayInputStream(imageData)) {
@@ -80,18 +99,6 @@ public class ReclamationController implements Initializable {
         }
     }
 
-    @Override
-    public void initialize(URL url, ResourceBundle resourceBundle) {
-        reclamationService = new ReclamationService();
-        if (topName != null) {
-            loadCurrentUserProfile();
-        }
-        if (reclamationTable != null) {
-            setupTable();
-            loadData();
-        }
-    }
-
     private void loadData() {
         reclamationList = reclamationService.getAll();
         reclamationTable.setItems(reclamationList);
@@ -102,7 +109,7 @@ public class ReclamationController implements Initializable {
         colProjet.setCellValueFactory(new PropertyValueFactory<>("projet"));
         colDate.setCellValueFactory(new PropertyValueFactory<>("date"));
 
-        // Colonne CATÉGORIE
+        // Colonne CATÉGORIE avec badge
         colCategorie.setCellValueFactory(new PropertyValueFactory<>("categorie"));
         colCategorie.setCellFactory(column -> new TableCell<>() {
             @Override
@@ -118,7 +125,7 @@ public class ReclamationController implements Initializable {
             }
         });
 
-        // Colonne STATUT
+        // Colonne STATUT avec badge
         colStatut.setCellValueFactory(new PropertyValueFactory<>("statut"));
         colStatut.setCellFactory(column -> new TableCell<>() {
             @Override
@@ -128,23 +135,13 @@ public class ReclamationController implements Initializable {
                     setGraphic(null);
                 } else {
                     Label badge = new Label(item);
-                    badge.getStyleClass().add("status-pill");
+                    badge.getStyleClass().addAll("status-pill");
                     switch (item) {
-                        case "En attente":
-                            badge.getStyleClass().add("status-open");
-                            break;
-                        case "En cours":
-                            badge.getStyleClass().add("status-progress");
-                            break;
-                        case "Rèsolu":
-                            badge.getStyleClass().add("status-resolved");
-                            break;
-                        case "Fermer":
-                            badge.getStyleClass().add("status-closed");
-                            break;
-                        default:
-                            badge.getStyleClass().add("status-closed");
-                            break;
+                        case "En attente" -> badge.getStyleClass().add("status-open");
+                        case "En cours"   -> badge.getStyleClass().add("status-progress");
+                        case "Rèsolu"     -> badge.getStyleClass().add("status-resolved");
+                        case "Fermer"     -> badge.getStyleClass().add("status-closed");
+                        default           -> badge.getStyleClass().add("status-closed");
                     }
                     setGraphic(badge);
                 }
@@ -161,7 +158,7 @@ public class ReclamationController implements Initializable {
                 replyIcon.setIconSize(18);
                 replyBtn.setGraphic(replyIcon);
                 replyBtn.getStyleClass().add("btn-response");
-                replyBtn.setTooltip(new Tooltip("Voir la réponse"));
+                replyBtn.setTooltip(new Tooltip("Voir / Modifier"));
                 replyBtn.setOnAction(event -> {
                     Reclamation rec = getTableView().getItems().get(getIndex());
                     openModifyPopup(rec);
@@ -199,8 +196,16 @@ public class ReclamationController implements Initializable {
         });
     }
 
+    // =========================================================================
+    // Navigation
+    // =========================================================================
     public void handleUserManagementNavigation(ActionEvent event) {
         switchScene(event, "/User/UserTable.fxml");
+    }
+
+    public void handleLogout(ActionEvent event) {
+        UserService.logout();
+        switchScene(event, "/Start/1ere.fxml");
     }
 
     private void switchScene(ActionEvent event, String fxmlPath) {
@@ -214,11 +219,13 @@ public class ReclamationController implements Initializable {
         }
     }
 
-    public void handleLogout(ActionEvent event) {
-        UserService.logout();
-        switchScene(event, "/Start/1ere.fxml");
-    }
+    // =========================================================================
+    // Gestion des popups (Ajout / Modification)
+    // =========================================================================
 
+    /**
+     * Ouvre la popup d'ajout d'une réclamation.
+     */
     @FXML
     public void addreclamation(ActionEvent event) {
         try {
@@ -228,11 +235,10 @@ public class ReclamationController implements Initializable {
             Stage popupStage = new Stage();
             popupStage.initModality(Modality.APPLICATION_MODAL);
             popupStage.setScene(new Scene(root));
-
             popupStage.showAndWait();
 
             if (reclamationTable != null) {
-                loadData();
+                loadData(); // rafraîchir la table après fermeture
             }
 
         } catch (Exception e) {
@@ -240,68 +246,16 @@ public class ReclamationController implements Initializable {
         }
     }
 
-    @FXML
-    public void saveReclamation(ActionEvent event) {
-        if (!validerSaisie()) {
-            return;
-        }
-        String titre = titreField.getText();
-        String cat = categorieField.getText();
-        String proj = projetField.getText();
-        String statut = statutCombo.getValue();
-
-        String date = LocalDate.now().toString();
-
-        Reclamation r = new Reclamation(titre, cat, proj, statut, date);
-        reclamationService.add(r);
-
-        System.out.println("Reclamation ajoutée : " + r.getTitre());
-        closePopup(event);
-    }
-
-    @FXML
-    public void closePopup(ActionEvent event) {
-        ((Node) event.getSource()).getScene().getWindow().hide();
-    }
-
-    private int idAModifier = 0;
-
-    public void initData(Reclamation r) {
-        if (r != null) {
-            this.idAModifier = r.getId();
-            titreField.setText(r.getTitre());
-            categorieField.setText(r.getCategorie());
-            projetField.setText(r.getProjet());
-            statutCombo.setValue(r.getStatut());
-        }
-    }
-
-    @FXML
-    public void updateReclamation(ActionEvent event) {
-        if (!validerSaisie()) {
-            return;
-        }
-        String titre = titreField.getText();
-        String cat = categorieField.getText();
-        String proj = projetField.getText();
-        String statut = statutCombo.getValue();
-        String date = java.time.LocalDate.now().toString();
-
-        Reclamation r = new Reclamation(titre, cat, proj, statut, date);
-        r.setId(idAModifier);
-
-        reclamationService.update(r);
-
-        closePopup(event);
-    }
-
+    /**
+     * Ouvre la popup de modification d'une réclamation.
+     */
     private void openModifyPopup(Reclamation rec) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/Reclamation/popUpmodif.fxml"));
             Parent root = loader.load();
 
             ReclamationController controller = loader.getController();
-            controller.initData(rec);
+            controller.initData(rec); // injection des données existantes
 
             Stage stage = new Stage();
             stage.initModality(Modality.APPLICATION_MODAL);
@@ -309,11 +263,138 @@ public class ReclamationController implements Initializable {
             stage.setScene(new Scene(root));
             stage.showAndWait();
 
-            loadData();
+            loadData(); // rafraîchir la table après modification
 
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Initialise les champs de la popup avec les données d'une réclamation existante.
+     * Utilisé pour la modification.
+     */
+    public void initData(Reclamation r) {
+        if (r != null) {
+            this.idAModifier = r.getId();
+            this.currentReclamation = reclamationService.getById(r.getId()); // récupère aussi le fichier
+            titreField.setText(currentReclamation.getTitre());
+            categorieField.setText(currentReclamation.getCategorie());
+            projetField.setText(currentReclamation.getProjet());
+            statutCombo.setValue(currentReclamation.getStatut());
+            // Indiquer qu'un fichier existe déjà
+            if (currentReclamation.getFichier() != null && currentReclamation.getFichier().length > 0) {
+                lblNomFichier.setText("Fichier existant (non modifié)");
+            } else {
+                lblNomFichier.setText("Aucun fichier");
+            }
+            selectedFile = null; // aucun nouveau fichier sélectionné
+        }
+    }
+
+    // =========================================================================
+    // Sauvegarde (Ajout / Modification)
+    // =========================================================================
+
+    @FXML
+    public void saveReclamation(ActionEvent event) {
+        if (!validerSaisie()) return;
+
+        String titre = titreField.getText().trim();
+        String cat = categorieField.getText().trim();
+        String proj = projetField.getText().trim();
+        String statut = statutCombo.getValue();
+        String date = LocalDate.now().toString();
+
+        Reclamation r = new Reclamation(titre, cat, proj, statut, date);
+
+        // Gestion du fichier sélectionné
+        if (selectedFile != null) {
+            try {
+                byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
+                r.setFichier(fileBytes);
+            } catch (IOException e) {
+                showAlert("Erreur", "Impossible de lire le fichier : " + e.getMessage());
+                return;
+            }
+        }
+
+        reclamationService.add(r);
+        closePopup(event);
+    }
+
+    @FXML
+    public void updateReclamation(ActionEvent event) {
+        if (!validerSaisie()) return;
+
+        String titre = titreField.getText().trim();
+        String cat = categorieField.getText().trim();
+        String proj = projetField.getText().trim();
+        String statut = statutCombo.getValue();
+        String date = LocalDate.now().toString();
+
+        Reclamation r = new Reclamation(titre, cat, proj, statut, date);
+        r.setId(idAModifier);
+
+        // Gestion du fichier
+        if (selectedFile != null) {
+            // Nouveau fichier choisi → on l'utilise
+            try {
+                byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
+                r.setFichier(fileBytes);
+            } catch (IOException e) {
+                showAlert("Erreur", "Impossible de lire le fichier : " + e.getMessage());
+                return;
+            }
+        } else {
+            // Aucun nouveau fichier → on conserve l'ancien (s'il existe)
+            if (currentReclamation != null) {
+                r.setFichier(currentReclamation.getFichier());
+            }
+        }
+
+        reclamationService.update(r);
+        closePopup(event);
+    }
+
+    /**
+     * Ferme la popup actuelle.
+     */
+    @FXML
+    public void closePopup(ActionEvent event) {
+        ((Node) event.getSource()).getScene().getWindow().hide();
+    }
+
+    // =========================================================================
+    // Gestion du fichier (choix)
+    // =========================================================================
+    @FXML
+    private void choisirFichier() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.setTitle("Choisir une pièce jointe");
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Tous les fichiers", "*.*"),
+                new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.gif"),
+                new FileChooser.ExtensionFilter("PDF", "*.pdf"),
+                new FileChooser.ExtensionFilter("Documents", "*.docx", "*.xlsx", "*.txt")
+        );
+        selectedFile = fileChooser.showOpenDialog(btnChoisirFichier.getScene().getWindow());
+        if (selectedFile != null) {
+            lblNomFichier.setText(selectedFile.getName());
+            lblNomFichier.setStyle("-fx-text-fill: #111827; -fx-font-weight: bold;");
+        } else {
+            lblNomFichier.setText("Aucun fichier");
+            lblNomFichier.setStyle("");
+        }
+    }
+
+    // =========================================================================
+    // Validation des champs
+    // =========================================================================
+    private void clearErrors() {
+        if (titreError != null) { titreError.setVisible(false); titreError.setManaged(false); }
+        if (categorieError != null) { categorieError.setVisible(false); categorieError.setManaged(false); }
+        if (projetError != null) { projetError.setVisible(false); projetError.setManaged(false); }
     }
 
     private void showInlineError(Label label, String text) {
@@ -322,12 +403,6 @@ public class ReclamationController implements Initializable {
             label.setVisible(true);
             label.setManaged(true);
         }
-    }
-
-    private void clearErrors() {
-        if (titreError != null) { titreError.setVisible(false); titreError.setManaged(false); }
-        if (categorieError != null) { categorieError.setVisible(false); categorieError.setManaged(false); }
-        if (projetError != null) { projetError.setVisible(false); projetError.setManaged(false); }
     }
 
     private boolean validerSaisie() {
@@ -363,5 +438,13 @@ public class ReclamationController implements Initializable {
         }
 
         return isValid;
+    }
+
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.ERROR);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }
