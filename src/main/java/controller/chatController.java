@@ -4,12 +4,14 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import model.Conversation;
@@ -51,6 +53,7 @@ import java.nio.file.Files;
 import java.awt.Desktop;
 import java.net.URI;
 import java.nio.file.Path;
+import javafx.embed.swing.SwingNode;
 import com.sun.jna.NativeLibrary;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
@@ -62,7 +65,8 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.Rectangle;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
-import javax.swing.SwingUtilities;
+
+import javax.swing.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
@@ -164,20 +168,53 @@ public class chatController {
     private final Map<Long, Label> unreadBadgeByConvId = new HashMap<>();
     private final Map<Long, Label> timeLabelByConvId  = new HashMap<>();
     private final Map<Integer, String> senderNameCache = new HashMap<>();
-    private static boolean VLC_INIT_DONE = false;
+    private static final java.util.concurrent.atomic.AtomicBoolean VLC_INIT = new java.util.concurrent.atomic.AtomicBoolean(false);
+    private static uk.co.caprica.vlcj.factory.MediaPlayerFactory VLC_FACTORY;
+    private javafx.stage.Stage inlineVideoStage;
+    private uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent inlineComp;
+    private javafx.animation.AnimationTimer inlineTracker;
+    private java.nio.file.Path inlineCurrentFile;
+    private javafx.scene.Node inlineAnchor;
+    private javax.swing.JWindow inlineSwingWindow;
+    private uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent inlineSwingComp;
+    // listeners/filters so we can detach cleanly
+    private javafx.event.EventHandler<javafx.scene.input.KeyEvent> inlineEscFilter;
+    private javafx.scene.Scene inlineEscScene;
+    private javafx.beans.value.ChangeListener<Boolean> inlineOwnerFocusListener;
+    private javafx.stage.Window inlineOwnerWindow;
+
+
     private int currentUserId = 1;
     //==========================
     //HELPER METHODS
     //==========================
 
     private static void initVlcOnce() {
-        Path vlcDir = Path.of(System.getProperty("user.dir"), "vlc").toAbsolutePath();
+        if (!VLC_INIT.compareAndSet(false, true)) return;
 
-        System.setProperty("jna.library.path", vlcDir.toString());
+        java.nio.file.Path vlcDir = java.nio.file.Path.of(System.getProperty("user.dir"), "vlc").toAbsolutePath();
+
+        // Required for bundled VLC
         System.setProperty("VLC_PLUGIN_PATH", vlcDir.resolve("plugins").toString());
 
-        boolean ok = new NativeDiscovery().discover();
+        // Make sure JNA can find libvlc from your bundled folder
+        String vlcPath = vlcDir.toString();
+        System.setProperty("jna.library.path", vlcPath);
+        try {
+            com.sun.jna.NativeLibrary.addSearchPath("libvlc", vlcPath);
+            com.sun.jna.NativeLibrary.addSearchPath("libvlccore", vlcPath);
+        } catch (Throwable ignored) {
+            // not fatal; some setups still work with jna.library.path alone
+        }
+
+        boolean ok = new uk.co.caprica.vlcj.factory.discovery.NativeDiscovery().discover();
         System.out.println("VLC discover ok=" + ok + " dir=" + vlcDir);
+
+        VLC_FACTORY = new uk.co.caprica.vlcj.factory.MediaPlayerFactory(
+                "--no-video-title-show",
+                "--no-video-on-top",
+                "--quiet"
+        );
     }
 
     private static void vlcEdt(Runnable r) {
@@ -2062,107 +2099,272 @@ public class chatController {
         return card;
     }
 
-    private Node buildInlineVideo(ServiceMessage.AttachmentMeta meta, boolean outgoing) {
-
+    private void openVideoInSwingWindow(java.nio.file.Path mediaFile, String title) {
+        if (mediaFile == null) return;
         initVlcOnce();
 
-        Label overlay = new Label("▶");
-        overlay.getStyleClass().add("vid-play");
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent comp =
+                    new uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent();
 
-        Label loading = new Label("Chargement…");
-        loading.getStyleClass().add("vid-loading");
+            javax.swing.JFrame frame = new javax.swing.JFrame(title == null ? "Video" : title);
+            frame.setDefaultCloseOperation(javax.swing.WindowConstants.DISPOSE_ON_CLOSE);
+            frame.setContentPane(comp);
+            frame.setSize(900, 520);
+            frame.setLocationRelativeTo(null);
 
-        StackPane player = new StackPane(loading, overlay);
-        player.getStyleClass().addAll("media-bubble", outgoing ? "media-out" : "media-in");
-        player.setPrefWidth(420);
+            frame.addWindowListener(new java.awt.event.WindowAdapter() {
+                @Override public void windowClosing(java.awt.event.WindowEvent e) {
+                    try { comp.mediaPlayer().controls().stop(); } catch (Throwable ignored) {}
+                    try { comp.release(); } catch (Throwable ignored) {}
+                }
+                @Override public void windowClosed(java.awt.event.WindowEvent e) {
+                    try { comp.release(); } catch (Throwable ignored) {}
+                }
+            });
 
-        Rectangle clip = new Rectangle();
+            frame.setVisible(true);
+
+            // Play AFTER visible so native handle exists
+            comp.mediaPlayer().media().play(mediaFile.toString());
+        });
+    }
+
+    private void openInlineOverlayVideoSwing(java.nio.file.Path file, javafx.scene.Node anchor, String title) {
+        if (file == null || anchor == null) return;
+        initVlcOnce();
+
+        javafx.geometry.Bounds b = anchor.localToScreen(anchor.getBoundsInLocal());
+        if (b == null) return;
+
+        // Toggle behavior: if already open on the SAME bubble -> close; else replace
+        if (inlineSwingWindow != null && inlineSwingWindow.isVisible()) {
+            if (inlineAnchor == anchor) {
+                closeInlineOverlayVideoSwing();
+                return;
+            } else {
+                closeInlineOverlayVideoSwing(); // close previous then open new
+            }
+        }
+
+        inlineCurrentFile = file;
+        inlineAnchor = anchor;
+
+        // Attach ESC (event filter, not setOnKeyPressed)
+        javafx.scene.Scene sc = anchor.getScene();
+        if (sc != null) {
+            detachInlineEsc(); // safety
+            inlineEscScene = sc;
+            inlineEscFilter = ev -> {
+                if (ev.getCode() == javafx.scene.input.KeyCode.ESCAPE) {
+                    closeInlineOverlayVideoSwing();
+                    ev.consume();
+                }
+            };
+            sc.addEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, inlineEscFilter);
+        }
+
+        // Close if owner window loses focus (attach once, detach on close)
+        javafx.stage.Window w = sc != null ? sc.getWindow() : null;
+        if (w != null) {
+            detachInlineFocus(); // safety
+            inlineOwnerWindow = w;
+            inlineOwnerFocusListener = (o, old, focused) -> {
+                if (!focused) closeInlineOverlayVideoSwing();
+            };
+            w.focusedProperty().addListener(inlineOwnerFocusListener);
+        }
+
+        // Create/Show Swing overlay on EDT
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            inlineSwingComp = new uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent();
+
+            inlineSwingWindow = new javax.swing.JWindow();
+            inlineSwingWindow.setAlwaysOnTop(true);
+            inlineSwingWindow.setBackground(new java.awt.Color(0, 0, 0, 255)); // opaque black
+            inlineSwingWindow.getContentPane().setLayout(new java.awt.BorderLayout());
+            inlineSwingWindow.getContentPane().add(inlineSwingComp, java.awt.BorderLayout.CENTER);
+
+            inlineSwingWindow.setBounds(
+                    (int) Math.round(b.getMinX()),
+                    (int) Math.round(b.getMinY()),
+                    (int) Math.max(50, Math.round(b.getWidth())),
+                    (int) Math.max(50, Math.round(b.getHeight()))
+            );
+
+            inlineSwingWindow.setVisible(true);
+
+            // Play AFTER visible so native handle exists
+            inlineSwingComp.mediaPlayer().media().play(file.toAbsolutePath().toString());
+        });
+
+        // Track anchor while scrolling/resizing (JavaFX thread)
+        if (inlineTracker != null) inlineTracker.stop();
+        inlineTracker = new javafx.animation.AnimationTimer() {
+            @Override public void handle(long now) {
+                javafx.scene.Node a = inlineAnchor;
+                if (a == null) return;
+
+                javafx.geometry.Bounds bb = a.localToScreen(a.getBoundsInLocal());
+                if (bb == null) return;
+
+                javax.swing.SwingUtilities.invokeLater(() -> {
+                    if (inlineSwingWindow == null) return;
+                    inlineSwingWindow.setBounds(
+                            (int) Math.round(bb.getMinX()),
+                            (int) Math.round(bb.getMinY()),
+                            (int) Math.max(50, Math.round(bb.getWidth())),
+                            (int) Math.max(50, Math.round(bb.getHeight()))
+                    );
+                });
+            }
+        };
+        inlineTracker.start();
+    }
+
+
+    private void closeInlineOverlayVideoSwing() {
+        if (inlineTracker != null) { inlineTracker.stop(); inlineTracker = null; }
+
+        detachInlineEsc();
+        detachInlineFocus();
+
+        inlineAnchor = null;
+        inlineCurrentFile = null;
+
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            try {
+                if (inlineSwingComp != null) {
+                    try { inlineSwingComp.mediaPlayer().controls().stop(); } catch (Throwable ignored) {}
+                    try { inlineSwingComp.release(); } catch (Throwable ignored) {}
+                }
+            } finally {
+                inlineSwingComp = null;
+                if (inlineSwingWindow != null) {
+                    inlineSwingWindow.setVisible(false);
+                    inlineSwingWindow.dispose();
+                    inlineSwingWindow = null;
+                }
+            }
+        });
+    }
+
+    private void detachInlineEsc() {
+        if (inlineEscScene != null && inlineEscFilter != null) {
+            inlineEscScene.removeEventFilter(javafx.scene.input.KeyEvent.KEY_PRESSED, inlineEscFilter);
+        }
+        inlineEscScene = null;
+        inlineEscFilter = null;
+    }
+
+    private void detachInlineFocus() {
+        if (inlineOwnerWindow != null && inlineOwnerFocusListener != null) {
+            inlineOwnerWindow.focusedProperty().removeListener(inlineOwnerFocusListener);
+        }
+        inlineOwnerWindow = null;
+        inlineOwnerFocusListener = null;
+    }
+
+
+
+    private javafx.scene.Node buildInlineVideo(ServiceMessage.AttachmentMeta meta, boolean outgoing) {
+
+        initVlcOnce(); // guarded init
+
+        javafx.scene.layout.StackPane player = new javafx.scene.layout.StackPane();
+        player.getStyleClass().add("media-player");
+
+        // Big like image bubble (tweak)
+        player.setPrefWidth(640);
+        player.setPrefHeight(360);
+        player.setMinHeight(220);
+
+        // Rounded clip
+        javafx.scene.shape.Rectangle clip = new javafx.scene.shape.Rectangle();
         clip.setArcWidth(18);
         clip.setArcHeight(18);
         clip.widthProperty().bind(player.widthProperty());
         clip.heightProperty().bind(player.heightProperty());
         player.setClip(clip);
 
-        AtomicReference<EmbeddedMediaPlayerComponent> compRef = new AtomicReference<>();
-        AtomicReference<Path> tmpRef = new AtomicReference<>();
-        AtomicBoolean disposed = new AtomicBoolean(false);
+        // Overlay play icon
+        javafx.scene.control.Label playIcon = new javafx.scene.control.Label("▶");
+        playIcon.getStyleClass().add("media-play-icon");
 
-        CompletableFuture
+        javafx.scene.layout.StackPane overlay = new javafx.scene.layout.StackPane(playIcon);
+        overlay.getStyleClass().add("media-overlay");
+        overlay.setPickOnBounds(true);
+
+        // Host content (we keep it simple: black box / optional thumbnail later)
+        javafx.scene.layout.StackPane videoHost = new javafx.scene.layout.StackPane();
+        videoHost.setMinSize(0, 0);
+        videoHost.prefWidthProperty().bind(player.widthProperty());
+        videoHost.prefHeightProperty().bind(player.heightProperty());
+
+        player.getChildren().setAll(videoHost, overlay);
+
+        java.util.concurrent.atomic.AtomicReference<java.nio.file.Path> tmpRef =
+                new java.util.concurrent.atomic.AtomicReference<>();
+        java.util.concurrent.atomic.AtomicBoolean disposed =
+                new java.util.concurrent.atomic.AtomicBoolean(false);
+
+        // Load attachment -> temp file async
+        java.util.concurrent.CompletableFuture
                 .supplyAsync(() -> {
                     try {
                         byte[] data = messageService.readAttachmentBytes(meta.id());
                         String safe = meta.fileName().replaceAll("[\\\\/:*?\"<>|]", "_");
-                        Path tmp = Files.createTempFile("yedik_vlc_", "_" + safe);
-                        Files.write(tmp, data);
+                        java.nio.file.Path tmp = java.nio.file.Files.createTempFile("yedik_vlc_", "_" + safe);
+                        java.nio.file.Files.write(tmp, data);
+                        tmp.toFile().deleteOnExit();
                         return tmp;
                     } catch (Exception e) {
                         throw new RuntimeException(e);
                     }
                 })
-                .thenAccept(tmp -> {
+                .thenAccept(tmp -> javafx.application.Platform.runLater(() -> {
+                    if (disposed.get()) return;
                     tmpRef.set(tmp);
 
-                    SwingUtilities.invokeLater(() -> {
+                    // Enable clicking only after file is ready
+                    javafx.event.EventHandler<javafx.scene.input.MouseEvent> open = ev -> {
+                        if (disposed.get()) return;
+                        java.nio.file.Path p = tmpRef.get();
+                        if (p == null) return;
 
-                        EmbeddedMediaPlayerComponent comp = new EmbeddedMediaPlayerComponent();
-                        compRef.set(comp);
+                        // This opens the real VLC window aligned on top of this bubble
+                        openInlineOverlayVideoSwing(p, player, meta.fileName());
 
-                        SwingNode swingNode = new SwingNode();
-                        swingNode.setContent(comp);
+                        ev.consume();
+                    };
 
-                        Platform.runLater(() -> {
-                            player.getChildren().setAll(swingNode, overlay);
-
-                            player.setOnMouseClicked(e -> {
-                                if (disposed.get()) return;
-
-                                EmbeddedMediaPlayerComponent c = compRef.get();
-                                if (c == null) return;
-
-                                vlcEdt(() -> {
-                                    try {
-                                        boolean isPlaying = c.mediaPlayer().status().isPlaying();
-
-                                        if (isPlaying) {
-                                            c.mediaPlayer().controls().pause();
-                                            Platform.runLater(() -> overlay.setVisible(true));
-                                        } else {
-                                            c.mediaPlayer().media().play(tmp.toAbsolutePath().toString());
-                                            Platform.runLater(() -> overlay.setVisible(false));
-                                        }
-                                    } catch (Throwable t) {
-                                        t.printStackTrace();
-                                    }
-                                });
-                            });
-                        });
-                    });
-                })
+                    player.setOnMouseClicked(open);
+                    overlay.setOnMouseClicked(open);
+                }))
                 .exceptionally(ex -> {
-                    Platform.runLater(() -> {
+                    javafx.application.Platform.runLater(() -> {
                         ex.printStackTrace();
-                        player.getChildren().setAll(buildFileCard(meta, outgoing));
+                        videoHost.getChildren().setAll(new javafx.scene.control.Label("Video error"));
+                        overlay.setVisible(false);
                     });
                     return null;
                 });
 
-        // SAFE cleanup
+        // Cleanup when node removed (conversation switch etc.)
         player.sceneProperty().addListener((obs, oldScene, newScene) -> {
             if (oldScene != null && newScene == null) {
                 disposed.set(true);
+                player.setOnMouseClicked(null);
+                overlay.setOnMouseClicked(null);
 
-                EmbeddedMediaPlayerComponent comp = compRef.getAndSet(null);
-                Path tmp = tmpRef.getAndSet(null);
-
-                if (comp != null) {
-                    vlcEdt(() -> {
-                        try { comp.mediaPlayer().controls().stop(); } catch (Throwable ignored) {}
-                        try { comp.release(); } catch (Throwable ignored) {}
-                    });
+                // If overlay is currently attached to this bubble, close it
+                if (inlineAnchor == player) {
+                    closeInlineOverlayVideoSwing();
                 }
 
+                java.nio.file.Path tmp = tmpRef.getAndSet(null);
                 if (tmp != null) {
-                    try { Files.deleteIfExists(tmp); } catch (Exception ignored) {}
+                    try { java.nio.file.Files.deleteIfExists(tmp); } catch (Exception ignored) {}
                 }
             }
         });
