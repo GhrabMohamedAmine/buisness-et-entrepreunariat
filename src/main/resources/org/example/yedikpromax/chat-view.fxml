@@ -170,10 +170,28 @@
                                                 <FontIcon iconLiteral="mdi2p-paperclip" styleClass="icon"/>
                                             </graphic>
                                         </Button>
-
-                                        <Button styleClass="icon-button">
+                                        <Button fx:id="recCancelBtn" styleClass="danger-icon" visible="false" managed="false">
                                             <graphic>
-                                                <FontIcon iconLiteral="mdi2i-image-outline" styleClass="icon"/>
+                                                <FontIcon iconLiteral="mdi2c-close" styleClass="icon-button"/>
+                                            </graphic>
+                                        </Button>
+                                        <HBox fx:id="recIndicatorBox" visible="false" managed="false" spacing="8" alignment="CENTER_LEFT"
+                                              styleClass="rec-indicator" HBox.hgrow="ALWAYS">
+                                            <Label text="●" styleClass="rec-dot"/>
+                                            <Label fx:id="recTimerLabel" text="00:00" styleClass="rec-time"/>
+                                        </HBox>
+                                        <HBox fx:id="recPreviewBox" visible="false" managed="false" spacing="8" alignment="CENTER_LEFT"
+                                              styleClass="rec-preview" HBox.hgrow="ALWAYS">
+                                            <Button fx:id="recPreviewPlayBtn" styleClass="rec-preview-play" >
+                                                <graphic>
+                                                    <FontIcon fx:id="recPreviewPlayIcon" iconLiteral="mdi2p-play" styleClass="icon"/>
+                                                </graphic>
+                                            </Button>
+                                            <Label fx:id="recPreviewTimeLabel" text="00:00" styleClass="rec-time"/>
+                                        </HBox>
+                                        <Button fx:id="micBtn" styleClass="icon-button" onAction="#handleMicToggle" >
+                                            <graphic>
+                                                <FontIcon fx:id="micIcon" iconLiteral="mdi2m-microphone" styleClass="icon"/>
                                             </graphic>
                                         </Button>
 
@@ -183,7 +201,7 @@
                                                    styleClass="composer-field"
                                                    HBox.hgrow="ALWAYS"/>
 
-                                        <Button styleClass="icon-button">
+                                        <Button fx:id="emojiBtn" styleClass="icon-button">
                                             <graphic>
                                                 <FontIcon iconLiteral="mdi2e-emoticon-outline" styleClass="icon"/>
                                             </graphic>

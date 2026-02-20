@@ -54,6 +54,8 @@ import java.nio.file.Files;
 import java.awt.Desktop;
 import java.net.URI;
 import java.nio.file.Path;
+import javax.sound.sampled.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javafx.embed.swing.SwingNode;
 import com.sun.jna.NativeLibrary;
 import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
@@ -70,7 +72,6 @@ import javax.swing.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class chatController {
@@ -125,6 +126,16 @@ public class chatController {
     @FXML private FontIcon dangerActionIcon;
     @FXML private VBox customizeSection;
     @FXML private FontIcon sendIcon;
+    @FXML private Button micBtn;
+    @FXML private FontIcon micIcon;
+    @FXML private Button emojiBtn;
+    @FXML private Button recCancelBtn;
+    @FXML private HBox recIndicatorBox;
+    @FXML private Label recTimerLabel;
+    @FXML private HBox recPreviewBox;
+    @FXML private Button recPreviewPlayBtn;
+    @FXML private FontIcon recPreviewPlayIcon;
+    @FXML private Label recPreviewTimeLabel;
 
     @FXML private void toggleChatInfo()   { toggleSection(secChatInfo,   chevChatInfo); }
     @FXML private void toggleCustomize()  { toggleSection(secCustomize,  chevCustomize); }
@@ -177,7 +188,6 @@ public class chatController {
     private javafx.scene.Node inlineAnchor;
     private javax.swing.JWindow inlineSwingWindow;
     private uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent inlineSwingComp;
-    // listeners/filters so we can detach cleanly
     private javafx.event.EventHandler<javafx.scene.input.KeyEvent> inlineEscFilter;
     private javafx.scene.Scene inlineEscScene;
     private javafx.beans.value.ChangeListener<Boolean> inlineOwnerFocusListener;
@@ -186,10 +196,26 @@ public class chatController {
     private double lastX = Double.NaN, lastY = Double.NaN, lastW = Double.NaN, lastH = Double.NaN;
     private javafx.event.EventHandler<javafx.scene.input.MouseEvent> inlineClickAwayFilter;
     private javafx.scene.Scene inlineClickAwayScene;
+    private javafx.scene.media.MediaPlayer currentAudioPlayer;
+    private long currentAudioAttachmentId = -1;
+    private volatile boolean recording = false;
+    private javax.sound.sampled.TargetDataLine recordLine;
+    private Thread recordThread;
+    private java.io.File lastRecordedFile;
+    private enum MicState {
+        NORMAL,
+        RECORDING,
+        PREVIEW
+    }
+    private MicState micState = MicState.NORMAL;
+    private javafx.animation.Timeline recTimeline;
+    private int recSeconds = 0;
+    private javafx.scene.media.MediaPlayer previewPlayer;
 
 
 
     private int currentUserId = 2;
+
     //==========================
     //HELPER METHODS
     //==========================
@@ -341,14 +367,13 @@ public class chatController {
         newMsgCancelBtn.getStyleClass().add("overlay-btn");
         selectedConversationProperty.set(null);
         BooleanBinding hasSelection = selectedConversationProperty.isNotNull();
-        // show header + composer only when selected
+
         chatHeader.visibleProperty().bind(hasSelection);
         chatHeader.managedProperty().bind(chatHeader.visibleProperty());
 
         composerBar.visibleProperty().bind(hasSelection);
         composerBar.managedProperty().bind(composerBar.visibleProperty());
 
-        // show empty state only when NOTHING selected
         emptyState.visibleProperty().bind(hasSelection.not());
         emptyState.managedProperty().bind(emptyState.visibleProperty());
 
@@ -361,12 +386,12 @@ public class chatController {
         membersList.getStyleClass().add("members-list");
         membersList.setCellFactory(lv -> new MemberCell());
         membersList.setItems(members);
-        membersList.setFixedCellSize(48); // height of one member row
+        membersList.setFixedCellSize(48);
 
         membersList.prefHeightProperty().bind(
                 membersList.fixedCellSizeProperty()
                         .multiply(Bindings.size(membersList.getItems()))
-                        .add(2) // small padding
+                        .add(2)
         );
 
         membersList.setFocusTraversable(false);
@@ -376,7 +401,7 @@ public class chatController {
         nicknamesList.setFocusTraversable(false);
         nicknamesList.setPlaceholder(new Label("No participants"));
 
-        nicknamesList.setFixedCellSize(56); // adjust if your row is taller/shorter
+        nicknamesList.setFixedCellSize(56);
 
         int maxRows = 6;
 
@@ -387,11 +412,11 @@ public class chatController {
         );
 
         nicknamesList.maxHeightProperty().bind(nicknamesList.prefHeightProperty());
-        // Make sure drawer starts hidden off-screen (after layout)
+
         Platform.runLater(() -> drawer.setTranslateX(drawer.getWidth()));
         chatNameField.textProperty().addListener((obs, oldV, newV) -> updateSaveState());
 
-        // --- New Message modal setup ---
+
         usersPickList.setItems(filteredUsers);
         usersPickList.setCellFactory(lv -> new UserPickCell()); // class below
 
@@ -403,8 +428,12 @@ public class chatController {
         );
         usersPickList.maxHeightProperty().bind(usersPickList.prefHeightProperty());
 
-        // Search filter
         userSearchField.textProperty().addListener((obs, o, q) -> applyUserFilter(q));
+        if (micBtn != null) micBtn.setOnAction(e -> handleMicToggle());
+        if (recCancelBtn != null) recCancelBtn.setOnAction(e -> handleCancelRecording());
+        if (recPreviewPlayBtn != null) recPreviewPlayBtn.setOnAction(e -> handlePreviewPlayPause());
+
+        setComposerModeNormalUI();
     }
 
     private void updateSaveState() {
@@ -952,6 +981,23 @@ public class chatController {
     @FXML
     private void handleSend() {
         if (selectedConversation == null) return;
+
+        if (micState == MicState.PREVIEW && editingMessage == null
+                && lastRecordedFile != null && lastRecordedFile.exists()) {
+            try {
+                sendAttachment(lastRecordedFile);
+
+                cleanupPreviewPlayer();
+                lastRecordedFile = null;
+                setComposerModeNormalUI();
+
+                loadMessages(selectedConversation.getId());
+                loadConversations();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+            return;
+        }
 
         String body = messageInput.getText() == null ? "" : messageInput.getText().trim();
         if (body.isBlank()) return;
@@ -1821,7 +1867,15 @@ public class chatController {
 
     private void sendAttachment(File f) throws Exception {
         String mime = Files.probeContentType(f.toPath());
-        if (mime == null) mime = "application/octet-stream";
+        if (mime == null) {
+            String n = f.getName().toLowerCase();
+            if (n.endsWith(".wav")) mime = "audio/wav";
+            else if (n.endsWith(".mp3")) mime = "audio/mpeg";
+            else if (n.endsWith(".m4a")) mime = "audio/mp4";
+            else if (n.endsWith(".aac")) mime = "audio/aac";
+            else if (n.endsWith(".ogg")) mime = "audio/ogg";
+            else mime = "application/octet-stream";
+        }
 
         long size = Files.size(f.toPath());
         String name = f.getName();
@@ -1922,6 +1976,7 @@ public class chatController {
         String mime = meta.mimeType();
         if (mime.startsWith("image/")) return buildInlineImage(meta, outgoing);
         if (mime.startsWith("video/")) return buildInlineVideo(meta, outgoing);
+        if (mime.startsWith("audio/")) return buildInlineAudio(meta, outgoing);
         return buildFileCard(meta, outgoing);
     }
 
@@ -1947,7 +2002,11 @@ public class chatController {
             clip.heightProperty().bind(media.heightProperty());
             media.setClip(clip);
 
-            media.setOnMouseClicked(e -> openAttachment(meta));
+            media.setOnMouseClicked(e -> {
+                if (e.getButton() == javafx.scene.input.MouseButton.PRIMARY) {
+                    openAttachment(meta);
+                }
+            });
             return media;
 
         } catch (Exception e) {
@@ -2582,6 +2641,399 @@ public class chatController {
         return player;
     }
 
+    private Node buildInlineAudio(ServiceMessage.AttachmentMeta meta, boolean outgoing) {
+        // UI
+        FontIcon playIco = new FontIcon("mdi2p-play");
+        playIco.getStyleClass().add("icon");
 
+        Button playBtn = new Button();
+        playBtn.getStyleClass().add("audio-btn");
+        playBtn.setGraphic(playIco);
 
+        Slider slider = new Slider(0, 1, 0);
+        slider.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(slider, Priority.ALWAYS);
+
+        Label time = new Label("0:00");
+        time.getStyleClass().add("audio-time");
+
+        HBox row = new HBox(10, playBtn, slider, time);
+        row.getStyleClass().addAll("audio-card", outgoing ? "audio-card-out" : "audio-card-in");
+
+        // Playback logic (single active player globally)
+        playBtn.setOnAction(e -> {
+            try {
+                toggleAudio(meta, playIco, slider, time);
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+
+        // seek
+        slider.valueChangingProperty().addListener((obs, was, is) -> {
+            if (!is && currentAudioPlayer != null && currentAudioAttachmentId == meta.id()) {
+                javafx.util.Duration d = currentAudioPlayer.getTotalDuration();
+                if (d != null && !d.isUnknown() && d.toMillis() > 0) {
+                    currentAudioPlayer.seek(d.multiply(slider.getValue()));
+                }
+            }
+        });
+
+        return row;
+    }
+
+    private void toggleAudio(ServiceMessage.AttachmentMeta meta, FontIcon playIco, Slider slider, Label time) throws Exception {
+        // if same audio is already playing -> pause/stop toggle
+        if (currentAudioPlayer != null && currentAudioAttachmentId == meta.id()) {
+            var st = currentAudioPlayer.getStatus();
+            if (st == javafx.scene.media.MediaPlayer.Status.PLAYING) {
+                currentAudioPlayer.pause();
+                playIco.setIconLiteral("mdi2p-play");
+            } else {
+                currentAudioPlayer.play();
+                playIco.setIconLiteral("mdi2p-pause");
+            }
+            return;
+        }
+
+        // stop previous audio
+        stopCurrentAudio();
+
+        // load bytes -> temp file -> MediaPlayer
+        byte[] data = messageService.readAttachmentBytes(meta.id());
+        if (data == null || data.length == 0) return;
+
+        java.nio.file.Path tmp = writeTempMedia(meta.fileName(), data);
+        javafx.scene.media.Media media = new javafx.scene.media.Media(tmp.toUri().toString());
+        javafx.scene.media.MediaPlayer mp = new javafx.scene.media.MediaPlayer(media);
+
+        currentAudioPlayer = mp;
+        currentAudioAttachmentId = meta.id();
+
+        mp.setOnReady(() -> {
+            javafx.util.Duration total = mp.getTotalDuration();
+            if (total != null && !total.isUnknown() && total.toMillis() > 0) {
+                time.setText(formatTime(mp.getCurrentTime()) + " / " + formatTime(total));
+            }
+        });
+
+        mp.currentTimeProperty().addListener((obs, old, cur) -> {
+            if (mp != currentAudioPlayer) return;
+            javafx.util.Duration total = mp.getTotalDuration();
+            if (total != null && !total.isUnknown() && total.toMillis() > 0) {
+                if (!slider.isValueChanging()) {
+                    slider.setValue(cur.toMillis() / total.toMillis());
+                }
+                time.setText(formatTime(cur) + " / " + formatTime(total));
+            } else {
+                time.setText(formatTime(cur));
+            }
+        });
+
+        mp.setOnEndOfMedia(() -> {
+            playIco.setIconLiteral("mdi2p-play");
+            slider.setValue(0);
+            stopCurrentAudio();
+        });
+
+        playIco.setIconLiteral("mdi2p-pause");
+        mp.play();
+    }
+
+    private void stopCurrentAudio() {
+        if (currentAudioPlayer != null) {
+            try { currentAudioPlayer.stop(); } catch (Exception ignored) {}
+            try { currentAudioPlayer.dispose(); } catch (Exception ignored) {}
+        }
+        currentAudioPlayer = null;
+        currentAudioAttachmentId = -1;
+    }
+
+    private java.nio.file.Path writeTempMedia(String fileName, byte[] data) throws Exception {
+        String safe = (fileName == null ? "audio.bin" : fileName).replaceAll("[\\\\/:*?\"<>|]", "_");
+        java.nio.file.Path tmp = java.nio.file.Files.createTempFile("yedik_media_", "_" + safe);
+        java.nio.file.Files.write(tmp, data);
+        tmp.toFile().deleteOnExit();
+        return tmp;
+    }
+
+    private String formatTime(javafx.util.Duration d) {
+        if (d == null) return "0:00";
+        int s = (int) Math.floor(d.toSeconds());
+        int m = s / 60;
+        int r = s % 60;
+        return m + ":" + (r < 10 ? "0" + r : String.valueOf(r));
+    }
+    // ==========================
+    // Voice recording logic
+    // ==========================
+
+    @FXML
+    private void handleMicToggle() {
+        if (selectedConversation == null) return;
+
+        switch (micState) {
+            case NORMAL -> startVoiceRecording();
+            case RECORDING -> stopRecordingIntoPreview();
+            case PREVIEW -> {}
+        }
+    }
+
+    private void startVoiceRecording() {
+        try {
+            // if you were editing a message, recording should cancel that UX
+            if (editingMessage != null) cancelEdit();
+
+            recording = true;
+
+            setComposerModeRecordingUI();
+            startRecTimer();
+
+            AudioFormat format = new AudioFormat(16000f, 16, 1, true, false);
+            DataLine.Info info = new DataLine.Info(TargetDataLine.class, format);
+
+            recordLine = (TargetDataLine) AudioSystem.getLine(info);
+            recordLine.open(format);
+            recordLine.start();
+
+            java.nio.file.Path out = java.nio.file.Files.createTempFile("yedik_voice_", ".wav");
+            lastRecordedFile = out.toFile();
+            lastRecordedFile.deleteOnExit();
+
+            AudioInputStream ais = new AudioInputStream(recordLine);
+
+            recordThread = new Thread(() -> {
+                try {
+                    AudioSystem.write(ais, AudioFileFormat.Type.WAVE, lastRecordedFile);
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }, "voice-recorder");
+
+            recordThread.setDaemon(true);
+            recordThread.start();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            recording = false;
+            stopRecTimer();
+            cleanupRecorder();
+            setComposerModeNormalUI();
+        }
+    }
+
+    private void stopVoiceRecordingAndSend() {
+        // kept for compatibility
+        stopRecordingIntoPreview();
+    }
+
+    private void stopRecordingIntoPreview() {
+        try {
+            recording = false;
+
+            stopRecTimer();
+
+            if (recordLine != null) {
+                try { recordLine.stop(); } catch (Exception ignored) {}
+                try { recordLine.close(); } catch (Exception ignored) {}
+            }
+
+            if (recordThread != null) {
+                try { recordThread.join(800); } catch (InterruptedException ignored) {}
+            }
+
+            // validate file
+            if (lastRecordedFile == null || !lastRecordedFile.exists() || lastRecordedFile.length() <= 44) {
+                lastRecordedFile = null;
+                setComposerModeNormalUI();
+                return;
+            }
+            setComposerModePreviewUI();
+            if (recPreviewTimeLabel != null) recPreviewTimeLabel.setText("00:00");
+            if (recPreviewPlayIcon != null) recPreviewPlayIcon.setIconLiteral("mdi2p-play");
+            if (micIcon != null) micIcon.setIconLiteral("mdi2p-play");
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            lastRecordedFile = null;
+            setComposerModeNormalUI();
+        } finally {
+            recordLine = null;
+            recordThread = null;
+        }
+    }
+
+    private void cleanupRecorder() {
+        recordLine = null;
+        recordThread = null;
+        lastRecordedFile = null;
+    }
+    @FXML
+    private void handleCancelRecording() {
+        stopRecTimer();
+
+        if (recordLine != null) {
+            try { recordLine.stop(); } catch (Exception ignored) {}
+            try { recordLine.close(); } catch (Exception ignored) {}
+        }
+        recordLine = null;
+        recordThread = null;
+        recording = false;
+
+        cleanupPreviewPlayer();
+
+        if (lastRecordedFile != null && lastRecordedFile.exists()) {
+            try { lastRecordedFile.delete(); } catch (Exception ignored) {}
+        }
+        lastRecordedFile = null;
+
+        setComposerModeNormalUI();
+    }
+
+    @FXML
+    private void handlePreviewPlayPause() {
+        togglePreviewPlayback();
+    }
+
+    private void togglePreviewPlayback() {
+        if (lastRecordedFile == null || !lastRecordedFile.exists()) return;
+
+        try {
+            if (previewPlayer == null) {
+                javafx.scene.media.Media media = new javafx.scene.media.Media(lastRecordedFile.toURI().toString());
+                previewPlayer = new javafx.scene.media.MediaPlayer(media);
+
+                previewPlayer.currentTimeProperty().addListener((obs, old, cur) -> {
+                    if (recPreviewTimeLabel != null) recPreviewTimeLabel.setText(formatMMSS((int) cur.toSeconds()));
+                });
+
+                previewPlayer.setOnEndOfMedia(() -> {
+                    if (recPreviewPlayIcon != null) recPreviewPlayIcon.setIconLiteral("mdi2p-play");
+                    if (micIcon != null) micIcon.setIconLiteral("mdi2p-play");
+                    previewPlayer.stop();
+                });
+            }
+
+            var st = previewPlayer.getStatus();
+            if (st == javafx.scene.media.MediaPlayer.Status.PLAYING) {
+                previewPlayer.pause();
+                if (recPreviewPlayIcon != null) recPreviewPlayIcon.setIconLiteral("mdi2p-play");
+                if (micIcon != null) micIcon.setIconLiteral("mdi2p-play");
+            } else {
+                previewPlayer.play();
+                if (recPreviewPlayIcon != null) recPreviewPlayIcon.setIconLiteral("mdi2p-pause");
+                if (micIcon != null) micIcon.setIconLiteral("mdi2p-pause");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void cleanupPreviewPlayer() {
+        if (previewPlayer != null) {
+            try { previewPlayer.stop(); } catch (Exception ignored) {}
+            try { previewPlayer.dispose(); } catch (Exception ignored) {}
+            previewPlayer = null;
+        }
+    }
+
+    private void startRecTimer() {
+        recSeconds = 0;
+        if (recTimerLabel != null) recTimerLabel.setText("00:00");
+
+        stopRecTimer();
+        recTimeline = new javafx.animation.Timeline(
+                new javafx.animation.KeyFrame(javafx.util.Duration.seconds(1), e -> {
+                    recSeconds++;
+                    if (recTimerLabel != null) recTimerLabel.setText(formatMMSS(recSeconds));
+                })
+        );
+        recTimeline.setCycleCount(javafx.animation.Animation.INDEFINITE);
+        recTimeline.play();
+    }
+
+    private void stopRecTimer() {
+        if (recTimeline != null) {
+            recTimeline.stop();
+            recTimeline = null;
+        }
+    }
+
+    private String formatMMSS(int seconds) {
+        int m = seconds / 60;
+        int s = seconds % 60;
+        return String.format("%02d:%02d", m, s);
+    }
+
+    private void setComposerModeNormalUI() {
+        micState = MicState.NORMAL;
+
+        micBtn.setVisible(true);
+        micBtn.setManaged(true);
+
+        messageInput.setVisible(true);
+        messageInput.setManaged(true);
+
+        emojiBtn.setVisible(true);
+        emojiBtn.setManaged(true);
+
+        recCancelBtn.setVisible(false);
+        recCancelBtn.setManaged(false);
+
+        recIndicatorBox.setVisible(false);
+        recIndicatorBox.setManaged(false);
+
+        recPreviewBox.setVisible(false);
+        recPreviewBox.setManaged(false);
+
+        if (micIcon != null) micIcon.setIconLiteral("mdi2m-microphone");
+    }
+
+    private void setComposerModeRecordingUI() {
+        micState = MicState.RECORDING;
+
+        micBtn.setVisible(true);
+        micBtn.setManaged(true);
+
+        messageInput.setVisible(false);
+        messageInput.setManaged(false);
+
+        emojiBtn.setVisible(false);
+        emojiBtn.setManaged(false);
+
+        recCancelBtn.setVisible(true);
+        recCancelBtn.setManaged(true);
+
+        recIndicatorBox.setVisible(true);
+        recIndicatorBox.setManaged(true);
+
+        recPreviewBox.setVisible(false);
+        recPreviewBox.setManaged(false);
+
+        recTimerLabel.setText("00:00");
+        if (micIcon != null) micIcon.setIconLiteral("mdi2s-stop");
+    }
+
+    private void setComposerModePreviewUI() {
+        micState = MicState.PREVIEW;
+        micBtn.setVisible(false);
+        micBtn.setManaged(false);
+
+        messageInput.setVisible(false);
+        messageInput.setManaged(false);
+
+        emojiBtn.setVisible(false);
+        emojiBtn.setManaged(false);
+
+        recCancelBtn.setVisible(true);
+        recCancelBtn.setManaged(true);
+
+        recIndicatorBox.setVisible(false);
+        recIndicatorBox.setManaged(false);
+
+        recPreviewBox.setVisible(true);
+        recPreviewBox.setManaged(true);
+
+        if (recPreviewPlayIcon != null) recPreviewPlayIcon.setIconLiteral("mdi2p-play");
+    }
 }
