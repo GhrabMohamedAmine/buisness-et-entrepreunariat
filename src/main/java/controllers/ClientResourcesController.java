@@ -43,6 +43,22 @@ public class ClientResourcesController {
     private void openRequestPopup() {
         openRequestPopupInternal(null);
     }
+    @FXML
+    private void openRequestPage() {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/front/resources-catalog.fxml"));
+            Parent root = loader.load();
+
+            // pass clientCode to catalog controller
+            ResourcesCatalogController c = loader.getController();
+            c.setClientCode(clientCode);
+
+            Stage stage = (Stage) requestedFlow.getScene().getWindow();
+            stage.setScene(new Scene(root));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     // ===================== OPEN POPUP (EDIT MODE) =====================
     private void openRequestPopupInternal(ResourceAssignment assignmentToEdit) {

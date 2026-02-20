@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controllers.ResourcesCatalogController"
+      spacing="18"
+      stylesheets="@resources-catalog.css"
+      styleClass="root">
+
+    <padding>
+        <Insets top="24" right="24" bottom="24" left="24"/>
+    </padding>
+
+    <!-- Header -->
+    <BorderPane>
+        <left>
+            <VBox spacing="4">
+                <Label text="Resources Catalog" styleClass="header-title"/>
+                <Label text="Select a resource and send your request"
+                       styleClass="header-subtitle"/>
+            </VBox>
+        </left>
+
+        <right>
+            <Button text="Back"
+                    onAction="#goBack"
+                    styleClass="secondary-btn"/></right>
+          <left> <Button text="🤖 AI Recommend"
+                    onAction="#openAIRecommend"
+                    styleClass="primary-btn"/></left>
+
+
+    </BorderPane>
+
+    <!-- Table -->
+    <TableView fx:id="resourcesTable" VBox.vgrow="ALWAYS">
+        <columns>
+            <TableColumn fx:id="codeCol" text="Code" prefWidth="90"/>
+            <TableColumn fx:id="nameCol" text="Name" prefWidth="250"/>
+            <TableColumn fx:id="typeCol" text="Type" prefWidth="140"/>
+            <TableColumn fx:id="unitCostCol" text="Unit Cost" prefWidth="120"/>
+            <TableColumn fx:id="totalQtyCol" text="Total Qty" prefWidth="95"/>
+            <TableColumn fx:id="avQtyCol" text="Available" prefWidth="95"/>
+            <TableColumn fx:id="actionCol" text="Action" prefWidth="150"/>
+        </columns>
+    </TableView>
+
+</VBox>

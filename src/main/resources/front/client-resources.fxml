@@ -28,7 +28,7 @@
         <right>
             <Button text="+ Request Resource"
                     styleClass="primary-btn"
-                    onAction="#openRequestPopup"/>
+                    onAction="#openRequestPage"/>
         </right>
     </BorderPane>
 
