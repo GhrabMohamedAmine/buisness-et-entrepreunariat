@@ -1,5 +1,6 @@
 package controllers;
 
+import java.awt.*;
 import java.time.LocalDate;
 import entities.Reclamation;
 import entities.User;
@@ -13,6 +14,9 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
@@ -25,9 +29,7 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import services.ReclamationService;
 import services.UserService;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.ResourceBundle;
@@ -44,7 +46,7 @@ public class ReclamationController implements Initializable {
     @FXML private TextField projetField;
     @FXML private ComboBox<String> statutCombo;
 
-    // Nouveaux éléments pour le fichier
+    // Éléments pour le fichier
     @FXML private Button btnChoisirFichier;
     @FXML private Label lblNomFichier;
 
@@ -72,6 +74,8 @@ public class ReclamationController implements Initializable {
         if (reclamationTable != null) {
             setupTable();
             loadData();
+            // Ajout du double-clic pour ouvrir le fichier
+            setupDoubleClick();
         }
     }
 
@@ -196,6 +200,65 @@ public class ReclamationController implements Initializable {
         });
     }
 
+    /**
+     * Active le double-clic sur une ligne pour ouvrir le fichier joint (s'il existe).
+     */
+    private void setupDoubleClick() {
+        reclamationTable.setRowFactory(tv -> {
+            TableRow<Reclamation> row = new TableRow<>();
+            row.setOnMouseClicked(event -> {
+                if (event.getClickCount() == 2 && !row.isEmpty()) {
+                    Reclamation rec = row.getItem();
+                    openAttachedFile(rec);
+                }
+            });
+            // Option : ajouter un tooltip pour indiquer la fonctionnalité
+            row.hoverProperty().addListener((obs, oldVal, newVal) -> {
+                if (newVal && !row.isEmpty()) {
+                    // On ne peut pas savoir s'il y a un fichier sans requête, on met un message générique
+                    row.setTooltip(new Tooltip("Double-cliquer pour ouvrir la pièce jointe (si existante)"));
+                }
+            });
+            return row;
+        });
+    }
+
+    /**
+     * Ouvre le fichier attaché à une réclamation.
+     */
+    private void openAttachedFile(Reclamation rec) {
+        // Récupérer la réclamation complète (avec le fichier)
+        Reclamation fullRec = reclamationService.getById(rec.getId());
+        if (fullRec == null || fullRec.getFichier() == null || fullRec.getFichier().length == 0) {
+            showAlert("Information", "Aucune pièce jointe pour cette réclamation.");
+            return;
+        }
+
+        // Créer un fichier temporaire
+        try {
+            // Déterminer une extension approximative (on ne connaît pas le type original)
+            // On peut essayer de deviner ou simplement mettre .tmp
+            String suffix = ".tmp";
+            // Option : on pourrait stocker le nom original du fichier dans une autre colonne.
+            // Ici on utilise un nom générique.
+            File tempFile = File.createTempFile("reclamation_" + rec.getId() + "_", suffix);
+            tempFile.deleteOnExit();
+
+            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                fos.write(fullRec.getFichier());
+            }
+
+            // Ouvrir avec l'application par défaut
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(tempFile);
+            } else {
+                showAlert("Erreur", "L'ouverture de fichiers n'est pas supportée sur ce système.");
+            }
+        } catch (IOException e) {
+            showAlert("Erreur", "Impossible d'ouvrir le fichier : " + e.getMessage());
+        }
+    }
+
     // =========================================================================
     // Navigation
     // =========================================================================
@@ -222,10 +285,6 @@ public class ReclamationController implements Initializable {
     // =========================================================================
     // Gestion des popups (Ajout / Modification)
     // =========================================================================
-
-    /**
-     * Ouvre la popup d'ajout d'une réclamation.
-     */
     @FXML
     public void addreclamation(ActionEvent event) {
         try {
@@ -238,7 +297,7 @@ public class ReclamationController implements Initializable {
             popupStage.showAndWait();
 
             if (reclamationTable != null) {
-                loadData(); // rafraîchir la table après fermeture
+                loadData();
             }
 
         } catch (Exception e) {
@@ -246,16 +305,13 @@ public class ReclamationController implements Initializable {
         }
     }
 
-    /**
-     * Ouvre la popup de modification d'une réclamation.
-     */
     private void openModifyPopup(Reclamation rec) {
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/Reclamation/popUpmodif.fxml"));
             Parent root = loader.load();
 
             ReclamationController controller = loader.getController();
-            controller.initData(rec); // injection des données existantes
+            controller.initData(rec);
 
             Stage stage = new Stage();
             stage.initModality(Modality.APPLICATION_MODAL);
@@ -263,39 +319,40 @@ public class ReclamationController implements Initializable {
             stage.setScene(new Scene(root));
             stage.showAndWait();
 
-            loadData(); // rafraîchir la table après modification
+            loadData();
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    /**
-     * Initialise les champs de la popup avec les données d'une réclamation existante.
-     * Utilisé pour la modification.
-     */
     public void initData(Reclamation r) {
         if (r != null) {
             this.idAModifier = r.getId();
-            this.currentReclamation = reclamationService.getById(r.getId()); // récupère aussi le fichier
+            this.currentReclamation = reclamationService.getById(r.getId());
             titreField.setText(currentReclamation.getTitre());
             categorieField.setText(currentReclamation.getCategorie());
             projetField.setText(currentReclamation.getProjet());
             statutCombo.setValue(currentReclamation.getStatut());
-            // Indiquer qu'un fichier existe déjà
+
+            // Affichage du fichier existant
             if (currentReclamation.getFichier() != null && currentReclamation.getFichier().length > 0) {
-                lblNomFichier.setText("Fichier existant (non modifié)");
+                // Le nom original n'étant pas stocké, on utilise un affichage générique
+                lblNomFichier.setText("Fichier existant");
+                FontIcon icon = new FontIcon("mdi2f-file");
+                icon.setIconSize(18);
+                lblNomFichier.setGraphic(icon);
             } else {
                 lblNomFichier.setText("Aucun fichier");
+                lblNomFichier.setGraphic(null);
             }
-            selectedFile = null; // aucun nouveau fichier sélectionné
+            selectedFile = null;
         }
     }
 
     // =========================================================================
     // Sauvegarde (Ajout / Modification)
     // =========================================================================
-
     @FXML
     public void saveReclamation(ActionEvent event) {
         if (!validerSaisie()) return;
@@ -308,7 +365,6 @@ public class ReclamationController implements Initializable {
 
         Reclamation r = new Reclamation(titre, cat, proj, statut, date);
 
-        // Gestion du fichier sélectionné
         if (selectedFile != null) {
             try {
                 byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
@@ -336,9 +392,7 @@ public class ReclamationController implements Initializable {
         Reclamation r = new Reclamation(titre, cat, proj, statut, date);
         r.setId(idAModifier);
 
-        // Gestion du fichier
         if (selectedFile != null) {
-            // Nouveau fichier choisi → on l'utilise
             try {
                 byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
                 r.setFichier(fileBytes);
@@ -347,7 +401,7 @@ public class ReclamationController implements Initializable {
                 return;
             }
         } else {
-            // Aucun nouveau fichier → on conserve l'ancien (s'il existe)
+            // Conserver l'ancien fichier
             if (currentReclamation != null) {
                 r.setFichier(currentReclamation.getFichier());
             }
@@ -357,9 +411,6 @@ public class ReclamationController implements Initializable {
         closePopup(event);
     }
 
-    /**
-     * Ferme la popup actuelle.
-     */
     @FXML
     public void closePopup(ActionEvent event) {
         ((Node) event.getSource()).getScene().getWindow().hide();
@@ -379,13 +430,7 @@ public class ReclamationController implements Initializable {
                 new FileChooser.ExtensionFilter("Documents", "*.docx", "*.xlsx", "*.txt")
         );
         selectedFile = fileChooser.showOpenDialog(btnChoisirFichier.getScene().getWindow());
-        if (selectedFile != null) {
-            lblNomFichier.setText(selectedFile.getName());
-            lblNomFichier.setStyle("-fx-text-fill: #111827; -fx-font-weight: bold;");
-        } else {
-            lblNomFichier.setText("Aucun fichier");
-            lblNomFichier.setStyle("");
-        }
+        updateFileDisplay(selectedFile);
     }
 
     // =========================================================================
@@ -441,10 +486,69 @@ public class ReclamationController implements Initializable {
     }
 
     private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+    /**
+     * Met à jour l'affichage du label avec le nom du fichier et une icône adaptée.
+     * @param file le fichier sélectionné (ou null pour réinitialiser)
+     */
+    private void updateFileDisplay(File file) {
+        if (file != null) {
+            String fileName = file.getName();
+            lblNomFichier.setText(fileName);
+            lblNomFichier.setGraphic(getFileIcon(fileName));
+        } else {
+            lblNomFichier.setText("Aucun fichier");
+            lblNomFichier.setGraphic(null);
+        }
+    }
+
+    /**
+     * Retourne une icône FontIcon basée sur l'extension du fichier.
+     * @param fileName nom du fichier
+     * @return FontIcon correspondant
+     */
+    private FontIcon getFileIcon(String fileName) {
+        String ext = "";
+        int i = fileName.lastIndexOf('.');
+        if (i > 0) {
+            ext = fileName.substring(i + 1).toLowerCase();
+        }
+        String iconLiteral;
+        switch (ext) {
+            case "pdf":
+                iconLiteral = "mdi2f-file-pdf";
+                break;
+            case "jpg":
+            case "jpeg":
+            case "png":
+            case "gif":
+            case "bmp":
+                iconLiteral = "mdi2f-file-image";
+                break;
+            case "doc":
+            case "docx":
+                iconLiteral = "mdi2f-file-word";
+                break;
+            case "xls":
+            case "xlsx":
+                iconLiteral = "mdi2f-file-excel";
+                break;
+            case "txt":
+                iconLiteral = "mdi2f-file-document";
+                break;
+            default:
+                iconLiteral = "mdi2f-file";
+                break;
+        }
+        FontIcon icon = new FontIcon(iconLiteral);
+        icon.setIconSize(18);
+        // Option : définir une couleur personnalisée si besoin
+        // icon.setIconColor(javafx.scene.paint.Color.web("#6B7280"));
+        return icon;
     }
 }

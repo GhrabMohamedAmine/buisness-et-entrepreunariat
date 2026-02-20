@@ -77,3 +77,21 @@
 .right-pane .image-view {
     -fx-background-radius: 0 25 25 0;
 }
+.captcha-image {
+    -fx-background-color: #f0f0f0;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 5, 0, 0, 2);
+}
+
+.btn-refresh {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 8;
+    -fx-background-radius: 50%;
+}
+
+.btn-refresh:hover {
+    -fx-background-color: #f3f4f6;
+}

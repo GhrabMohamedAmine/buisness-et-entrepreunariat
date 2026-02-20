@@ -12,6 +12,9 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.image.Image;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.*;
@@ -24,8 +27,8 @@ import org.kordamp.ikonli.javafx.FontIcon;
 import services.ReclamationService;
 import services.UserService;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
+import java.awt.*;
+import java.io.*;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -110,6 +113,14 @@ public class UserReclamationController implements Initializable {
         card.setPrefWidth(280);
         card.setMinHeight(180);
 
+        // Ajout de l'événement de clic pour ouvrir le fichier
+        card.setOnMouseClicked(event -> {
+            // On évite de déclencher si on clique sur un bouton (les boutons consomment l'événement)
+            if (!(event.getTarget() instanceof Button) && !(event.getTarget() instanceof FontIcon)) {
+                openAttachedFile(r);
+            }
+        });
+
         HBox header = new HBox();
         header.setAlignment(Pos.CENTER_LEFT);
         header.setSpacing(10);
@@ -150,7 +161,6 @@ public class UserReclamationController implements Initializable {
         editIcon.setIconColor(Color.web("#6B7280"));
         btnEdit.setGraphic(editIcon);
 
-        // Désactiver si statut != "En attente"
         boolean modifiable = "En attente".equals(r.getStatut());
         btnEdit.setDisable(!modifiable);
         if (!modifiable) {
@@ -171,6 +181,37 @@ public class UserReclamationController implements Initializable {
 
         card.getChildren().addAll(header, subtitle, desc, footer);
         return card;
+    }
+
+    /**
+     * Ouvre le fichier attaché à une réclamation.
+     */
+    private void openAttachedFile(Reclamation rec) {
+        // Récupérer la réclamation complète (avec le fichier)
+        Reclamation fullRec = service.getById(rec.getId());
+        if (fullRec == null || fullRec.getFichier() == null || fullRec.getFichier().length == 0) {
+            showAlert("Information", "Aucune pièce jointe pour cette réclamation.");
+            return;
+        }
+
+        try {
+            // Créer un fichier temporaire
+            File tempFile = File.createTempFile("reclamation_" + rec.getId() + "_", ".tmp");
+            tempFile.deleteOnExit();
+
+            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
+                fos.write(fullRec.getFichier());
+            }
+
+            // Ouvrir avec l'application par défaut
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(tempFile);
+            } else {
+                showAlert("Erreur", "L'ouverture de fichiers n'est pas supportée sur ce système.");
+            }
+        } catch (IOException e) {
+            showAlert("Erreur", "Impossible d'ouvrir le fichier : " + e.getMessage());
+        }
     }
 
     @FXML
@@ -260,5 +301,13 @@ public class UserReclamationController implements Initializable {
 
     public void versProfil(MouseEvent event) {
         switchScene(event, "/Profile/Profile1.fxml");
+    }
+
+    private void showAlert(String title, String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }
