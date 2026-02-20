@@ -10,6 +10,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import model.Conversation;
@@ -21,9 +22,8 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import javafx.scene.layout.StackPane;
+
 import javafx.scene.control.TextField;
-import javafx.scene.layout.VBox;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.util.Duration;
@@ -40,9 +40,7 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
+
 import java.io.*;
 import model.ParticipantView;
 import java.util.*;
@@ -120,11 +118,22 @@ public class chatController {
     @FXML private ToggleButton filterPrivateBtn;
     @FXML private ToggleButton filterGroupsBtn;
     @FXML private TextField searchField;
+    @FXML private VBox mediaPanel;
+    @FXML private TabPane mediaTabs;
+    @FXML private Tab tabMedia, tabFiles, tabLinks;
+    @FXML private TilePane mediaGrid;
+    @FXML private VBox filesBox;
+    @FXML private VBox linksBox;
+    @FXML private Button mediaBackBtn;
+    @FXML private StackPane mediaOverlay;
 
     @FXML private void toggleChatInfo()   { toggleSection(secChatInfo,   chevChatInfo); }
     @FXML private void toggleCustomize()  { toggleSection(secCustomize,  chevCustomize); }
     @FXML private void toggleMembers()    { toggleSection(secMembers,    chevMembers); }
     @FXML private void toggleMedia()      { toggleSection(secMedia,      chevMedia); }
+    @FXML private void openMediaPanelMedia() throws SQLException { openMediaPanel(0); }
+    @FXML private void openMediaPanelFiles() throws SQLException { openMediaPanel(1); }
+    @FXML private void openMediaPanelLinks() throws SQLException { openMediaPanel(2); }
 
     private enum Role { OWNER, ADMIN, MEMBER }
     private boolean canManage(Role r) { return r == Role.OWNER || r == Role.ADMIN; }
@@ -199,6 +208,7 @@ public class chatController {
     private enum FilterMode { ALL, DM, GROUP }
     private FilterMode currentFilter = FilterMode.ALL;
     private List<Conversation> allConversations = new ArrayList<>();
+    private boolean restoreDrawerAfterMedia = false;
 
 
 
@@ -1596,6 +1606,9 @@ public class chatController {
         Long lastMsgId = conv.getLastMessageId();
         if (lastMsgId != null && lastMsgId > 0) {
             conversationService.markConversationRead(conv.getId(), currentUserId, lastMsgId);
+        }
+        if (mediaPanel.isVisible()) {
+            refreshMediaPanel(conv.getId());
         }
         clearUnreadUI(conv.getId());
         refreshDrawer();
@@ -3061,5 +3074,175 @@ public class chatController {
         recPreviewBox.setManaged(true);
 
         if (recPreviewPlayIcon != null) recPreviewPlayIcon.setIconLiteral("mdi2p-play");
+    }
+    // ==========================
+    // Media pannel
+    // ==========================
+
+    private void openMediaPanel(int tabIndex) throws SQLException {
+        if (selectedConversation == null) return;
+        restoreDrawerAfterMedia = isDrawerOpen();
+        hideDrawer();
+        mediaOverlay.setVisible(true);
+        mediaOverlay.setManaged(true);
+        mediaOverlay.toFront();
+        mediaTabs.getSelectionModel().select(tabIndex);
+        refreshMediaPanel(selectedConversation.getId());
+    }
+
+    @FXML
+    private void closeMediaPanel() {
+        mediaOverlay.setVisible(false);
+        mediaOverlay.setManaged(false);
+
+        if (restoreDrawerAfterMedia) {
+            showDrawer();
+        }
+        restoreDrawerAfterMedia = false;
+    }
+
+    private void refreshMediaPanel(long convId) throws SQLException {
+        // clear UI
+        mediaGrid.getChildren().clear();
+        filesBox.getChildren().clear();
+        linksBox.getChildren().clear();
+
+        List<Message> msgs = messageService.listByConversation(convId, 500);
+
+        // 1) Attachments (images/videos/audio/files)
+        for (Message m : msgs) {
+            if (!"ATTACHMENT".equalsIgnoreCase(m.getKind())) continue;
+
+            ServiceMessage.AttachmentMeta meta;
+            try {
+                meta = messageService.getAttachmentMeta(m.getId());
+            } catch (Exception ex) {
+                continue;
+            }
+            if (meta == null) continue;
+
+            String mime = meta.mimeType();
+            if (mime == null) mime = "application/octet-stream";
+
+            if (mime.startsWith("image/") || mime.startsWith("video/")) {
+                mediaGrid.getChildren().add(buildMediaThumb(meta));
+            } else {
+                filesBox.getChildren().add(buildFileRow(meta));
+            }
+        }
+
+        // 2) Links from text messages
+        java.util.regex.Pattern p = java.util.regex.Pattern.compile("(https?://\\S+)");
+        LinkedHashSet<String> uniq = new LinkedHashSet<>();
+
+        for (Message m : msgs) {
+            if ("ATTACHMENT".equalsIgnoreCase(m.getKind())) continue;
+            String body = m.getBody();
+            if (body == null) continue;
+
+            var mm = p.matcher(body);
+            while (mm.find()) uniq.add(mm.group(1));
+        }
+
+        for (String url : uniq) {
+            linksBox.getChildren().add(buildLinkRow(url));
+        }
+    }
+
+    private Node buildMediaThumb(ServiceMessage.AttachmentMeta meta) {
+        StackPane box = new StackPane();
+        box.setPrefSize(104, 104);
+        box.getStyleClass().add("media-thumb");
+
+        String mime = meta.mimeType() == null ? "" : meta.mimeType();
+
+        if (mime.startsWith("image/")) {
+            try {
+                byte[] data = messageService.readAttachmentBytes(meta.id());
+                Image img = new Image(new ByteArrayInputStream(data));
+                ImageView iv = new ImageView(img);
+                iv.setPreserveRatio(true);
+                iv.setFitWidth(104);
+                iv.setFitHeight(104);
+                Rectangle clip = new Rectangle(104, 104);
+                clip.setArcWidth(12);
+                clip.setArcHeight(12);
+                iv.setClip(clip);
+                box.getChildren().add(iv);
+            } catch (Exception e) {
+                box.getChildren().add(new FontIcon("mdi2i-image-outline"));
+            }
+        } else {
+            // video thumb placeholder (fast + stable)
+            FontIcon play = new FontIcon("mdi2p-play-circle-outline");
+            play.setIconSize(26);
+            box.getChildren().add(play);
+        }
+
+        box.setOnMouseClicked(e -> {
+            try {
+                openAttachment(meta); // uses your existing temp-file open logic (works now)
+            } catch (Exception ex) {
+                ex.printStackTrace();
+            }
+        });
+
+        return box;
+    }
+
+    private Node buildFileRow(ServiceMessage.AttachmentMeta meta) {
+        HBox row = new HBox(10);
+        row.getStyleClass().add("file-row");
+        row.setAlignment(Pos.CENTER_LEFT);
+
+        FontIcon ico = new FontIcon("mdi2f-file-outline");
+        ico.setIconSize(18);
+
+        Label name = new Label(meta.fileName());
+        name.getStyleClass().add("drawer-row-title");
+
+        Label sub = new Label(humanSize(meta.sizeBytes()) + (meta.mimeType() != null ? " • " + meta.mimeType() : ""));
+        sub.getStyleClass().add("muted");
+
+        VBox text = new VBox(2, name, sub);
+
+        row.getChildren().addAll(ico, text);
+        row.setOnMouseClicked(e -> openAttachment(meta));
+        return row;
+    }
+
+    private Node buildLinkRow(String url) {
+        VBox row = new VBox(6);
+        row.getStyleClass().add("link-row");
+
+        String vid = extractYoutubeId(url);
+        if (vid != null) {
+            // reuse your existing YouTube card UI
+            row.getChildren().add(buildYoutubePreviewCard(url, false));
+        } else {
+            Label title = new Label(prettifyUrl(url));
+            title.getStyleClass().add("drawer-row-title");
+            Label full = new Label(url);
+            full.getStyleClass().add("muted");
+            row.getChildren().addAll(title, full);
+        }
+
+        row.setOnMouseClicked(e -> openInBrowser(url));
+        return row;
+    }
+
+    private boolean isDrawerOpen() {
+        return drawerOverlay.isVisible() && drawerOverlay.isManaged();
+    }
+
+    private void showDrawer() {
+        drawerOverlay.setVisible(true);
+        drawerOverlay.setManaged(true);
+        drawerOverlay.toFront();
+    }
+
+    private void hideDrawer() {
+        drawerOverlay.setVisible(false);
+        drawerOverlay.setManaged(false);
     }
 }

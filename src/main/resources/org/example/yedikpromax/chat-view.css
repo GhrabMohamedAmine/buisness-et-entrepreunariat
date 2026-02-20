@@ -951,7 +951,6 @@
     -fx-font-size: 44px;
     -fx-text-fill: white;
 }
-/* Audio bubble */
 .audio-card {
     -fx-padding: 10 12;
     -fx-background-radius: 16;
@@ -986,7 +985,6 @@
     -fx-font-size: 11px;
     -fx-opacity: 0.75;
 }
-/* Bottom voice bar (recording/preview) */
 .rec-indicator {
     -fx-background-color: -color-bg-subtle;
     -fx-border-color: -color-border-subtle;
@@ -998,7 +996,6 @@
     -fx-alignment: CENTER_LEFT;
 }
 
-/* Little red dot */
 .rec-dot {
     -fx-min-width: 10;
     -fx-min-height: 10;
@@ -1008,7 +1005,6 @@
     -fx-background-color: #ef4444;
 }
 
-/* Preview pill (after stop) */
 .rec-preview {
     -fx-background-color: rgba(124,58,237,0.12);
     -fx-border-color: rgba(124,58,237,0.28);
@@ -1020,7 +1016,6 @@
     -fx-alignment: CENTER_LEFT;
 }
 
-/* Play button inside preview pill */
 .rec-preview-play {
     -fx-background-color: rgba(255,255,255,0.65);
     -fx-background-radius: 999;
@@ -1033,9 +1028,123 @@
     -fx-icon-color: #111827;
 }
 
-/* time labels */
 .rec-time {
     -fx-text-fill: -color-fg-muted;
     -fx-font-weight: 700;
     -fx-font-size: 12px;
+}
+
+.media-panel-header {
+    -fx-padding: 6 0 10 0;
+}
+
+.media-tabs .tab-header-area {
+    -fx-background-color: transparent;
+    -fx-padding: 0 0 8 0;
+}
+
+/* panel must be solid */
+.media-panel {
+    -fx-background-color: white;
+    -fx-background-insets: 0;
+}
+
+/* TabPane layers that often stay “see-through” */
+.media-tabs,
+.media-tabs .tab-header-area,
+.media-tabs .headers-region,
+.media-tabs .tab-content-area {
+    -fx-background-color: white;
+    -fx-background-insets: 0;
+}
+
+/* Scrollpane viewport must be white */
+.media-scroll {
+    -fx-background-color: white;
+    -fx-background: white;
+    -fx-background-insets: 0;
+}
+.media-scroll > .viewport {
+    -fx-background-color: white;
+}
+
+/* IMPORTANT: remove any inherited transparency from drawer-scroll rules */
+.media-panel .drawer-scroll,
+.media-panel .drawer-scroll > .viewport {
+    -fx-background-color: white;
+}
+
+.media-tabs {
+    -fx-background-color: white;
+}
+
+
+.media-tabs .tab {
+    -fx-background-color: white;
+    -fx-padding: 8 18 8 18;
+}
+
+.media-tabs .tab-label {
+    -fx-text-fill: #444;
+    -fx-font-weight: 600;
+}
+
+.media-tabs .tab:selected {
+    -fx-background-color: white;
+}
+
+.media-tabs .tab:selected .tab-label {
+    -fx-text-fill: #7c3aed;   /* purple */
+}
+
+.media-tabs .tab:selected {
+    -fx-border-color: transparent transparent #7c3aed transparent;
+    -fx-border-width: 0 0 3 0;
+}
+
+/* Remove default blue focus line */
+.media-tabs .tab:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+.media-grid {
+    -fx-padding: 14;
+}
+
+.media-thumb {
+    -fx-background-color: #f7f7f9;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 1;
+}
+
+.media-thumb:hover {
+    -fx-border-color: #d1d5db;
+}
+
+.media-backdrop {
+    -fx-background-color: transparent;
+}
+.file-row {
+    -fx-padding: 10;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: rgba(255,255,255,0.08);
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+}
+
+.file-row:hover {
+    -fx-border-color: rgba(255,255,255,0.18);
+}
+
+.link-row {
+    -fx-padding: 10;
+    -fx-background-radius: 12;
+    -fx-border-radius: 12;
+    -fx-border-color: rgba(255,255,255,0.08);
+    -fx-border-width: 1;
+    -fx-cursor: hand;
 }
