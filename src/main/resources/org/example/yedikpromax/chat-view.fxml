@@ -51,16 +51,16 @@
 
                             <HBox alignment="CENTER_LEFT" spacing="10" styleClass="search-box">
                                 <FontIcon iconLiteral="mdi2m-magnify" styleClass="muted icon"/>
-                                <TextField promptText="" styleClass="search-field" HBox.hgrow="ALWAYS"/>
+                                <TextField fx:id="searchField" promptText="checher..." styleClass="search-field" HBox.hgrow="ALWAYS"/>
                                 <VBox.margin>
                                     <Insets top="10" bottom="10"/>
                                 </VBox.margin>
                             </HBox>
 
                             <HBox spacing="10">
-                                <ToggleButton text="All" selected="true" styleClass="pill-selected"/>
-                                <ToggleButton text="Private" styleClass="pill"/>
-                                <ToggleButton text="Groups" styleClass="pill"/>
+                                <ToggleButton fx:id="filterAllBtn" text="All" selected="true" styleClass="pill"/>
+                                <ToggleButton fx:id="filterPrivateBtn" text="Private" styleClass="pill"/>
+                                <ToggleButton fx:id="filterGroupsBtn" text="Groups" styleClass="pill"/>
                                 <VBox.margin>
                                     <Insets bottom="10"/>
                                 </VBox.margin>

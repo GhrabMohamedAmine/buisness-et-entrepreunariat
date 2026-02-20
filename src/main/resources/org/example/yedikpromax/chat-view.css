@@ -62,12 +62,38 @@
     -fx-background-color: -color-bg-subtle;
     -fx-border-color: -color-border-subtle;
     -fx-padding: 6 14;
+
+    /* REMOVE internal blue layer */
+    -fx-background-insets: 0;
 }
 
-.pill-selected {
-    -fx-background-color: -color-accent-emphasis;
+/* REMOVE BLUE FOCUS */
+.pill:focused {
+    -fx-focus-color: transparent;
+    -fx-faint-focus-color: transparent;
+}
+
+/* OVERRIDE DEFAULT SELECTED */
+.pill:selected {
+    -fx-background-color: black;
     -fx-text-fill: white;
     -fx-border-color: transparent;
+
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+
+    /* CRITICAL: remove modena highlight layer */
+    -fx-background-insets: 0;
+}
+
+/* Also override hover when selected */
+.pill:selected:hover {
+    -fx-background-color: black;
+}
+.toggle-button.pill:selected {
+    -fx-background-color: black;
+    -fx-text-fill: white;
+    -fx-background-insets: 0;
 }
 
 /* Chat list scroll */

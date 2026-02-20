@@ -4,15 +4,12 @@ import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.MouseEvent;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import model.Conversation;
@@ -55,24 +52,8 @@ import java.awt.Desktop;
 import java.net.URI;
 import java.nio.file.Path;
 import javax.sound.sampled.*;
-import java.util.concurrent.atomic.AtomicBoolean;
-import javafx.embed.swing.SwingNode;
-import com.sun.jna.NativeLibrary;
-import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
-import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery;
-import java.nio.file.Path;
-import javafx.application.Platform;
-import javafx.embed.swing.SwingNode;
-import javafx.scene.Node;
-import javafx.scene.control.Label;
-import javafx.scene.layout.StackPane;
-import javafx.scene.shape.Rectangle;
-import uk.co.caprica.vlcj.player.component.EmbeddedMediaPlayerComponent;
 import javax.swing.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicReference;
+
 
 public class chatController {
 
@@ -120,7 +101,6 @@ public class chatController {
     @FXML private Button newMsgBackBtn;
     @FXML private Button newMsgPrimaryBtn;
     @FXML private Button newMsgCancelBtn;
-    @FXML private ScrollPane conversationScroll;
     @FXML private Button addPeopleBtn;
     @FXML private Label dangerActionLabel;
     @FXML private FontIcon dangerActionIcon;
@@ -136,6 +116,10 @@ public class chatController {
     @FXML private Button recPreviewPlayBtn;
     @FXML private FontIcon recPreviewPlayIcon;
     @FXML private Label recPreviewTimeLabel;
+    @FXML private ToggleButton filterAllBtn;
+    @FXML private ToggleButton filterPrivateBtn;
+    @FXML private ToggleButton filterGroupsBtn;
+    @FXML private TextField searchField;
 
     @FXML private void toggleChatInfo()   { toggleSection(secChatInfo,   chevChatInfo); }
     @FXML private void toggleCustomize()  { toggleSection(secCustomize,  chevCustomize); }
@@ -211,6 +195,10 @@ public class chatController {
     private javafx.animation.Timeline recTimeline;
     private int recSeconds = 0;
     private javafx.scene.media.MediaPlayer previewPlayer;
+    private final ToggleGroup filterToggleGroup = new ToggleGroup();
+    private enum FilterMode { ALL, DM, GROUP }
+    private FilterMode currentFilter = FilterMode.ALL;
+    private List<Conversation> allConversations = new ArrayList<>();
 
 
 
@@ -428,6 +416,26 @@ public class chatController {
         );
         usersPickList.maxHeightProperty().bind(usersPickList.prefHeightProperty());
 
+        filterAllBtn.setToggleGroup(filterToggleGroup);
+        filterPrivateBtn.setToggleGroup(filterToggleGroup);
+        filterGroupsBtn.setToggleGroup(filterToggleGroup);
+
+        filterAllBtn.setUserData(FilterMode.ALL);
+        filterPrivateBtn.setUserData(FilterMode.DM);
+        filterGroupsBtn.setUserData(FilterMode.GROUP);
+
+        filterToggleGroup.selectedToggleProperty().addListener((obs, oldT, newT) -> {
+            if (newT == null) {
+                oldT.setSelected(true);
+                return;
+            }
+            currentFilter = (FilterMode) newT.getUserData();
+            loadConversations();
+        });
+        searchField.textProperty().addListener((obs, oldV, newV) -> {
+            loadConversations();
+        });
+
         userSearchField.textProperty().addListener((obs, o, q) -> applyUserFilter(q));
         if (micBtn != null) micBtn.setOnAction(e -> handleMicToggle());
         if (recCancelBtn != null) recCancelBtn.setOnAction(e -> handleCancelRecording());
@@ -479,7 +487,7 @@ public class chatController {
     private void openDrawer() {
         if (drawerOpen) return;
         if (inlineSwingWindow != null) {
-            suspendInlineOverlayVideoSwing(true);
+            closeInlineOverlayVideoSwing();
         }
         drawerOverlay.setVisible(true);
         drawerOverlay.setManaged(true);
@@ -565,29 +573,6 @@ public class chatController {
     }
 
 
-
-    private void setSelectedConversation(Conversation conv) {
-        selectedConversation = conv;
-        boolean has = (conv != null);
-
-        emptyState.setVisible(!has);
-        emptyState.setManaged(!has);
-
-        chatHeader.setVisible(has);
-        chatHeader.setManaged(has);
-
-        composerBar.setVisible(has);
-        composerBar.setManaged(has);
-
-        if (!has) {
-            chatTitle.setText("");
-            chatSubtitle.setText("");
-            messagesContainer.getChildren().clear();
-            closeDrawer();
-        }
-    }
-
-
     // =========================
     // LOAD TIME
     // =========================
@@ -655,27 +640,56 @@ public class chatController {
     // LOAD CONVERSATIONS
     // =========================
     private void loadConversations() {
+
         conversationContainer.getChildren().clear();
         conversationNodeById.clear();
 
         try {
-            List<Conversation> list = conversationService.listForUser(currentUserId);
 
-            for (Conversation conv : list) {
+            // 🔹 store full list
+            allConversations = conversationService.listForUser(currentUserId);
+
+            for (Conversation conv : allConversations) {
+
+                if (!matchesFilter(conv)) continue;
+
                 VBox item = buildConversationItem(conv);
 
                 conversationNodeById.put(conv.getId(), item);
                 conversationContainer.getChildren().add(item);
             }
 
-            // re-apply selection if still visible
-            if (selectedConversationId > 0) {
+            // re-apply selection only if still visible
+            if (selectedConversationId > 0 && conversationNodeById.containsKey(selectedConversationId)) {
                 setSelectedConversationStyle(selectedConversationId);
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    private boolean matchesFilter(Conversation conv) {
+
+        // 🔹 1) Filter by type
+        String type = conv.getType();
+        boolean typeMatch = switch (currentFilter) {
+            case ALL -> true;
+            case DM -> "DM".equalsIgnoreCase(type);
+            case GROUP -> "GROUP".equalsIgnoreCase(type);
+        };
+
+        if (!typeMatch) return false;
+
+        // 🔹 2) Filter by search
+        String search = searchField.getText();
+
+        if (search == null || search.isBlank()) return true;
+
+        String title = conv.getTitle();
+        if (title == null) return false;
+
+        return title.toLowerCase().contains(search.toLowerCase());
     }
 
     private VBox buildConversationItem(Conversation conv) {
@@ -2030,7 +2044,11 @@ public class chatController {
         HBox card = new HBox(12, icon, texts);
         card.getStyleClass().addAll("file-card", outgoing ? "file-card-out" : "file-card-in");
 
-        card.setOnMouseClicked(e -> openAttachment(meta));
+        card.setOnMouseClicked(e -> {
+            if (e.getButton() == javafx.scene.input.MouseButton.PRIMARY) {
+                openAttachment(meta);
+            }
+        });
         card.setCursor(javafx.scene.Cursor.HAND);
 
         return card;
@@ -2160,7 +2178,11 @@ public class chatController {
 
         var card = new VBox(thumbWrap, body);
         card.getStyleClass().addAll("link-card", outgoing ? "link-card-out" : "link-card-in");
-        card.setOnMouseClicked(e -> openInBrowser(url));
+        card.setOnMouseClicked(e -> {
+            if (e.getButton() == javafx.scene.input.MouseButton.PRIMARY) {
+                openInBrowser(url);
+            }
+        });
         card.setCursor(javafx.scene.Cursor.HAND);
 
         // async fill
@@ -2607,8 +2629,12 @@ public class chatController {
                         ev.consume();
                     };
 
-                    player.setOnMouseClicked(open);
-                    overlay.setOnMouseClicked(open);
+                    player.setOnMouseClicked(ev -> {
+                        if (ev.getButton() == javafx.scene.input.MouseButton.PRIMARY) open.handle(ev);
+                    });
+                    overlay.setOnMouseClicked(ev -> {
+                        if (ev.getButton() == javafx.scene.input.MouseButton.PRIMARY) open.handle(ev);
+                    });
                 }))
                 .exceptionally(ex -> {
                     javafx.application.Platform.runLater(() -> {
