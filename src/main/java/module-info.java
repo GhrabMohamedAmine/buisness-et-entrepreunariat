@@ -16,16 +16,22 @@ module NEXUM {
     requires javafx.graphics;
     requires java.sql;
 
-    // 4. Accès pour le chargement des interfaces (FXML)
-    // Permet à JavaFX de lier le fichier UserTable.fxml à sa classe contrôleur
+    // 4. Nouveaux modules pour la webcam et le client HTTP
+    requires java.net.http;                 // Pour les appels API HTTP
+    requires webcam.capture;
+    requires com.fasterxml.jackson.databind;
+    requires javafx.swing;
+    requires jakarta.mail;// Pour la capture webcam (bibliothèque sarxos)
+
+    // 5. Accès pour le chargement des interfaces (FXML)
     opens controllers to javafx.fxml;
 
-    // 5. Accès pour l'affichage des données (TableView)
-    // IMPORTANT : Permet à la TableView de lire les champs de votre classe User
+    // 6. Accès pour l'affichage des données (TableView)
     opens entities to javafx.base;
+
+    // 7. Exportation des packages
     exports services;
     opens services;
     exports entities;
-    // 6. Exportation du package principal pour lancer l'application
     exports Mains;
 }

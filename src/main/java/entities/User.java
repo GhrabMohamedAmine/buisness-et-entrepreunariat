@@ -12,13 +12,14 @@ public class User {
     private final StringProperty department = new SimpleStringProperty();
     private final StringProperty status = new SimpleStringProperty();
     private final StringProperty joinedDate = new SimpleStringProperty();
-    // Nouveau : image sous forme de byte[]
     private final ObjectProperty<byte[]> imageData = new SimpleObjectProperty<>();
+    // Nouveau champ pour l'identifiant de visage CompreFace
+    private final StringProperty faceId = new SimpleStringProperty();
 
-    // Constructeur mis à jour
+    // Constructeur complet avec faceId
     public User(int id, String name, String firstName, String email, String phone,
                 String role, String department, String status, String joinedDate,
-                byte[] imageData) {
+                byte[] imageData, String faceId) {
         this.id.set(id);
         this.name.set(name);
         this.firstName.set(firstName);
@@ -29,6 +30,7 @@ public class User {
         this.status.set(status);
         this.joinedDate.set(joinedDate);
         this.imageData.set(imageData);
+        this.faceId.set(faceId);
     }
 
     // Getters
@@ -42,6 +44,7 @@ public class User {
     public String getStatus() { return status.get(); }
     public String getJoinedDate() { return joinedDate.get(); }
     public byte[] getImageData() { return imageData.get(); }
+    public String getFaceId() { return faceId.get(); }
 
     // Property getters (utiles pour les bindings JavaFX)
     public IntegerProperty idProperty() { return id; }
@@ -54,6 +57,7 @@ public class User {
     public StringProperty statusProperty() { return status; }
     public StringProperty joinedDateProperty() { return joinedDate; }
     public ObjectProperty<byte[]> imageDataProperty() { return imageData; }
+    public StringProperty faceIdProperty() { return faceId; }
 
     // Setters
     public void setId(int id) { this.id.set(id); }
@@ -66,4 +70,5 @@ public class User {
     public void setStatus(String status) { this.status.set(status); }
     public void setJoinedDate(String joinedDate) { this.joinedDate.set(joinedDate); }
     public void setImageData(byte[] imageData) { this.imageData.set(imageData); }
+    public void setFaceId(String faceId) { this.faceId.set(faceId); }
 }

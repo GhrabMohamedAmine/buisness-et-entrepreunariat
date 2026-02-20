@@ -1,6 +1,7 @@
 package controllers;
 
 import entities.User;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -15,7 +16,9 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import services.CompreFaceService;
 import services.UserService;
 
 import java.io.ByteArrayInputStream;
@@ -46,6 +49,7 @@ public class SignUpController implements Initializable {
     private byte[] selectedImageData;
 
     private final UserService userService = new UserService();
+    private final CompreFaceService compreFaceService = new CompreFaceService();
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
@@ -163,16 +167,56 @@ public class SignUpController implements Initializable {
         if (selectedImageData == null) {
             selectedImageData = new byte[0];
         }
+        System.out.println("Taille de l'image de profil : " + selectedImageData.length + " octets");
+        // Création de l'utilisateur temporaire (sans faceId)
+        User newUser = new User(0, nom, prenom, email, phone, role, dept, "en attente", dateInscription, selectedImageData, null);
 
-        // Création de l'utilisateur avec les données binaires
-        User newUser = new User(0, nom, prenom, email, phone, role, dept, "en attente", dateInscription, selectedImageData);
+        // Ouvrir la fenêtre de capture faciale
+        openFaceCaptureWindow(event, newUser, mdp);
+    }
 
+    private void openFaceCaptureWindow(ActionEvent event, User user, String password) {
         try {
-            userService.signup(newUser, mdp);
-            switchScene(event, "/SignUp/SignUp2.fxml");
-        } catch (SQLException e) {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/CaptureFace/CaptureFace.fxml"));
+            Parent root = loader.load();
+            CaptureFaceController captureController = loader.getController();
+
+            Stage captureStage = new Stage();
+            captureStage.setTitle("Capture faciale");
+            captureStage.setScene(new Scene(root));
+            captureStage.initModality(Modality.APPLICATION_MODAL);
+            captureStage.setOnHidden(e -> captureController.closeWebcam()); // fermer la webcam à la fermeture
+
+            captureController.setOnCaptureCallback(() -> {
+                byte[] faceImage = captureController.getCapturedImageData();
+                if (faceImage != null) {
+                    // Enregistrer le visage via CompreFace
+                    String faceId = compreFaceService.registerFace(faceImage, user.getEmail());
+                    if (faceId != null) {
+                        user.setFaceId(faceId);
+                        try {
+                            userService.signup(user, password);
+                            Platform.runLater(() -> {
+                                captureStage.close();
+                                switchScene(event, "/SignUp/SignUp2.fxml");
+                            });
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                            Platform.runLater(() -> showAlert("Erreur", "Échec de la création du compte : " + e.getMessage()));
+                        }
+                    } else {
+                        Platform.runLater(() -> showAlert("Erreur", "Échec de l'enregistrement facial. Veuillez réessayer."));
+                    }
+                } else {
+                    Platform.runLater(() -> showAlert("Erreur", "Aucune image capturée."));
+                }
+            });
+
+            captureStage.showAndWait();
+
+        } catch (IOException e) {
             e.printStackTrace();
-            showAlert("Erreur SQL", "Impossible de créer le compte : " + e.getMessage());
+            showAlert("Erreur", "Impossible d'ouvrir la fenêtre de capture.");
         }
     }
 
@@ -235,7 +279,7 @@ public class SignUpController implements Initializable {
     }
 
     public void goToDashboard(MouseEvent event) {
-        switchScen(event, "/Profile/Profile1.fxml");
+        switchScen(event, "/SignIn/SignIn.fxml");
     }
 
     private void showInlineError(Label errorLabel, String message) {

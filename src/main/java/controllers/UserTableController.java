@@ -22,6 +22,7 @@ import javafx.scene.shape.Circle;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
 import services.UserService;
+import services.EmailService; // <-- Import ajouté
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -44,7 +45,6 @@ public class UserTableController implements Initializable {
     private ObservableList<User> userList = FXCollections.observableArrayList();
     private final UserService userService = new UserService();
 
-    // Liste des rôles (identique)
     private final ObservableList<String> roleOptions = FXCollections.observableArrayList(
             "Admin",
             "Manager",
@@ -62,12 +62,8 @@ public class UserTableController implements Initializable {
         loadCurrentUserProfile();
     }
 
-    /**
-     * Charge le profil de l'utilisateur connecté (nom + avatar)
-     */
     private void loadCurrentUserProfile() {
         User currentUser = UserService.getCurrentUser();
-
         if (currentUser != null) {
             String fullName = currentUser.getFirstName() + " " + currentUser.getName();
             topName.setText(fullName);
@@ -79,7 +75,7 @@ public class UserTableController implements Initializable {
                     if (!img.isError()) {
                         topAvatar.setFill(new ImagePattern(img));
                     } else {
-                        topAvatar.setFill(Color.web("#E0E7FF")); // défaut
+                        topAvatar.setFill(Color.web("#E0E7FF"));
                     }
                 } catch (Exception e) {
                     System.out.println("Erreur chargement image profil : " + e.getMessage());
@@ -91,22 +87,17 @@ public class UserTableController implements Initializable {
         }
     }
 
-    /**
-     * Configuration des colonnes du tableau
-     */
     private void setupColumns() {
         colEmail.setCellValueFactory(new PropertyValueFactory<>("email"));
         colPhone.setCellValueFactory(new PropertyValueFactory<>("phone"));
         colDept.setCellValueFactory(new PropertyValueFactory<>("department"));
         colJoined.setCellValueFactory(new PropertyValueFactory<>("joinedDate"));
 
-        // --- Colonne utilisateur avec avatar (image depuis BLOB) ---
         colUser.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue()));
         colUser.setCellFactory(column -> new TableCell<User, User>() {
             @Override
             protected void updateItem(User user, boolean empty) {
                 super.updateItem(user, empty);
-
                 if (empty || user == null) {
                     setGraphic(null);
                 } else {
@@ -117,7 +108,6 @@ public class UserTableController implements Initializable {
                     avatar.setStroke(Color.web("#E5E7EB"));
                     avatar.setStrokeWidth(1);
 
-                    // Chargement de l'image depuis les données binaires
                     byte[] imageData = user.getImageData();
                     boolean imageLoaded = false;
 
@@ -134,7 +124,7 @@ public class UserTableController implements Initializable {
                     }
 
                     if (!imageLoaded) {
-                        avatar.setFill(Color.web("#E0E7FF")); // fond gris clair par défaut
+                        avatar.setFill(Color.web("#E0E7FF"));
                     }
 
                     String fullName = (user.getFirstName() != null ? user.getFirstName() : "")
@@ -148,7 +138,6 @@ public class UserTableController implements Initializable {
             }
         });
 
-        // --- Colonne Rôle (ComboBox) ---
         colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
         colRole.setCellFactory(column -> new TableCell<User, String>() {
             private final ComboBox<String> roleCombo = new ComboBox<>(roleOptions);
@@ -178,7 +167,6 @@ public class UserTableController implements Initializable {
             }
         });
 
-        // --- Colonne Statut (Pills) ---
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colStatus.setCellFactory(column -> new TableCell<User, String>() {
             @Override
@@ -209,14 +197,12 @@ public class UserTableController implements Initializable {
             }
         });
 
-        // --- Colonne Actions (boutons) ---
         colActions.setCellFactory(param -> new TableCell<User, Void>() {
             private final Button deleteBtn = new Button();
             private final Button statusBtn = new Button();
             private final FontIcon statusIcon = new FontIcon();
 
             {
-                // Bouton Supprimer
                 FontIcon deleteIcon = new FontIcon("mdi2t-trash-can-outline");
                 deleteIcon.setIconSize(18);
                 deleteBtn.setGraphic(deleteIcon);
@@ -228,7 +214,6 @@ public class UserTableController implements Initializable {
                     handleDeleteUser(user);
                 });
 
-                // Bouton Statut
                 statusIcon.setIconSize(18);
                 statusBtn.setGraphic(statusIcon);
                 statusBtn.getStyleClass().addAll("action-btn", "action-btn-state");
@@ -250,11 +235,11 @@ public class UserTableController implements Initializable {
                     String status = user.getStatus().toLowerCase();
                     if (status.equals("active") || status.equals("actif")) {
                         statusIcon.setIconLiteral("mdi2b-block-helper");
-                        statusIcon.setIconColor(Color.web("#D97706")); // Orange
+                        statusIcon.setIconColor(Color.web("#D97706"));
                         statusBtn.setTooltip(new Tooltip("Suspendre le compte"));
                     } else {
                         statusIcon.setIconLiteral("mdi2c-check-circle-outline");
-                        statusIcon.setIconColor(Color.web("#15803D")); // Vert
+                        statusIcon.setIconColor(Color.web("#15803D"));
                         statusBtn.setTooltip(new Tooltip("Activer le compte"));
                     }
 
@@ -265,8 +250,6 @@ public class UserTableController implements Initializable {
             }
         });
     }
-
-    // --- Méthodes métier (inchangées) ---
 
     private void handleRoleUpdate(User user, String newRole) {
         try {
@@ -285,8 +268,17 @@ public class UserTableController implements Initializable {
         String newStatus = (currentStatus.equals("active") || currentStatus.equals("actif")) ? "Suspendu" : "Active";
 
         try {
+            // Mise à jour en base de données
             userService.modifierStatut(user.getId(), newStatus);
+
+            // Recharger la liste pour afficher le nouveau statut
             loadUsersFromDatabase();
+
+            // Envoyer un email de notification dans un thread séparé (non bloquant)
+            new Thread(() -> {
+                EmailService.sendStatusChangeEmail(user.getEmail(), newStatus);
+            }).start();
+
         } catch (SQLException e) {
             e.printStackTrace();
             showAlert("Erreur", "Impossible de modifier le statut : " + e.getMessage());
@@ -329,8 +321,6 @@ public class UserTableController implements Initializable {
         alert.setContentText(content);
         alert.show();
     }
-
-    // --- Navigation ---
 
     @FXML
     public void handleReclamationsNavigation(ActionEvent event) {
