@@ -1,4 +1,4 @@
-package tezfx.model.Entities;
+package entities;
 
 public class User {
     private int id;

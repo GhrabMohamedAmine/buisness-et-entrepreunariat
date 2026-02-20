@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<AnchorPane prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml" fx:controller="tezfx.controller.ProjectDetailsController">
+<AnchorPane prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml" fx:controller="controllers.ProjectDetailsController">
     <VBox spacing="15" style="-fx-background-color: #f9fafb;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <padding>
             <Insets bottom="30" left="40" right="40" top="30" />
@@ -37,7 +37,7 @@
                     <HBox spacing="25" HBox.hgrow="ALWAYS">
                         <Button fx:id="overviewTab" onAction="#onOverviewTabClicked" styleClass="tab-active" text="Overview" />
                         <Button fx:id="tasksBtn" onAction="#onTasksTabClicked" styleClass="tab-inactive" text="Tasks" />
-                        <Button styleClass="tab-inactive" text="Kanban" />
+                        <Button fx:id="kanbanTab" onAction="#onKanbanTabClicked" styleClass="tab-inactive" text="Kanban" />
                         <Button styleClass="tab-inactive" text="Discussion" />
                     </HBox>
                     <VBox alignment="CENTER_RIGHT" spacing="5">
@@ -98,6 +98,25 @@
                         <VBox fx:id="taskListContainer" fillWidth="true" spacing="20" />
                     </VBox>
                 </ScrollPane>
+
+                <VBox fx:id="kanbanContainer" managed="false" spacing="20" visible="false">
+                    <Label styleClass="header-title" text="Project Kanban" />
+                    <HBox spacing="16" VBox.vgrow="ALWAYS">
+                        <VBox maxWidth="Infinity" minWidth="260" prefWidth="0.0" styleClass="nexum-card-sub" spacing="10" HBox.hgrow="ALWAYS">
+                            <Label style="-fx-font-size: 16; -fx-font-weight: bold;" text="To Do" />
+                            <VBox fx:id="todoColumn" fillWidth="true" maxWidth="Infinity" spacing="10" VBox.vgrow="ALWAYS" />
+                        </VBox>
+                        <VBox maxWidth="Infinity" minWidth="260" prefWidth="0.0" styleClass="nexum-card-sub" spacing="10" HBox.hgrow="ALWAYS">
+                            <Label style="-fx-font-size: 16; -fx-font-weight: bold;" text="In Progress" />
+                            <VBox fx:id="inProgressColumn" fillWidth="true" maxWidth="Infinity" spacing="10" VBox.vgrow="ALWAYS" />
+                        </VBox>
+                        <VBox maxWidth="Infinity" minWidth="260" prefWidth="0.0" styleClass="nexum-card-sub" spacing="10" HBox.hgrow="ALWAYS">
+                            <Label style="-fx-font-size: 16; -fx-font-weight: bold;" text="Done" />
+                            <VBox fx:id="doneColumn" fillWidth="true" maxWidth="Infinity" spacing="10" VBox.vgrow="ALWAYS" />
+                        </VBox>
+                    </HBox>
+                </VBox>
+
             </StackPane>
         </VBox>
     </VBox>

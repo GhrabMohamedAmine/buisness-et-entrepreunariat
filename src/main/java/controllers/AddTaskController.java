@@ -1,4 +1,4 @@
-package tezfx.controller;
+package controllers;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
@@ -8,10 +8,12 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
-import tezfx.model.Entities.Project;
-import tezfx.model.Entities.Task;
-import tezfx.model.Entities.User;
-import tezfx.model.services.sql;
+import entities.Project;
+import entities.Task;
+import entities.User;
+import services.ProjectService;
+import services.TaskService;
+import services.UserService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -36,6 +38,9 @@ public class AddTaskController {
 
     private int projectId;
     private int fixedAssignedUserId = -1;
+    private final ProjectService projectService = new ProjectService();
+    private final UserService userService = new UserService();
+    private final TaskService taskService = new TaskService();
 
     @FXML
     public void initialize() {
@@ -72,8 +77,7 @@ public class AddTaskController {
     }
 
     private void loadProjects() {
-        sql dao = new sql();
-        List<Project> projects = dao.getAllProjects();
+        List<Project> projects = projectService.getAllProjects();
         projectCombo.getItems().setAll(projects);
         projectCombo.setConverter(new StringConverter<>() {
             @Override
@@ -89,8 +93,7 @@ public class AddTaskController {
     }
 
     private void loadUsers() {
-        sql dao = new sql();
-        List<User> users = dao.getAllUsers(); // You'll need this method in sql.java
+        List<User> users = userService.getAllUsers();
         userCombo.getItems().addAll(users);
 
         // This makes the ComboBox show the User's name instead of memory address
@@ -144,7 +147,7 @@ public class AddTaskController {
                 1 // creator (replace with logged-in user id when auth/session is added)
         );
 
-        new sql().addTask(task);
+        taskService.addTask(task);
         closeWindow();
     }
     private void closeWindow() {

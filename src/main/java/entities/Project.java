@@ -1,4 +1,4 @@
-package tezfx.model.Entities;
+package entities;
 
 
 import javafx.beans.property.*;

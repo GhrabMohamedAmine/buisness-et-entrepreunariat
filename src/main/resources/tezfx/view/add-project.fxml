@@ -5,7 +5,7 @@
 <?import javafx.geometry.Insets?>
 <?import org.controlsfx.control.CheckComboBox?>
 
-<StackPane xmlns:fx="http://javafx.com/fxml" fx:controller="tezfx.controller.AddProjectController"
+<StackPane xmlns:fx="http://javafx.com/fxml" fx:controller="controllers.AddProjectController"
            style="-fx-background-color: transparent;">
 
     <VBox maxWidth="550" maxHeight="780" spacing="20"

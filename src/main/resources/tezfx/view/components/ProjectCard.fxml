@@ -5,7 +5,7 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.text.*?>
 
-<VBox maxWidth="320" prefWidth="320" spacing="10" styleClass="project-card" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tezfx.controller.ProjectCardController">
+<VBox maxWidth="320" prefWidth="320" spacing="10" styleClass="project-card" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.ProjectCardController">
     <padding><Insets bottom="20" left="20" right="20" top="20" /></padding>
 
     <HBox alignment="CENTER_LEFT">

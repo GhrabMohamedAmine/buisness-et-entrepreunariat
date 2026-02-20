@@ -1,4 +1,4 @@
-package tezfx.model.Entities;
+package entities;
 
 import javafx.beans.property.*;
 
@@ -29,6 +29,8 @@ public class Task {
         this.createdby.set(createdby);
     }
 
+
+
     // Getters
     public String getTitle() { return title.get(); }
     public String getDescription() { return description.get(); }
@@ -53,5 +55,8 @@ public class Task {
 
     public void setId(int id) { this.id.set(id); }
     public void setStatus(String status) { this.status.set(status); }
+    public void setAssignedTo(int assignedTo) { this.assignedTo.set(assignedTo); }
+    public void setCreatedby(int createdby) { this.createdby.set(createdby); }
+
 
 }

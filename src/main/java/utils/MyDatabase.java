@@ -1,9 +1,9 @@
-package tezfx.model;
+package utils;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 
-public class databaseconnection
+public class MyDatabase
 {
     // MAMP default credentials
     private static final String URL = "jdbc:mysql://localhost:8889/Nexum?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";

@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 
-<StackPane alignment="CENTER" prefHeight="280.0"   prefWidth="440.0" style="-fx-background-color: transparent;"   stylesheets="@../../css/stylesheet.css, @../../css/project-css.css, @../../css/buttons.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tezfx.controller.TasksFilterModalController">
+<StackPane alignment="CENTER" prefHeight="280.0"   prefWidth="440.0" style="-fx-background-color: transparent;"   stylesheets="@../../css/stylesheet.css, @../../css/project-css.css, @../../css/buttons.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.TasksFilterModalController">
     <children >
         <VBox style="-fx-background-radius: 20; -fx-border-radius: 20;" spacing="18.0" styleClass="modal-card" maxWidth="440.0" prefWidth="440.0">
             <padding>

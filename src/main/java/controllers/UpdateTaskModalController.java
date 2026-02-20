@@ -1,4 +1,4 @@
-package tezfx.controller;
+package controllers;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
@@ -8,9 +8,10 @@ import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
 import javafx.stage.Stage;
 import javafx.util.StringConverter;
-import tezfx.model.Entities.Task;
-import tezfx.model.Entities.User;
-import tezfx.model.services.sql;
+import entities.Task;
+import entities.User;
+import services.TaskService;
+import services.UserService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -31,6 +32,8 @@ public class UpdateTaskModalController {
 
     private Task currentTask;
     private boolean saved;
+    private final UserService userService = new UserService();
+    private final TaskService taskService = new TaskService();
 
     @FXML
     public void initialize() {
@@ -45,8 +48,7 @@ public class UpdateTaskModalController {
                 TaskValueMapper.PRIORITY_HIGH
         );
 
-        sql dao = new sql();
-        List<User> users = dao.getAllUsers();
+        List<User> users = userService.getAllUsers();
         userCombo.getItems().setAll(users);
         userCombo.setConverter(new StringConverter<>() {
             @Override
@@ -107,7 +109,7 @@ public class UpdateTaskModalController {
         );
         updated.setId(currentTask.getId());
 
-        if (new sql().updateTask(updated)) {
+        if (taskService.updateTask(updated)) {
             saved = true;
             closeWindow();
         }

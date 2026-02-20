@@ -1,4 +1,4 @@
-package tezfx.controller;
+package controllers;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -14,9 +14,9 @@ import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import tezfx.model.Entities.Project;
-import tezfx.model.Entities.User;
-import tezfx.model.services.sql;
+import entities.Project;
+import entities.User;
+import services.ProjectService;
 
 import java.io.IOException;
 import java.util.List;
@@ -33,7 +33,7 @@ public class ProjectsController {
     @FXML
     private TextField searchField;
 
-    private final sql dao = new sql();
+    private final ProjectService projectService = new ProjectService();
 
     @FXML
     public void initialize() {
@@ -52,8 +52,8 @@ public class ProjectsController {
     private void loadData(String query) {
         projectsGrid.getChildren().clear();
 
-        List<Project> projectList = dao.getAllProjects();
-        Map<Integer, List<User>> assigneesByProject = dao.getProjectAssigneesMap();
+        List<Project> projectList = projectService.getAllProjects();
+        Map<Integer, List<User>> assigneesByProject = projectService.getProjectAssigneesMap();
         String normalizedQuery = query == null ? "" : query.trim().toLowerCase();
         if (!normalizedQuery.isEmpty()) {
             projectList = projectList.stream()
@@ -122,5 +122,10 @@ public class ProjectsController {
             mainLayout.setEffect(null);
             e.printStackTrace();
         }
+    }
+
+    @FXML
+    private void onCalendarIconClicked() {
+        MainController.setView("calendar.fxml");
     }
 }

@@ -9,7 +9,7 @@
 <VBox spacing="25"
       xmlns="http://javafx.com/javafx/17.0.12"
       xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="tezfx.controller.HelloController">
+      fx:controller="controllers.HelloController">
 
     <padding>
         <Insets top="20" right="20" bottom="20" left="20"/>

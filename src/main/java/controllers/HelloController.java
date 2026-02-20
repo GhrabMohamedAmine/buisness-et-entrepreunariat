@@ -1,4 +1,4 @@
-package tezfx.controller;
+package controllers;
 
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -6,10 +6,11 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import tezfx.model.Entities.Project;
-import tezfx.model.Entities.Task;
-import tezfx.model.Entities.User;
-import tezfx.model.services.sql; // You need to import your DAO
+import entities.Project;
+import entities.Task;
+import entities.User;
+import services.ProjectService;
+import services.TaskService;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.effect.BoxBlur;
@@ -48,7 +49,8 @@ public class HelloController {
     @FXML private Label overdueUndoneKpiLabel;
     @FXML private VBox tasksListContainer;
 
-    private final sql projectDAO = new sql();
+    private final ProjectService projectService = new ProjectService();
+    private final TaskService taskService = new TaskService();
     private Map<Integer, List<User>> assigneesByProject = Map.of();
     private static final String[] AVATAR_COLOR_CLASSES = {
             "purple", "blue", "green", "orange"
@@ -138,9 +140,9 @@ public class HelloController {
     }
 
     public void loadData() {
-        assigneesByProject = projectDAO.getProjectAssigneesMap();
-        List<Project> projectsFromDB = projectDAO.getAllProjects().stream()
-                .filter(project -> projectDAO.getTaskCount(project.getId()) > 0)
+        assigneesByProject = projectService.getProjectAssigneesMap();
+        List<Project> projectsFromDB = projectService.getAllProjects().stream()
+                .filter(project -> taskService.getTaskCount(project.getId()) > 0)
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         projectsFromDB.sort(Comparator.comparingInt(Project::getId).reversed());
         int visibleCount = Math.min(projectsFromDB.size(), RECENT_PROJECTS_LIMIT);
@@ -233,11 +235,11 @@ public class HelloController {
     }
 
     private void loadKpis() {
-        totalProjectsKpiLabel.setText(String.valueOf(projectDAO.getTotalProjectsCount()));
-        tasksInProgressKpiLabel.setText(String.valueOf(projectDAO.getTasksInProgressCount()));
-        completedTasksKpiLabel.setText(String.valueOf(projectDAO.getCompletedTasksCount()));
-        upcomingDeadlinesKpiLabel.setText(String.valueOf(projectDAO.getUpcomingDeadlinesCount(3)));
-        overdueUndoneKpiLabel.setText(String.valueOf(projectDAO.getOverdueUndoneTasksCount()));
+        totalProjectsKpiLabel.setText(String.valueOf(projectService.getTotalProjectsCount()));
+        tasksInProgressKpiLabel.setText(String.valueOf(taskService.getTasksInProgressCount()));
+        completedTasksKpiLabel.setText(String.valueOf(taskService.getCompletedTasksCount()));
+        upcomingDeadlinesKpiLabel.setText(String.valueOf(taskService.getUpcomingDeadlinesCount(3)));
+        overdueUndoneKpiLabel.setText(String.valueOf(taskService.getOverdueUndoneTasksCount()));
     }
 
     private void loadCurrentUserTasks() {
@@ -245,7 +247,7 @@ public class HelloController {
             return;
         }
         tasksListContainer.getChildren().clear();
-        List<Task> tasks = projectDAO.getTasksByAssignedUser(CURRENT_USER_ID);
+        List<Task> tasks = taskService.getTasksByAssignedUser(CURRENT_USER_ID);
         if (tasks.isEmpty()) {
             Label emptyLabel = new Label("No tasks assigned.");
             emptyLabel.getStyleClass().add("task-time");
@@ -289,7 +291,7 @@ public class HelloController {
 
         statusCheck.setOnAction(e -> {
             String newStatus = statusCheck.isSelected() ? TaskValueMapper.STATUS_DONE : TaskValueMapper.STATUS_TODO;
-            boolean updated = projectDAO.updateTaskStatus(task.getId(), newStatus);
+            boolean updated = taskService.updateTaskStatus(task.getId(), newStatus);
             if (!updated) {
                 statusCheck.setSelected(!statusCheck.isSelected());
                 return;
@@ -301,7 +303,7 @@ public class HelloController {
             if (TaskValueMapper.STATUS_IN_PROGRESS.equals(TaskValueMapper.normalizeStatus(task.getStatus()))) {
                 return;
             }
-            boolean updated = projectDAO.updateTaskStatus(task.getId(), TaskValueMapper.STATUS_IN_PROGRESS);
+            boolean updated = taskService.updateTaskStatus(task.getId(), TaskValueMapper.STATUS_IN_PROGRESS);
             if (updated) {
                 loadData();
             }

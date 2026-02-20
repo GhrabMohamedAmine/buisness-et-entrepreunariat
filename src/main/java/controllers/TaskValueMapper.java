@@ -1,4 +1,4 @@
-package tezfx.controller;
+package controllers;
 
 import java.util.Locale;
 

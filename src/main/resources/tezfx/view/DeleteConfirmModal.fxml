@@ -9,7 +9,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
-<StackPane alignment="CENTER" prefHeight="300.0" prefWidth="520.0" style="-fx-background-color: transparent;" stylesheets="@../../css/stylesheet.css, @../../css/buttons.css, @../../css/project-css.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tezfx.controller.DeleteConfirmModalController">
+<StackPane alignment="CENTER" prefHeight="300.0" prefWidth="520.0" style="-fx-background-color: transparent;" stylesheets="@../../css/stylesheet.css, @../../css/buttons.css, @../../css/project-css.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.DeleteConfirmModalController">
     <children>
         <VBox alignment="TOP_LEFT" spacing="18.0" styleClass="delete-modal-card">
             <padding>

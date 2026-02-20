@@ -160,7 +160,7 @@
                     <execution>
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>tezfx/tezfx.app.HelloApplication</mainClass>
+                            <mainClass>tezfx/Mains.HelloApplication</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>

@@ -1,4 +1,4 @@
-package tezfx.controller;
+package controllers;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -11,20 +11,21 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.effect.BoxBlur;
 import javafx.scene.effect.ColorAdjust;
-import javafx.scene.layout.HBox;
+import javafx.scene.input.Dragboard;
+import javafx.scene.input.TransferMode;
+import javafx.scene.layout.*;
 import javafx.geometry.Pos;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.Region;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
-import tezfx.model.Entities.Project;
-import tezfx.model.Entities.Task;
-import tezfx.model.Entities.User;
-import tezfx.model.services.sql;
+import entities.Project;
+import entities.Task;
+import entities.User;
+import services.ActivityService;
+import services.ProjectService;
+import services.TaskService;
+import services.UserService;
 import javafx.scene.paint.Color;
 
 import javafx.scene.control.Button;
@@ -50,14 +51,19 @@ public class ProjectDetailsController {
     @FXML private VBox tasksContainer;
     @FXML private ScrollPane tasksScrollPane;
     @FXML private HBox overviewContainer;
+    @FXML private VBox kanbanContainer;
+    @FXML private VBox todoColumn;
+    @FXML private VBox inProgressColumn;
+    @FXML private VBox doneColumn;
     @FXML private VBox teamContainer;
     @FXML private VBox recentActivityContainer;
     @FXML private Project currentProject;
-    @FXML private Button tasksBtn, overviewTab;
+    @FXML private Button tasksBtn, overviewTab, kanbanTab;
 
-
-
-    private final sql dao = new sql();
+    private final ProjectService projectService = new ProjectService();
+    private final TaskService taskService = new TaskService();
+    private final UserService userService = new UserService();
+    private final ActivityService activityService = new ActivityService();
 
     private static class ActivityItem {
         private final long sortKey;
@@ -67,6 +73,13 @@ public class ProjectDetailsController {
             this.sortKey = sortKey;
             this.node = node;
         }
+    }
+
+    @FXML
+    private void initialize() {
+        setupDropTarget(todoColumn, TaskValueMapper.STATUS_TODO);
+        setupDropTarget(inProgressColumn, TaskValueMapper.STATUS_IN_PROGRESS);
+        setupDropTarget(doneColumn, TaskValueMapper.STATUS_DONE);
     }
 
     public void ProjectDataLoad(Project project) {
@@ -99,13 +112,9 @@ public class ProjectDetailsController {
     }
 
     private void loadProjectStats(int projectId) {
-        // Here you will call your DAO to count tasks from the 'tasks' table
-        sql dao = new sql();
-
-        // Fetch real numbers from MAMP
-        int total = dao.getTaskCount(projectId);
-        int completed = dao.getTaskCountByStatus(projectId, "DONE");
-        int overdue = dao.getOverdueTaskCount(projectId);
+        int total = taskService.getTaskCount(projectId);
+        int completed = taskService.getTaskCountByStatus(projectId, "DONE");
+        int overdue = taskService.getOverdueTaskCount(projectId);
 
         totalTasksLabel.setText(String.valueOf(total));
         completedTasksLabel.setText(String.valueOf(completed));
@@ -124,7 +133,7 @@ public class ProjectDetailsController {
 
         teamContainer.getChildren().clear();
 
-        Map<Integer, List<User>> assigneesByProject = dao.getProjectAssigneesMap();
+        Map<Integer, List<User>> assigneesByProject = projectService.getProjectAssigneesMap();
         List<User> users = assigneesByProject.getOrDefault(projectId, List.of());
         if (users.isEmpty()) {
             HBox row = new HBox(8, buildAvatar("U", "gray"), new Label("Unassigned"));
@@ -146,13 +155,13 @@ public class ProjectDetailsController {
         recentActivityContainer.getChildren().clear();
 
         Map<Integer, String> userNamesById = new java.util.HashMap<>();
-        for (User user : dao.getAllUsers()) {
+        for (User user : userService.getAllUsers()) {
             userNamesById.put(user.getId(), user.getFullName());
         }
 
         List<ActivityItem> items = new ArrayList<>();
-        List<sql.TaskActivity> activities = dao.getTaskActivitiesByProject(projectId, 20);
-        for (sql.TaskActivity activity : activities) {
+        List<ActivityService.TaskActivity> activities = activityService.getTaskActivitiesByProject(projectId, 20);
+        for (ActivityService.TaskActivity activity : activities) {
             String type = normalizeActivityType(activity.getType());
             String title = switch (type) {
                 case "CREATED" -> "Task Created";
@@ -184,7 +193,7 @@ public class ProjectDetailsController {
         }
 
         if (items.isEmpty()) {
-            List<Task> tasks = dao.getTasksByProject(projectId);
+            List<Task> tasks = taskService.getTasksByProject(projectId);
             for (Task task : tasks) {
                 String createdBy = userNamesById.getOrDefault(task.getCreatedby(), "A user");
                 items.add(new ActivityItem(
@@ -276,7 +285,7 @@ public class ProjectDetailsController {
 
     private void loadTasks(int projectId) {
         tasksContainer.getChildren().clear();
-        List<Task> tasks = dao.getTasksByProject(projectId);
+        List<Task> tasks = taskService.getTasksByProject(projectId);
 
         for (Task t : tasks) {
             try {
@@ -301,15 +310,17 @@ public class ProjectDetailsController {
             return;
         }
 
-        // 1. Hide the "Overview" content, Show the "Tasks" content
+        // 1. Hide the "Overview" and "Kanban" content, show the "Tasks" content
         overviewContainer.setVisible(false);
         overviewContainer.setManaged(false);
+        kanbanContainer.setVisible(false);
+        kanbanContainer.setManaged(false);
         tasksScrollPane.setVisible(true);
         tasksScrollPane.setManaged(true);
 
         // 2. Load the rows
         taskListContainer.getChildren().clear();
-        List<Task> tasks = dao.getTasksByProject(currentProject.getId());
+        List<Task> tasks = taskService.getTasksByProject(currentProject.getId());
 
         for (Task t : tasks) {
             try {
@@ -320,7 +331,7 @@ public class ProjectDetailsController {
                 controller.setTaskData(t);
                 controller.setOnStatusToggle(selected -> {
                     String newStatus = selected ? "DONE" : "TODO";
-                    boolean updated = dao.updateTaskStatus(t.getId(), newStatus);
+                    boolean updated = taskService.updateTaskStatus(t.getId(), newStatus);
                     if (updated && currentProject != null) {
                         loadProjectStats(currentProject.getId());
                         showTasksTab();
@@ -328,7 +339,7 @@ public class ProjectDetailsController {
                     return updated;
                 });
                 controller.setOnStatusChange(newStatus -> {
-                    boolean updated = dao.updateTaskStatus(t.getId(), newStatus);
+                    boolean updated = taskService.updateTaskStatus(t.getId(), newStatus);
                     if (updated && currentProject != null) {
                         loadProjectStats(currentProject.getId());
                         showTasksTab();
@@ -349,26 +360,13 @@ public class ProjectDetailsController {
             }
         }
     }
-    public void showOverviewTab() {
-        // 1. Toggle visibility
-        overviewContainer.setVisible(true);
-        overviewContainer.setManaged(true);
-        tasksScrollPane.setVisible(false);
-        tasksScrollPane.setManaged(false);
 
-        // 2. Refresh the UI labels with the current project data
-        if (currentProject != null) {
-            detailName.setText(currentProject.getName());
-            detailDate.setText("Due " + currentProject.getEndDate().toString());
-            loadProjectStats(currentProject.getId());
-            loadRecentActivities(currentProject.getId());
-        }
-    }
     @FXML
     private void onTasksTabClicked() {
         // 1. Update Tab Styles
         overviewTab.getStyleClass().setAll("tab-inactive");
         tasksBtn.getStyleClass().setAll("tab-active");
+        kanbanTab.getStyleClass().setAll("tab-inactive");
 
         // 2. Hide Overview
         overviewContainer.setVisible(false);
@@ -377,6 +375,8 @@ public class ProjectDetailsController {
         // 3. Show Tasks
         tasksScrollPane.setVisible(true);
         tasksScrollPane.setManaged(true);
+        kanbanContainer.setVisible(false);
+        kanbanContainer.setManaged(false);
 
         // Refresh your task list logic here
         showTasksTab();
@@ -386,6 +386,7 @@ public class ProjectDetailsController {
         // 1. Update Tab Styles
         overviewTab.getStyleClass().setAll("tab-active");
         tasksBtn.getStyleClass().setAll("tab-inactive");
+        kanbanTab.getStyleClass().setAll("tab-inactive");
 
         // 2. Show Overview
         overviewContainer.setVisible(true);
@@ -394,7 +395,98 @@ public class ProjectDetailsController {
         // 3. Hide Tasks (The fix for your issue)
         tasksScrollPane.setVisible(false);
         tasksScrollPane.setManaged(false);
+        kanbanContainer.setVisible(false);
+        kanbanContainer.setManaged(false);
     }
+
+    @FXML
+    private void onKanbanTabClicked() {
+        if (currentProject == null) {
+            return;
+        }
+
+        overviewTab.getStyleClass().setAll("tab-inactive");
+        tasksBtn.getStyleClass().setAll("tab-inactive");
+        kanbanTab.getStyleClass().setAll("tab-active");
+
+        overviewContainer.setVisible(false);
+        overviewContainer.setManaged(false);
+        tasksScrollPane.setVisible(false);
+        tasksScrollPane.setManaged(false);
+        kanbanContainer.setVisible(true);
+        kanbanContainer.setManaged(true);
+
+        loadKanbanColumns();
+    }
+
+    private void loadKanbanColumns() {
+        if (currentProject == null) {
+            return;
+        }
+        todoColumn.getChildren().clear();
+        inProgressColumn.getChildren().clear();
+        doneColumn.getChildren().clear();
+
+        List<Task> tasks = taskService.getTasksByProject(currentProject.getId());
+        for (Task task : tasks) {
+            try {
+                FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/components/TaskRow.fxml"));
+                Parent row = loader.load();
+                TaskRowController controller = loader.getController();
+
+                controller.setTaskData(task);
+                controller.setKanbanMode(true);
+                controller.setOnStatusToggle(selected -> {
+                    String newStatus = selected ? TaskValueMapper.STATUS_DONE : TaskValueMapper.STATUS_TODO;
+                    boolean updated = taskService.updateTaskStatus(task.getId(), newStatus);
+                    if (updated) {
+                        loadProjectStats(currentProject.getId());
+                        loadRecentActivities(currentProject.getId());
+                        loadKanbanColumns();
+                    }
+                    return updated;
+                });
+                controller.setOnStatusChange(newStatus -> {
+                    boolean updated = taskService.updateTaskStatus(task.getId(), newStatus);
+                    if (updated) {
+                        loadProjectStats(currentProject.getId());
+                        loadRecentActivities(currentProject.getId());
+                        loadKanbanColumns();
+                    }
+                    return updated;
+                });
+                controller.setOnEdit(() -> openUpdateTaskModal(task));
+                controller.setOnDelete(() -> deleteTask(task));
+
+                VBox targetColumn = switch (TaskValueMapper.normalizeStatus(task.getStatus())) {
+                    case TaskValueMapper.STATUS_DONE -> doneColumn;
+                    case TaskValueMapper.STATUS_IN_PROGRESS -> inProgressColumn;
+                    default -> todoColumn;
+                };
+
+                if (row instanceof Region region) {
+                    region.setMaxWidth(Double.MAX_VALUE);
+                }
+                targetColumn.getChildren().add(row);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    private void refreshVisibleTaskView() {
+        if (currentProject == null) {
+            return;
+        }
+        loadProjectStats(currentProject.getId());
+        loadRecentActivities(currentProject.getId());
+        if (kanbanContainer != null && kanbanContainer.isVisible()) {
+            loadKanbanColumns();
+            return;
+        }
+        showTasksTab();
+    }
+
     @FXML
     private void handleAddTask() {
         Node mainLayout = tasksContainer.getScene().getRoot();
@@ -436,8 +528,7 @@ public class ProjectDetailsController {
             mainLayout.setEffect(null);
 
             // 6. Refresh the task list once the popup is closed
-            showTasksTab();
-            loadRecentActivities(currentProject.getId());
+            refreshVisibleTaskView();
 
         } catch (IOException e) {
             e.printStackTrace();
@@ -484,7 +575,7 @@ public class ProjectDetailsController {
             mainLayout.setEffect(null);
 
             if (controller.isConfirmed()) {
-                boolean deleted = dao.deleteProjectById(currentProject.getId());
+                boolean deleted = projectService.deleteProjectById(currentProject.getId());
                 if (deleted) {
                     MainController.setView("project.fxml");
                 }
@@ -570,9 +661,7 @@ public class ProjectDetailsController {
             mainLayout.setEffect(null);
 
             if (controller.isSaved()) {
-                showTasksTab();
-                loadProjectStats(currentProject.getId());
-                loadRecentActivities(currentProject.getId());
+                refreshVisibleTaskView();
             }
         } catch (IOException e) {
             mainLayout.setEffect(null);
@@ -615,15 +704,45 @@ public class ProjectDetailsController {
 
             mainLayout.setEffect(null);
 
-            if (controller.isConfirmed() && dao.deleteTaskById(task.getId())) {
-                showTasksTab();
-                loadProjectStats(currentProject.getId());
-                loadRecentActivities(currentProject.getId());
+            if (controller.isConfirmed() && taskService.deleteTaskById(task.getId())) {
+                refreshVisibleTaskView();
             }
         } catch (IOException e) {
             mainLayout.setEffect(null);
             e.printStackTrace();
         }
+    }
+    private void setupDropTarget(VBox column, String newStatus) {
+        if (column == null) {
+            return;
+        }
+        column.setOnDragOver(event -> {
+            if (event.getGestureSource() != column && event.getDragboard().hasString()) {
+                event.acceptTransferModes(TransferMode.MOVE);
+            }
+            event.consume();
+        });
+
+        column.setOnDragDropped(event -> {
+            Dragboard db = event.getDragboard();
+            boolean success = false;
+
+            if (db.hasString()) {
+                try {
+                    int taskId = Integer.parseInt(db.getString());
+                    success = taskService.updateTaskStatus(taskId, newStatus);
+                    if (success && currentProject != null) {
+                        loadProjectStats(currentProject.getId());
+                        loadRecentActivities(currentProject.getId());
+                        loadKanbanColumns();
+                    }
+                } catch (NumberFormatException ignored) {
+                    success = false;
+                }
+            }
+            event.setDropCompleted(success);
+            event.consume();
+        });
     }
 
 

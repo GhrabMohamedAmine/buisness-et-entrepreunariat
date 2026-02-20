@@ -1,7 +1,7 @@
-package tezfx.controller;
+package controllers;
 
 import javafx.scene.Parent;
-import tezfx.app.ViewLoader;
+import Mains.ViewLoader;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.layout.StackPane;

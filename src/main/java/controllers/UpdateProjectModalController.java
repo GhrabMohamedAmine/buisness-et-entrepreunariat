@@ -1,4 +1,4 @@
-package tezfx.controller;
+package controllers;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.DatePicker;
@@ -9,9 +9,10 @@ import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import javafx.collections.ListChangeListener;
 import org.controlsfx.control.CheckComboBox;
-import tezfx.model.Entities.Project;
-import tezfx.model.Entities.User;
-import tezfx.model.services.sql;
+import entities.Project;
+import entities.User;
+import services.ProjectService;
+import services.UserService;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -32,11 +33,12 @@ public class UpdateProjectModalController {
     private Project originalProject;
     private Project updatedProject;
     private boolean saved;
-    private final sql dao = new sql();
+    private final ProjectService projectService = new ProjectService();
+    private final UserService userService = new UserService();
 
     @FXML
     public void initialize() {
-        assignedUsersCombo.getItems().setAll(dao.getAllUsers());
+        assignedUsersCombo.getItems().setAll(userService.getAllUsers());
         assignedUsersCombo.setConverter(new StringConverter<>() {
             @Override
             public String toString(User user) {
@@ -69,7 +71,7 @@ public class UpdateProjectModalController {
             dueDatePicker.setValue(LocalDate.parse(project.getEndDate()));
         }
 
-        List<Integer> assignedIds = dao.getProjectAssignmentUserIds(project.getId());
+        List<Integer> assignedIds = projectService.getProjectAssignmentUserIds(project.getId());
         if (assignedIds.isEmpty() && project.getAssignedTo() > 0) {
             assignedIds = List.of(project.getAssignedTo());
         }
@@ -113,9 +115,9 @@ public class UpdateProjectModalController {
                 originalProject.getCreatedby()
         );
 
-        boolean ok = dao.updateProject(candidate);
+        boolean ok = projectService.updateProject(candidate);
         if (ok) {
-            dao.replaceProjectAssignments(candidate.getId(), selectedUsers.stream().map(User::getId).collect(Collectors.toList()));
+            projectService.replaceProjectAssignments(candidate.getId(), selectedUsers.stream().map(User::getId).collect(Collectors.toList()));
             saved = true;
             updatedProject = candidate;
             close();

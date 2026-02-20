@@ -13,9 +13,12 @@ module tezfx {
     requires org.kordamp.bootstrapfx.core;
     requires com.almasb.fxgl.all;
     requires java.desktop;
+    requires java.net.http;
 
+    exports Mains;
     exports tezfx.app;
-    opens tezfx.controller to javafx.fxml;
+    opens controllers to javafx.fxml;
+    opens Mains to javafx.graphics, javafx.fxml;
     opens tezfx.app to javafx.graphics, javafx.fxml;
 
 }

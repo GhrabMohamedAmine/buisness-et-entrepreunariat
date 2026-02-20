@@ -9,7 +9,7 @@
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 <HBox fx:id="taskRowRoot" alignment="CENTER_LEFT" maxWidth="Infinity" prefWidth="Infinity" spacing="20" styleClass="task-row-card"
       xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="tezfx.controller.TaskRowController">
+      fx:controller="controllers.TaskRowController">
     <padding>
         <Insets  />
     </padding>
@@ -26,6 +26,6 @@
     <Label fx:id="statusLabel" styleClass="badge-progress" text="In Progress" />
     <Label fx:id="assignedUser" styleClass="task-assignee-pill" text="John Doe" />
     <Label fx:id="dueDateLabel" styleClass="text-muted" text="Oct 24" />
-    <FontIcon styleClass="btn-icon-outline" iconLiteral="mdi2p-pencil-outline" iconSize="18" onMouseClicked="#onEditTask" />
-    <FontIcon styleClass="btn-icon-danger" iconLiteral="mdi2d-delete-empty-outline" iconSize="18" onMouseClicked="#onDeleteTask" />
+    <FontIcon fx:id="editIcon" styleClass="btn-icon-outline" iconLiteral="mdi2p-pencil-outline" iconSize="18" onMouseClicked="#onEditTask" />
+    <FontIcon fx:id="deleteIcon" styleClass="btn-icon-danger" iconLiteral="mdi2d-delete-empty-outline" iconSize="18" onMouseClicked="#onDeleteTask" />
 </HBox>

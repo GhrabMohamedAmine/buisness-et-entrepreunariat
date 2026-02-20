@@ -10,7 +10,7 @@
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox spacing="20.0" styleClass="modal-card" stylesheets="@../../css/stylesheet.css, @../../css/project-css.css, @../../css/buttons.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tezfx.controller.UpdateTaskModalController">
+<VBox spacing="20.0" styleClass="modal-card" stylesheets="@../../css/stylesheet.css, @../../css/project-css.css, @../../css/buttons.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.UpdateTaskModalController">
     <children>
         <HBox alignment="CENTER_LEFT">
             <children>

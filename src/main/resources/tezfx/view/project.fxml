@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="UTF-8"?>
+ <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
@@ -7,7 +7,7 @@
 
 <VBox spacing="20"
       xmlns:fx="http://javafx.com/fxml"
-      fx:controller="tezfx.controller.ProjectsController">
+      fx:controller="controllers.ProjectsController">
     <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
 
     <HBox spacing="15" alignment="CENTER_LEFT">
@@ -17,6 +17,10 @@
         </VBox>
         <Region HBox.hgrow="ALWAYS" />
         <TextField fx:id="searchField" promptText="Search projects..." prefWidth="250" styleClass="search-field"/>
+        <Button onAction="#onCalendarIconClicked" styleClass="btn-secondary">
+            <graphic><FontIcon iconLiteral="mdi2c-calendar-month-outline" iconSize="16"/></graphic>
+            <tooltip><Tooltip text="Calendar"/></tooltip>
+        </Button>
         <Button text="Filter" styleClass="btn-secondary">
             <graphic><FontIcon iconLiteral="mdi2f-filter-outline" iconSize="16"/></graphic>
         </Button>

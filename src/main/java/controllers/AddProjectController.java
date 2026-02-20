@@ -1,13 +1,14 @@
-package tezfx.controller;
+package controllers;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
 import org.controlsfx.control.CheckComboBox;
-import tezfx.model.Entities.Project;
-import tezfx.model.Entities.User;
-import tezfx.model.services.sql;
+import entities.Project;
+import entities.User;
+import services.ProjectService;
+import services.UserService;
 import javafx.util.StringConverter;
 import javafx.collections.ListChangeListener;
 import java.time.LocalDate;
@@ -29,11 +30,12 @@ public class AddProjectController {
 
     private Runnable onProjectCreated;
 
-    private sql dao = new sql();
+    private final ProjectService projectService = new ProjectService();
+    private final UserService userService = new UserService();
 
     @FXML
     public void initialize() {
-        assignedUsersCombo.getItems().setAll(dao.getAllUsers());
+        assignedUsersCombo.getItems().setAll(userService.getAllUsers());
         assignedUsersCombo.setConverter(new StringConverter<User>() {
             @Override
             public String toString(User user) {
@@ -69,10 +71,10 @@ public class AddProjectController {
             Project newProject = new Project(name, desc, progress, 0.0, startStr, dueStr, selectedUsers.get(0).getId(), 1);
 
             // 3. Save and Refresh
-            int projectId = dao.ReturnPrID(newProject);
+            int projectId = projectService.ReturnPrID(newProject);
             if (projectId > 0) {
                 List<Integer> userIds = selectedUsers.stream().map(User::getId).collect(Collectors.toList());
-                dao.replaceProjectAssignments(projectId, userIds);
+                projectService.replaceProjectAssignments(projectId, userIds);
             }
             if (onProjectCreated != null) {
                 onProjectCreated.run();

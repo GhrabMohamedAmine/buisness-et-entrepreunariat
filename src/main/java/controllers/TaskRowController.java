@@ -1,12 +1,16 @@
-package tezfx.controller;
+package controllers;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
 import javafx.event.ActionEvent;
+import javafx.scene.input.ClipboardContent;
+import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.input.TransferMode;
+import javafx.scene.layout.HBox;
 import org.kordamp.ikonli.javafx.FontIcon;
-import tezfx.model.Entities.Task;
+import entities.Task;
 
 import java.util.function.Function;
 
@@ -14,28 +18,43 @@ public class TaskRowController {
     // Add assignedUser here
     @FXML private Label taskTitle, taskDesc, priorityLabel, statusLabel, dueDateLabel, assignedUser;
     @FXML private CheckBox doneCheck;
-    @FXML private FontIcon inProgressIcon;
+    @FXML private FontIcon inProgressIcon, editIcon, deleteIcon;
+    @FXML private HBox taskRowRoot;
     private Runnable onEdit;
     private Runnable onDelete;
     private Function<Boolean, Boolean> onStatusToggle;
     private Function<String, Boolean> onStatusChange;
     private String currentStatus = TaskValueMapper.STATUS_TODO;
+    private boolean kanbanMode = false;
 
     public void setTaskData(Task task) {
         if (task == null) return;
+
+        if (taskRowRoot != null) {
+            taskRowRoot.setOnDragDetected(event -> {
+                Dragboard db = taskRowRoot.startDragAndDrop(TransferMode.MOVE);
+            ClipboardContent content = new ClipboardContent();
+                content.putString(String.valueOf(task.getId()));
+            db.setContent(content);
+                db.setDragView(taskRowRoot.snapshot(null, null));
+                event.consume();
+            });
+        }
+
+
 
         taskTitle.setText(task.getTitle());
         taskDesc.setText(task.getDescription() != null ? task.getDescription() : "No description");
         dueDateLabel.setText(task.getDueDate() != null ? task.getDueDate() : "No date");
 
-        // SET THE ASSIGNED USER NAME
-        // Assuming your Task model has getAssignedTo() or getAssignedUser()
+
         if (assignedUser != null) {
             String assigneeName = task.getAssignedToName();
             assignedUser.setText(
                     assigneeName == null || assigneeName.isBlank() ? "Unassigned" : assigneeName
             );
         }
+
 
         String normalizedStatus = TaskValueMapper.normalizeStatus(task.getStatus());
         currentStatus = normalizedStatus;
@@ -44,7 +63,42 @@ public class TaskRowController {
         }
         updateStatusStyle(normalizedStatus);
         updatePriorityStyle(task.getPriority());
+        applyMode();
+
     }
+
+    public void setKanbanMode(boolean enabled) {
+        this.kanbanMode = enabled;
+        applyMode();
+    }
+
+    private void applyMode() {
+        if (taskRowRoot == null) return;
+        if (kanbanMode) {
+            taskRowRoot.setSpacing(10);
+            setNodeVisibleManaged(taskDesc, false);
+            setNodeVisibleManaged(assignedUser, false);
+            setNodeVisibleManaged(dueDateLabel, false);
+            setNodeVisibleManaged(editIcon, false);
+            setNodeVisibleManaged(deleteIcon, false);
+            setNodeVisibleManaged(inProgressIcon, false);
+        } else {
+            taskRowRoot.setSpacing(20);
+            setNodeVisibleManaged(taskDesc, true);
+            setNodeVisibleManaged(assignedUser, true);
+            setNodeVisibleManaged(dueDateLabel, true);
+            setNodeVisibleManaged(editIcon, true);
+            setNodeVisibleManaged(deleteIcon, true);
+            setNodeVisibleManaged(inProgressIcon, true);
+        }
+    }
+
+    private void setNodeVisibleManaged(javafx.scene.Node node, boolean value) {
+        if (node == null) return;
+        node.setVisible(value);
+        node.setManaged(value);
+    }
+
 
     private void updateStatusStyle(String status) {
         String normalized = TaskValueMapper.normalizeStatus(status);
@@ -139,4 +193,6 @@ public class TaskRowController {
     private void onDeleteTask(MouseEvent event) {
         if (onDelete != null) onDelete.run();
     }
+
+
 }

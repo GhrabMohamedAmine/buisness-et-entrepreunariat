@@ -1,4 +1,4 @@
-package tezfx.app;
+package Mains;
 
 import javafx.application.Application;
 

@@ -1,4 +1,4 @@
-package tezfx.controller;
+package controllers;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.ToggleButton;
@@ -32,7 +32,6 @@ public class SidebarController {
 
     private void loadPage(String pageName) {
         System.out.println("Loading: " + pageName);
-        // Here you would call a method in your MainController
-        // to swap the center Pane of your layout
+
     }
 }

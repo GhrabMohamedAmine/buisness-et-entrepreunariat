@@ -1,16 +1,16 @@
-package tezfx.controller;
+package controllers;
 
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.control.ProgressBar;
 import javafx.fxml.FXML;
-import tezfx.model.Entities.Project;
+import entities.Project;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
-import tezfx.model.Entities.User;
+import entities.User;
 
 import java.io.IOException;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package tezfx.controller;
+package controllers;
 
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -22,9 +22,10 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import org.kordamp.ikonli.javafx.FontIcon;
-import tezfx.model.Entities.Project;
-import tezfx.model.Entities.Task;
-import tezfx.model.services.sql;
+import entities.Project;
+import entities.Task;
+import services.ProjectService;
+import services.TaskService;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -39,7 +40,8 @@ public class TasksController {
     @FXML private Button filterButton;
     @FXML private Label filterBadgeLabel;
 
-    private final sql dao = new sql();
+    private final ProjectService projectService = new ProjectService();
+    private final TaskService taskService = new TaskService();
     private static final DateTimeFormatter DUE_DATE_INPUT = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter DUE_DATE_OUTPUT = DateTimeFormatter.ofPattern("dd MMM", Locale.ENGLISH);
     private String selectedStatusFilter = TaskValueMapper.FILTER_ALL;
@@ -105,11 +107,11 @@ public class TasksController {
         tasksGroupsContainer.getChildren().clear();
 
         String normalizedQuery = normalizeSearch(query);
-        List<Project> projects = dao.getAllProjects();
+        List<Project> projects = projectService.getAllProjects();
         int colorIndex = 0;
 
         for (Project project : projects) {
-            List<Task> projectTasks = dao.getTasksByProject(project.getId());
+            List<Task> projectTasks = taskService.getTasksByProject(project.getId());
             if (!isAllFilter(selectedStatusFilter)) {
                 projectTasks = projectTasks.stream()
                         .filter(task -> matchesStatusFilter(task.getStatus()))
@@ -234,7 +236,7 @@ public class TasksController {
 
         doneCheck.setOnAction(e -> {
             String newStatus = doneCheck.isSelected() ? TaskValueMapper.STATUS_DONE : TaskValueMapper.STATUS_TODO;
-            boolean updated = dao.updateTaskStatus(task.getId(), newStatus);
+            boolean updated = taskService.updateTaskStatus(task.getId(), newStatus);
             if (!updated) {
                 doneCheck.setSelected(!doneCheck.isSelected());
                 return;
@@ -247,7 +249,7 @@ public class TasksController {
             if (TaskValueMapper.STATUS_IN_PROGRESS.equals(currentStatus)) {
                 return;
             }
-            boolean updated = dao.updateTaskStatus(task.getId(), TaskValueMapper.STATUS_IN_PROGRESS);
+            boolean updated = taskService.updateTaskStatus(task.getId(), TaskValueMapper.STATUS_IN_PROGRESS);
             if (updated) {
                 loadTasks(currentSearchQuery());
             }
@@ -435,7 +437,7 @@ public class TasksController {
 
             mainLayout.setEffect(null);
 
-            if (controller.isConfirmed() && dao.deleteTaskById(task.getId())) {
+            if (controller.isConfirmed() && taskService.deleteTaskById(task.getId())) {
                 loadTasks(currentSearchQuery());
             }
         } catch (IOException e) {

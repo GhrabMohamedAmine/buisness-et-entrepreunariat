@@ -7,7 +7,7 @@
 <?import javafx.scene.control.DatePicker?>
 <?import javafx.scene.control.TextArea?>
 <?import javafx.geometry.Insets?>
-<VBox spacing="20.0" styleClass="modal-card" style="-fx-background-radius: 20;" stylesheets="@../../css/stylesheet.css, @../../css/project-css.css, @../../css/buttons.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="tezfx.controller.AddTaskController">
+<VBox spacing="20.0" styleClass="modal-card" style="-fx-background-radius: 20;" stylesheets="@../../css/stylesheet.css, @../../css/project-css.css, @../../css/buttons.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.AddTaskController">
     <children>
         <HBox alignment="CENTER_LEFT">
             <children>
