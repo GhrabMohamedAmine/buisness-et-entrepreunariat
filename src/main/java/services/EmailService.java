@@ -8,15 +8,9 @@ import java.util.Properties;
 public class EmailService {
 
     // ------------------- CONFIGURATION GMAIL -------------------
-    // Hôte SMTP de Gmail (vous n'avez pas besoin d'autre chose)
     private static final String SMTP_HOST = "smtp.gmail.com";
-    private static final String SMTP_PORT = "587"; // Port TLS
-
-    // Votre adresse Gmail complète
+    private static final String SMTP_PORT = "587";
     private static final String USERNAME = "ghramine7@gmail.com";
-
-    // ⚠️ REMPLACEZ CE MOT DE PASSE par celui que vous générerez dans votre compte Google
-    // Il s'agit d'un "mot de passe d'application" (16 caractères)
     private static final String PASSWORD = "bikj pdqi xwhr nbbv";
 
     /**
@@ -26,14 +20,12 @@ public class EmailService {
      * @param newStatus le nouveau statut ("Actif" ou "Suspendu")
      */
     public static void sendStatusChangeEmail(String toEmail, String newStatus) {
-        // 1. Propriétés de connexion au serveur SMTP
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "true"); // Active TLS
+        props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.smtp.host", SMTP_HOST);
         props.put("mail.smtp.port", SMTP_PORT);
 
-        // 2. Création de la session avec authentification
         Session session = Session.getInstance(props, new Authenticator() {
             @Override
             protected PasswordAuthentication getPasswordAuthentication() {
@@ -41,17 +33,12 @@ public class EmailService {
             }
         });
 
-        // Optionnel : activer le mode debug pour voir les échanges avec le serveur
-        // session.setDebug(true);
-
         try {
-            // 3. Création du message
             Message message = new MimeMessage(session);
             message.setFrom(new InternetAddress(USERNAME));
             message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
             message.setSubject("Changement de statut de votre compte");
 
-            // 4. Contenu personnalisé selon le statut
             String content;
             if ("Actif".equalsIgnoreCase(newStatus) || "Active".equalsIgnoreCase(newStatus)) {
                 content = "Bonjour,\n\n"
@@ -66,12 +53,55 @@ public class EmailService {
             }
             message.setText(content);
 
-            // 5. Envoi du message
             Transport.send(message);
             System.out.println("✅ Email de notification envoyé à " + toEmail);
 
         } catch (MessagingException e) {
             System.err.println("❌ Erreur lors de l'envoi de l'email : " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Envoie un email de notification pour le changement de statut d'une réclamation.
+     *
+     * @param toEmail   adresse du destinataire (propriétaire de la réclamation)
+     * @param titre     titre de la réclamation
+     * @param projet    projet concerné
+     * @param newStatus nouveau statut ("Rèsolu" ou "Fermer")
+     */
+    public static void sendReclamationStatusEmail(String toEmail, String titre, String projet, String newStatus) {
+        Properties props = new Properties();
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.host", SMTP_HOST);
+        props.put("mail.smtp.port", SMTP_PORT);
+
+        Session session = Session.getInstance(props, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(USERNAME, PASSWORD);
+            }
+        });
+
+        try {
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(USERNAME));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+            message.setSubject("Mise à jour de votre réclamation");
+
+            String content = "Bonjour,\n\n"
+                    + "Le statut de votre réclamation \"" + titre + "\" (projet : " + projet + ") "
+                    + "a été mis à jour : " + newStatus + ".\n\n"
+                    + "Cordialement,\n"
+                    + "L'équipe de support.";
+
+            message.setText(content);
+            Transport.send(message);
+            System.out.println("✅ Email de notification de réclamation envoyé à " + toEmail);
+
+        } catch (MessagingException e) {
+            System.err.println("❌ Erreur envoi email réclamation : " + e.getMessage());
             e.printStackTrace();
         }
     }

@@ -26,6 +26,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
+import services.EmailService;
 import services.ReclamationService;
 import services.UserService;
 
@@ -407,7 +408,29 @@ public class ReclamationController implements Initializable {
             }
         }
 
+        // Vérifier si le statut a changé vers "Rèsolu" ou "Fermer"
+        String oldStatus = currentReclamation != null ? currentReclamation.getStatut() : "";
+        boolean statusChanged = !oldStatus.equals(statut);
+        boolean shouldNotify = statusChanged && (statut.equals("Rèsolu") || statut.equals("Fermer"));
+
+        // Mettre à jour en base
         reclamationService.update(r);
+
+        // Envoyer un email si nécessaire
+        if (shouldNotify) {
+            User currentUser = UserService.getCurrentUser();
+            if (currentUser != null && currentUser.getEmail() != null) {
+                EmailService.sendReclamationStatusEmail(
+                        currentUser.getEmail(),
+                        r.getTitre(),
+                        r.getProjet(),
+                        r.getStatut()
+                );
+            } else {
+                System.out.println("Impossible d'envoyer l'email : utilisateur non connecté ou email manquant.");
+            }
+        }
+
         closePopup(event);
     }
 
