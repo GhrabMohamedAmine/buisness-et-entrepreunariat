@@ -14,7 +14,10 @@ import services.TaskService;
 import services.UserService;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class UpdateTaskModalController {
     @FXML private TextField titleField;
@@ -34,6 +37,8 @@ public class UpdateTaskModalController {
     private boolean saved;
     private final UserService userService = new UserService();
     private final TaskService taskService = new TaskService();
+    private final services.ProjectService projectService = new services.ProjectService();
+    private final List<User> allUsers = new ArrayList<>();
 
     @FXML
     public void initialize() {
@@ -48,8 +53,8 @@ public class UpdateTaskModalController {
                 TaskValueMapper.PRIORITY_HIGH
         );
 
-        List<User> users = userService.getAllUsers();
-        userCombo.getItems().setAll(users);
+        allUsers.clear();
+        allUsers.addAll(userService.getAllUsers());
         userCombo.setConverter(new StringConverter<>() {
             @Override
             public String toString(User user) {
@@ -76,6 +81,7 @@ public class UpdateTaskModalController {
         statusCombo.setValue(TaskValueMapper.toStatusLabel(task.getStatus()));
         priorityCombo.setValue(TaskValueMapper.normalizePriority(task.getPriority()));
 
+        loadAssignableUsersForProject(task.getProjectId());
         for (User user : userCombo.getItems()) {
             if (user.getId() == task.getAssignedTo()) {
                 userCombo.setValue(user);
@@ -195,5 +201,17 @@ public class UpdateTaskModalController {
         label.setText("");
         label.setVisible(false);
         label.setManaged(false);
+    }
+
+    private void loadAssignableUsersForProject(int projectId) {
+        Set<Integer> assignedUserIds = projectService.getProjectAssignmentUserIds(projectId)
+                .stream()
+                .collect(Collectors.toSet());
+
+        List<User> allowedUsers = allUsers.stream()
+                .filter(user -> assignedUserIds.contains(user.getId()))
+                .toList();
+        userCombo.getItems().setAll(allowedUsers);
+        userCombo.setPromptText(allowedUsers.isEmpty() ? "No members assigned to this project" : "Select team member...");
     }
 }

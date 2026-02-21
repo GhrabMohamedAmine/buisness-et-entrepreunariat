@@ -9,6 +9,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
+import javafx.scene.control.Alert;
 import javafx.scene.effect.BoxBlur;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.input.Dragboard;
@@ -16,6 +17,7 @@ import javafx.scene.input.TransferMode;
 import javafx.scene.layout.*;
 import javafx.geometry.Pos;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
@@ -24,12 +26,14 @@ import entities.Task;
 import entities.User;
 import services.ActivityService;
 import services.ProjectService;
+import services.ProjectReportService;
 import services.TaskService;
 import services.UserService;
 import javafx.scene.paint.Color;
 
 import javafx.scene.control.Button;
 import java.io.IOException;
+import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -64,6 +68,7 @@ public class ProjectDetailsController {
     private final TaskService taskService = new TaskService();
     private final UserService userService = new UserService();
     private final ActivityService activityService = new ActivityService();
+    private final ProjectReportService projectReportService = new ProjectReportService();
 
     private static class ActivityItem {
         private final long sortKey;
@@ -533,6 +538,54 @@ public class ProjectDetailsController {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @FXML
+    private void handleExportReport() {
+        if (currentProject == null || tasksContainer == null || tasksContainer.getScene() == null) {
+            showAlert(Alert.AlertType.WARNING, "Export rapport", "Aucun projet sélectionné.");
+            return;
+        }
+
+        List<Task> tasks = taskService.getTasksByProject(currentProject.getId());
+        List<User> teamMembers = projectService.getProjectAssigneesMap().getOrDefault(currentProject.getId(), List.of());
+
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Enregistrer le rapport PDF");
+        chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF files", "*.pdf"));
+        chooser.setInitialFileName(buildReportFileName(currentProject.getName()));
+
+        File file = chooser.showSaveDialog(tasksContainer.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+
+        try {
+            projectReportService.exportProjectPerformanceReport(
+                    currentProject,
+                    tasks,
+                    teamMembers,
+                    file.toPath()
+            );
+            showAlert(Alert.AlertType.INFORMATION, "Export rapport", "Rapport généré avec succès:\n" + file.getAbsolutePath());
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Export rapport", "Échec de génération du PDF:\n" + e.getMessage());
+        }
+    }
+
+    private String buildReportFileName(String projectName) {
+        String base = projectName == null || projectName.isBlank()
+                ? "rapport-projet"
+                : projectName.trim().toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]+", "-");
+        return base + "-performance-report.pdf";
+    }
+
+    private void showAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 
     @FXML

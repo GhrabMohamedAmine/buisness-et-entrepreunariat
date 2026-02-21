@@ -1,6 +1,7 @@
 package controllers;
 
 import javafx.fxml.FXML;
+import javafx.application.Platform;
 import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.stage.Stage;
@@ -11,9 +12,12 @@ import services.ProjectService;
 import services.UserService;
 import javafx.util.StringConverter;
 import javafx.collections.ListChangeListener;
+import entities.Task;
+import services.AiTaskGeneratorService;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
+import services.TaskService;
 
 public class AddProjectController {
     @FXML private TextField nameField;
@@ -32,6 +36,8 @@ public class AddProjectController {
 
     private final ProjectService projectService = new ProjectService();
     private final UserService userService = new UserService();
+    private final TaskService taskService = new TaskService();
+    private final AiTaskGeneratorService aiTaskGeneratorService = new AiTaskGeneratorService();
 
     @FXML
     public void initialize() {
@@ -75,6 +81,7 @@ public class AddProjectController {
             if (projectId > 0) {
                 List<Integer> userIds = selectedUsers.stream().map(User::getId).collect(Collectors.toList());
                 projectService.replaceProjectAssignments(projectId, userIds);
+                generateTasksInBackground(projectId, newProject);
             }
             if (onProjectCreated != null) {
                 onProjectCreated.run();
@@ -193,5 +200,85 @@ public class AddProjectController {
         label.setText("");
         label.setVisible(false);
         label.setManaged(false);
+    }
+
+    private void generateTasksInBackground(int projectId, Project project) {
+        String projectDescription = project.getDescription();
+        if (projectDescription == null || projectDescription.isBlank()) {
+            return;
+        }
+
+        LocalDate startDate = parseDate(project.getStartDate());
+        LocalDate dueDate = parseDate(project.getEndDate());
+
+        Thread taskGeneratorThread = new Thread(() -> {
+            try {
+                List<AiTaskGeneratorService.GeneratedTask> generatedTasks =
+                        aiTaskGeneratorService.generateTasks(project.getName(), projectDescription, startDate, dueDate, 5);
+
+                int createdCount = 0;
+                for (AiTaskGeneratorService.GeneratedTask generatedTask : generatedTasks) {
+                    Task task = new Task(
+                            generatedTask.title(),
+                            generatedTask.description(),
+                            "TODO",
+                            generatedTask.priority(),
+                            project.getStartDate(),
+                            project.getEndDate(),
+                            projectId,
+                            0,
+                            1
+                    );
+                    taskService.addTask(task);
+                    createdCount++;
+                }
+
+                if (createdCount > 0) {
+                    final int finalCreatedCount = createdCount;
+                    Platform.runLater(() -> {
+                        if (onProjectCreated != null) {
+                            onProjectCreated.run();
+                        }
+                        showAiGenerationAlert(
+                                Alert.AlertType.INFORMATION,
+                                "AI Tasks Generated",
+                                "Created " + finalCreatedCount + " tasks for project \"" + project.getName() + "\"."
+                        );
+                    });
+                } else {
+                    Platform.runLater(() -> showAiGenerationAlert(
+                            Alert.AlertType.WARNING,
+                            "AI Task Generation",
+                            "No tasks were generated. Check API key, model access, or project description."
+                    ));
+                }
+            } catch (Exception e) {
+                System.err.println("AI task generation skipped: " + e.getMessage());
+                e.printStackTrace();
+                Platform.runLater(() -> showAiGenerationAlert(
+                        Alert.AlertType.WARNING,
+                        "AI Task Generation Failed",
+                        e.getMessage()
+                ));
+            }
+        }, "ai-task-generator-" + projectId);
+        taskGeneratorThread.setDaemon(true);
+        taskGeneratorThread.start();
+    }
+
+    private LocalDate parseDate(String dateText) {
+        try {
+            return dateText == null || dateText.isBlank() ? null : LocalDate.parse(dateText);
+        } catch (Exception ex) {
+            return null;
+        }
+    }
+
+    private void showAiGenerationAlert(Alert.AlertType type, String title, String message) {
+        Alert alert = new Alert(type);
+        alert.setTitle(title);
+        alert.setHeaderText(null);
+        alert.setContentText(message);
+        alert.showAndWait();
     }
 }

@@ -16,7 +16,10 @@ import services.TaskService;
 import services.UserService;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class AddTaskController {
     @FXML private TextField titleField;
@@ -41,6 +44,7 @@ public class AddTaskController {
     private final ProjectService projectService = new ProjectService();
     private final UserService userService = new UserService();
     private final TaskService taskService = new TaskService();
+    private final List<User> allUsers = new ArrayList<>();
 
     @FXML
     public void initialize() {
@@ -60,6 +64,9 @@ public class AddTaskController {
 
         loadProjects();
         loadUsers();
+        if (projectCombo != null) {
+            projectCombo.valueProperty().addListener((obs, oldValue, newValue) -> refreshAssignableUsers());
+        }
         clearErrors();
     }
 
@@ -71,6 +78,7 @@ public class AddTaskController {
             if (project.getId() == projectId) {
                 projectCombo.setValue(project);
                 projectCombo.setDisable(true);
+                refreshAssignableUsers();
                 return;
             }
         }
@@ -93,14 +101,15 @@ public class AddTaskController {
     }
 
     private void loadUsers() {
-        List<User> users = userService.getAllUsers();
-        userCombo.getItems().addAll(users);
+        allUsers.clear();
+        allUsers.addAll(userService.getAllUsers());
 
-        // This makes the ComboBox show the User's name instead of memory address
         userCombo.setConverter(new StringConverter<User>() {
             @Override public String toString(User user) { return user == null ? "" : user.getFullName(); }
             @Override public User fromString(String s) { return null; }
         });
+
+        refreshAssignableUsers();
 
         if (fixedAssignedUserId > 0) {
             applyFixedAssignedUser();
@@ -240,6 +249,47 @@ public class AddTaskController {
                 return;
             }
         }
+        userCombo.setValue(null);
+        userCombo.setDisable(false);
+    }
+
+    private void refreshAssignableUsers() {
+        int effectiveProjectId = resolveEffectiveProjectId();
+        if (effectiveProjectId <= 0) {
+            userCombo.getItems().clear();
+            userCombo.setValue(null);
+            userCombo.setPromptText("Select a project first...");
+            return;
+        }
+
+        Set<Integer> assignedUserIds = projectService.getProjectAssignmentUserIds(effectiveProjectId)
+                .stream()
+                .collect(Collectors.toSet());
+
+        List<User> allowedUsers = allUsers.stream()
+                .filter(user -> assignedUserIds.contains(user.getId()))
+                .toList();
+
+        User currentSelection = userCombo.getValue();
+        userCombo.getItems().setAll(allowedUsers);
+        if (currentSelection != null && allowedUsers.stream().anyMatch(user -> user.getId() == currentSelection.getId())) {
+            userCombo.setValue(currentSelection);
+        } else {
+            userCombo.setValue(null);
+        }
+        userCombo.setPromptText(allowedUsers.isEmpty() ? "No members assigned to this project" : "Select team member...");
+
+        if (fixedAssignedUserId > 0) {
+            applyFixedAssignedUser();
+        }
+    }
+
+    private int resolveEffectiveProjectId() {
+        if (projectId > 0) {
+            return projectId;
+        }
+        Project selectedProject = projectCombo == null ? null : projectCombo.getValue();
+        return selectedProject == null ? -1 : selectedProject.getId();
     }
 
 }

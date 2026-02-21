@@ -8,6 +8,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.sql.Types;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -27,7 +28,11 @@ public class TaskService {
             adt.setString(5, task.getStartDate());
             adt.setString(6, task.getDueDate());
             adt.setInt(7, task.getProjectId());
-            adt.setInt(8, task.getAssignedTo());
+            if (task.getAssignedTo() > 0) {
+                adt.setInt(8, task.getAssignedTo());
+            } else {
+                adt.setNull(8, Types.INTEGER);
+            }
             adt.setInt(9, task.getCreatedby());
 
             adt.executeUpdate();
