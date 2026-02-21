@@ -33,13 +33,24 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.function.Predicate;
 
 public class UserTableController implements Initializable {
 
     @FXML private Label topName;
     @FXML private Circle topAvatar;
     @FXML private TableView<User> userTable;
-    @FXML private TextField searchField; // Champ de recherche
+    @FXML private TextField searchField;
+
+    // Statistiques
+    @FXML private Label totalUsersCount;
+    @FXML private Label activeUsersCount;
+    @FXML private Label pendingUsersCount;
+
+    // Toggle buttons pour le filtre par statut
+    @FXML private ToggleButton allToggle;
+    @FXML private ToggleButton activeToggle;
+    @FXML private ToggleButton pendingToggle;
 
     @FXML private TableColumn<User, User> colUser;
     @FXML private TableColumn<User, String> colEmail, colPhone, colRole, colDept, colStatus, colJoined;
@@ -62,41 +73,36 @@ public class UserTableController implements Initializable {
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         setupColumns();
-        loadUsersFromDatabase();
-        loadCurrentUserProfile();
+
+        // Initialisation du groupe de toggles AVANT de charger les données
+        ToggleGroup statusGroup = new ToggleGroup();
+        allToggle.setToggleGroup(statusGroup);
+        activeToggle.setToggleGroup(statusGroup);
+        pendingToggle.setToggleGroup(statusGroup);
 
         // Initialisation de la liste filtrée
         filteredData = new FilteredList<>(userList, p -> true);
         userTable.setItems(filteredData);
 
-        // Écouteur pour la recherche en temps réel
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            filteredData.setPredicate(user -> {
-                // Si le champ est vide, afficher tous les utilisateurs
-                if (newValue == null || newValue.isEmpty()) {
-                    return true;
-                }
-
-                String lowerCaseFilter = newValue.toLowerCase();
-
-                // Recherche sur le nom complet (prénom + nom)
-                String fullName = "";
-                if (user.getFirstName() != null && user.getName() != null) {
-                    fullName = (user.getFirstName() + " " + user.getName()).toLowerCase();
-                    if (fullName.contains(lowerCaseFilter)) {
-                        return true;
-                    }
-                }
-
-                // Recherche individuelle sur les champs
-                return (user.getFirstName() != null && user.getFirstName().toLowerCase().contains(lowerCaseFilter))
-                        || (user.getName() != null && user.getName().toLowerCase().contains(lowerCaseFilter))
-                        || (user.getEmail() != null && user.getEmail().toLowerCase().contains(lowerCaseFilter))
-                        || (user.getDepartment() != null && user.getDepartment().toLowerCase().contains(lowerCaseFilter))
-                        || (user.getRole() != null && user.getRole().toLowerCase().contains(lowerCaseFilter))
-                        || (user.getPhone() != null && user.getPhone().toLowerCase().contains(lowerCaseFilter));
-            });
+        // Écouteur de changement de filtre statut
+        statusGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null) {
+                // Si aucun sélectionné, on force "All"
+                allToggle.setSelected(true);
+            } else {
+                applyFilters();
+            }
         });
+
+        // Écouteur de recherche
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> applyFilters());
+
+        // Charger les données (cela va appliquer les filtres avec le groupe déjà initialisé)
+        loadUsersFromDatabase();
+        loadCurrentUserProfile();
+
+        // Initialisation : "All" sélectionné
+        allToggle.setSelected(true);
     }
 
     private void loadCurrentUserProfile() {
@@ -310,7 +316,9 @@ public class UserTableController implements Initializable {
 
         try {
             userService.modifierStatut(user.getId(), newStatus);
-            loadUsersFromDatabase(); // Recharger pour mettre à jour la liste
+            // Recharger les données pour mettre à jour les compteurs et le filtre
+            loadUsersFromDatabase();
+            // Envoyer un email dans un thread séparé
             new Thread(() -> EmailService.sendStatusChangeEmail(user.getEmail(), newStatus)).start();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -329,6 +337,8 @@ public class UserTableController implements Initializable {
             try {
                 userService.supprimer(user.getId());
                 userList.remove(user);
+                updateCounts(); // Mettre à jour les compteurs après suppression
+                applyFilters(); // Réappliquer les filtres
             } catch (SQLException e) {
                 e.printStackTrace();
                 showAlert("Erreur", "Impossible de supprimer l'utilisateur : " + e.getMessage());
@@ -341,11 +351,69 @@ public class UserTableController implements Initializable {
             List<User> users = userService.recupererTous();
             userList.clear();
             userList.addAll(users);
-            // filteredData se met à jour automatiquement
+            updateCounts();
+            applyFilters(); // Réappliquer les filtres après chargement
         } catch (SQLException e) {
             System.err.println("Erreur chargement utilisateurs : " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    private void updateCounts() {
+        long total = userList.size();
+        long active = userList.stream()
+                .filter(u -> {
+                    String s = u.getStatus().toLowerCase();
+                    return s.equals("active") || s.equals("actif");
+                })
+                .count();
+        long pending = userList.stream()
+                .filter(u -> {
+                    String s = u.getStatus().toLowerCase();
+                    return s.equals("pending") || s.equals("en attente");
+                })
+                .count();
+
+        totalUsersCount.setText(String.valueOf(total));
+        activeUsersCount.setText(String.valueOf(active));
+        pendingUsersCount.setText(String.valueOf(pending));
+    }
+
+    private void applyFilters() {
+        String searchText = searchField.getText() == null ? "" : searchField.getText().toLowerCase();
+        Toggle selectedToggle = allToggle.getToggleGroup().getSelectedToggle();
+
+        Predicate<User> statusPredicate = user -> {
+            if (selectedToggle == null || selectedToggle == allToggle) {
+                return true; // tous
+            } else if (selectedToggle == activeToggle) {
+                String s = user.getStatus().toLowerCase();
+                return s.equals("active") || s.equals("actif");
+            } else if (selectedToggle == pendingToggle) {
+                String s = user.getStatus().toLowerCase();
+                return s.equals("pending") || s.equals("en attente");
+            }
+            return true;
+        };
+
+        Predicate<User> searchPredicate = user -> {
+            if (searchText.isEmpty()) return true;
+            // Recherche sur nom complet
+            String fullName = "";
+            if (user.getFirstName() != null && user.getName() != null) {
+                fullName = (user.getFirstName() + " " + user.getName()).toLowerCase();
+                if (fullName.contains(searchText)) return true;
+            }
+            // Recherche individuelle
+            return (user.getFirstName() != null && user.getFirstName().toLowerCase().contains(searchText))
+                    || (user.getName() != null && user.getName().toLowerCase().contains(searchText))
+                    || (user.getEmail() != null && user.getEmail().toLowerCase().contains(searchText))
+                    || (user.getDepartment() != null && user.getDepartment().toLowerCase().contains(searchText))
+                    || (user.getRole() != null && user.getRole().toLowerCase().contains(searchText))
+                    || (user.getPhone() != null && user.getPhone().toLowerCase().contains(searchText));
+        };
+
+        filteredData.setPredicate(statusPredicate.and(searchPredicate));
     }
 
     private void showAlert(String title, String content) {
@@ -384,7 +452,9 @@ public class UserTableController implements Initializable {
             Parent root = loader.load();
 
             InviteUserController controller = loader.getController();
-            controller.setOnSaveCallback(this::loadUsersFromDatabase);
+            controller.setOnSaveCallback(() -> {
+                loadUsersFromDatabase(); // recharger après ajout
+            });
 
             Stage popupStage = new Stage();
             popupStage.initModality(Modality.APPLICATION_MODAL);

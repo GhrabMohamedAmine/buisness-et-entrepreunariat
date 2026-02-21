@@ -61,18 +61,50 @@
                     <Button onAction="#handleInviteUser" prefHeight="40.0" prefWidth="130.0" styleClass="btn-primary" text="+ Invite User" />
                 </HBox>
 
+                <!-- Statistiques avec fx:id sur les labels -->
                 <HBox spacing="20">
-                    <VBox styleClass="stat-card" HBox.hgrow="ALWAYS"><HBox spacing="15"><StackPane style="-fx-background-color: #F3F0FF; -fx-background-radius: 8; -fx-padding: 8;"><FontIcon iconColor="#7C3AED" iconLiteral="mdi2a-account-outline" iconSize="22" /></StackPane><VBox><Label styleClass="text-muted" text="Total Users" /><Label style="-fx-font-size: 22; -fx-font-weight: bold;" text="6" /></VBox></HBox></VBox>
-                    <VBox styleClass="stat-card" HBox.hgrow="ALWAYS"><HBox spacing="15"><StackPane style="-fx-background-color: #DCFCE7; -fx-background-radius: 8; -fx-padding: 8;"><FontIcon iconColor="#166534" iconLiteral="mdi2c-check-circle-outline" iconSize="22" /></StackPane><VBox><Label styleClass="text-muted" text="Active" /><Label style="-fx-font-size: 22; -fx-font-weight: bold;" text="3" /></VBox></HBox></VBox>
-                    <VBox styleClass="stat-card" HBox.hgrow="ALWAYS"><HBox spacing="15"><StackPane style="-fx-background-color: #FEF9C3; -fx-background-radius: 8; -fx-padding: 8;"><FontIcon iconColor="#854D0E" iconLiteral="mdi2c-clock-outline" iconSize="22" /></StackPane><VBox><Label styleClass="text-muted" text="Pending" /><Label style="-fx-font-size: 22; -fx-font-weight: bold;" text="2" /></VBox></HBox></VBox>
+                    <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                        <HBox spacing="15">
+                            <StackPane style="-fx-background-color: #F3F0FF; -fx-background-radius: 8; -fx-padding: 8;">
+                                <FontIcon iconColor="#7C3AED" iconLiteral="mdi2a-account-outline" iconSize="22" />
+                            </StackPane>
+                            <VBox>
+                                <Label styleClass="text-muted" text="Total Users" />
+                                <Label fx:id="totalUsersCount" style="-fx-font-size: 22; -fx-font-weight: bold;" text="0" />
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                    <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                        <HBox spacing="15">
+                            <StackPane style="-fx-background-color: #DCFCE7; -fx-background-radius: 8; -fx-padding: 8;">
+                                <FontIcon iconColor="#166534" iconLiteral="mdi2c-check-circle-outline" iconSize="22" />
+                            </StackPane>
+                            <VBox>
+                                <Label styleClass="text-muted" text="Active" />
+                                <Label fx:id="activeUsersCount" style="-fx-font-size: 22; -fx-font-weight: bold;" text="0" />
+                            </VBox>
+                        </HBox>
+                    </VBox>
+                    <VBox styleClass="stat-card" HBox.hgrow="ALWAYS">
+                        <HBox spacing="15">
+                            <StackPane style="-fx-background-color: #FEF9C3; -fx-background-radius: 8; -fx-padding: 8;">
+                                <FontIcon iconColor="#854D0E" iconLiteral="mdi2c-clock-outline" iconSize="22" />
+                            </StackPane>
+                            <VBox>
+                                <Label styleClass="text-muted" text="en attente" />
+                                <Label fx:id="pendingUsersCount" style="-fx-font-size: 22; -fx-font-weight: bold;" text="0" />
+                            </VBox>
+                        </HBox>
+                    </VBox>
                 </HBox>
 
                 <VBox styleClass="table-container" VBox.vgrow="ALWAYS">
                     <HBox alignment="CENTER_LEFT" spacing="15" style="-fx-padding: 20;">
+                        <!-- Segmented control avec fx:id sur les ToggleButtons -->
                         <HBox styleClass="segmented-control">
-                            <ToggleButton selected="true" styleClass="seg-left" text="All" />
-                            <ToggleButton styleClass="seg-center" text="Active" />
-                            <ToggleButton styleClass="seg-right" text="Pending" />
+                            <ToggleButton fx:id="allToggle" selected="true" styleClass="seg-left" text="All" />
+                            <ToggleButton fx:id="activeToggle" styleClass="seg-center" text="Active" />
+                            <ToggleButton fx:id="pendingToggle" styleClass="seg-right" text="en attente" />
                         </HBox>
                         <Region HBox.hgrow="ALWAYS" />
                         <TextField fx:id="searchField" prefWidth="250.0" promptText="Search users..." styleClass="search-field" />
