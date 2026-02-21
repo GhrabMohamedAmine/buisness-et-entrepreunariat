@@ -19,7 +19,8 @@
                         <Insets bottom="40.0" left="50.0" right="50.0" top="40.0" />
                     </padding>
                     <children>
-                        <Button mnemonicParsing="false" styleClass="btn-back" text="Back" onAction="#showMainPage">
+
+                        <Button mnemonicParsing="false" styleClass="btn-back" text="Retour" onAction="#showMainPage">
                             <graphic>
                                 <FontIcon iconLiteral="fth-chevron-left" />
                             </graphic>
@@ -27,15 +28,15 @@
 
                         <VBox spacing="5.0">
                             <children>
-                                <Label styleClass="title-label" text="Welcome Back" />
-                                <Label styleClass="description-label" text="Enter your credentials to access your workspace." />
+                                <Label styleClass="title-label" text="Bon retour" />
+                                <Label styleClass="description-label" text="Saisissez vos identifiants pour accéder à votre espace." />
                             </children>
                         </VBox>
 
                         <VBox spacing="8.0">
                             <children>
-                                <Label styleClass="input-label" text="Email Address" />
-                                <TextField fx:id="emailField" promptText="name@company.com" styleClass="login-input" />
+                                <Label styleClass="input-label" text="Adresse Email" />
+                                <TextField fx:id="emailField" promptText="nom@entreprise.com" styleClass="login-input" />
                             </children>
                         </VBox>
 
@@ -43,16 +44,15 @@
                             <children>
                                 <HBox alignment="CENTER_LEFT">
                                     <children>
-                                        <Label styleClass="input-label" text="Password" />
+                                        <Label styleClass="input-label" text="Mot de passe" />
                                         <Region HBox.hgrow="ALWAYS" />
-                                        <Hyperlink styleClass="forgot-link" text="Forgot password?" />
+                                        <Hyperlink onAction="#handleForgotPassword" styleClass="forgot-link" text="Mot de passe oublié ?" />
                                     </children>
                                 </HBox>
                                 <PasswordField fx:id="passwordField" promptText="••••••••" styleClass="login-input" />
                             </children>
                         </VBox>
 
-                        <!-- Section Captcha -->
                         <VBox spacing="8.0">
                             <children>
                                 <Label styleClass="input-label" text="Captcha" />
@@ -71,33 +71,31 @@
                             </children>
                         </VBox>
 
-                        <Button onAction="#handleSignIn" maxWidth="Infinity" mnemonicParsing="false" styleClass="btn-primary-large" text="Sign In" />
+                        <HBox spacing="10.0" alignment="CENTER">
+                            <children>
+                                <Button onAction="#handleSignIn" maxWidth="Infinity" mnemonicParsing="false" styleClass="btn-primary-large" text="Se connecter" HBox.hgrow="ALWAYS" />
 
-                        <!-- Bouton de connexion par reconnaissance faciale -->
-                        <Button onAction="#handleFaceSignIn" maxWidth="Infinity" mnemonicParsing="false" styleClass="btn-face" text="Se connecter avec le visage">
-                            <graphic>
-                                <FontIcon iconLiteral="mdi2f-face-recognition" iconSize="18" iconColor="#7C3AED" />
-                            </graphic>
-                        </Button>
+                                <Button onAction="#handleFaceSignIn" mnemonicParsing="false" styleClass="btn-face-icon">
+                                    <graphic>
+                                        <FontIcon iconLiteral="mdi2f-face-recognition" iconSize="24" iconColor="#7C3AED" />
+                                    </graphic>
+                                    <tooltip>
+                                        <Tooltip text="Se connecter avec le visage" />
+                                    </tooltip>
+                                </Button>
+                            </children>
+                        </HBox>
 
                         <HBox alignment="CENTER" spacing="5.0">
                             <children>
-                                <Label styleClass="description-label" text="Don't have an account?" />
-                                <Hyperlink styleClass="signup-link" text="Get Started" onAction="#showMainPage" />
+                                <Label styleClass="description-label" text="Vous n'avez pas de compte ?" />
+                                <Hyperlink styleClass="signup-link" text="S'inscrire" onAction="#showMainPage" />
                             </children>
                         </HBox>
                     </children>
                 </VBox>
 
-                <StackPane prefWidth="450.0" styleClass="right-pane" HBox.hgrow="ALWAYS">
-                    <children>
-                        <ImageView fitHeight="550.0" fitWidth="450.0" preserveRatio="false">
-                            <image>
-                                <Image url="@illustration_sphere.png" />
-                            </image>
-                        </ImageView>
-                    </children>
-                </StackPane>
+                <StackPane prefWidth="450.0" styleClass="right-pane" HBox.hgrow="ALWAYS" />
 
             </children>
         </HBox>

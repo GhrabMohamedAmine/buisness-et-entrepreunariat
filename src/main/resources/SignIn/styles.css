@@ -1,9 +1,54 @@
+/* --- Variables et Fond général --- */
 .root {
-    -color-nexum-violet: #7c3aed; /* Violet de l'image */
+    -color-nexum-violet: #7c3aed;
     -color-nexum-violet-hover: #6d28d9;
+    -fx-background-color: #f3f4f6; /* Gris très clair pour le fond */
 }
 
-/* Style des champs de saisie */
+/* --- La carte blanche centrale --- */
+.login-card {
+    -fx-background-color: white;
+    -fx-background-radius: 25;
+    -fx-overflow: hidden;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 20, 0, 0, 10);
+}
+
+/* --- Le volet droit (Image responsive) --- */
+.right-pane {
+    -fx-background-color: #4c1d95; /* Couleur de secours */
+    -fx-background-radius: 0 25 25 0; /* Arrondi uniquement à droite */
+    -fx-background-image: url('illustration_sphere.png');
+    -fx-background-size: cover;
+    -fx-background-position: center center;
+}
+
+/* --- Styles pour les textes --- */
+.title-label {
+    -fx-font-size: 26px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #111827; /* Noir profond */
+}
+
+.description-label {
+    -fx-font-size: 14px;
+    -fx-text-fill: #6b7280; /* Gris doux */
+    -fx-wrap-text: true;
+}
+
+.input-label {
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #374151;
+}
+
+/* --- Liens cliquables --- */
+.forgot-link, .signup-link {
+    -fx-text-fill: -color-nexum-violet;
+    -fx-font-weight: bold;
+    -fx-underline: false;
+}
+
+/* --- Champs de saisie --- */
 .login-input {
     -fx-background-color: #f9fafb;
     -fx-border-color: #e5e7eb;
@@ -18,65 +63,7 @@
     -fx-background-color: white;
 }
 
-.input-label {
-    -fx-font-size: 13px;
-    -fx-font-weight: bold;
-    -fx-text-fill: #374151;
-}
-
-/* Bouton Sign In Large */
-.btn-primary-large {
-    -fx-background-color: -color-nexum-violet;
-    -fx-text-fill: white;
-    -fx-font-weight: bold;
-    -fx-font-size: 15px;
-    -fx-background-radius: 12;
-    -fx-padding: 14;
-    -fx-cursor: hand;
-    -fx-effect: dropshadow(three-pass-box, rgba(124, 58, 237, 0.3), 15, 0, 0, 5);
-}
-
-.btn-primary-large:hover {
-    -fx-background-color: -color-nexum-violet-hover;
-}
-
-/* Liens cliquables */
-.forgot-link, .signup-link {
-    -fx-text-fill: -color-nexum-violet;
-    -fx-font-weight: bold;
-    -fx-underline: false;
-}
-
-.btn-back {
-    -fx-background-color: transparent;
-    -fx-text-fill: #6b7280;
-    -fx-cursor: hand;
-    -fx-padding: 0;
-}
-/* Fond général de l'application */
-.root {
-    -fx-background-color: #f3f4f6; /* Gris très clair pour le fond */
-    -color-nexum-violet: #7c3aed;
-}
-
-/* La carte blanche centrale */
-.login-card {
-    -fx-background-color: white;
-    -fx-background-radius: 25;
-    -fx-overflow: hidden; /* Important pour que l'image ne dépasse pas des coins arrondis */
-    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 20, 0, 0, 10);
-}
-
-/* Style du volet droit (Violet si l'image ne charge pas) */
-.right-pane {
-    -fx-background-color: #4c1d95;
-    -fx-background-radius: 0 25 25 0; /* Arrondi uniquement à droite */
-}
-
-/* On force l'image à suivre l'arrondi de la carte */
-.right-pane .image-view {
-    -fx-background-radius: 0 25 25 0;
-}
+/* --- Section Captcha --- */
 .captcha-image {
     -fx-background-color: #f0f0f0;
     -fx-border-color: #e5e7eb;
@@ -94,4 +81,54 @@
 
 .btn-refresh:hover {
     -fx-background-color: #f3f4f6;
+}
+
+/* --- Boutons principaux et secondaires --- */
+.btn-back {
+    -fx-background-color: transparent;
+    -fx-text-fill: #6b7280;
+    -fx-cursor: hand;
+    -fx-padding: 0;
+}
+
+/* Bouton Se connecter Large */
+.btn-primary-large {
+    -fx-background-color: -color-nexum-violet;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 15px;
+    -fx-background-radius: 12;
+    -fx-padding: 14;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(124, 58, 237, 0.3), 15, 0, 0, 5);
+}
+
+.btn-primary-large:hover {
+    -fx-background-color: -color-nexum-violet-hover;
+}
+
+/* Bouton icône (Reconnaissance faciale) */
+.btn-face-icon {
+    -fx-background-color: white;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 11 16;
+    -fx-cursor: hand;
+    -fx-alignment: center;
+}
+
+.btn-face-icon:hover {
+    -fx-border-color: -color-nexum-violet;
+    -fx-background-color: #f9fafb;
+    -fx-effect: dropshadow(three-pass-box, rgba(124, 58, 237, 0.15), 10, 0, 0, 3);
+}
+
+/* Personnalisation du Tooltip (Info-bulle de l'icône visage) */
+.tooltip {
+    -fx-background-color: #111827;
+    -fx-text-fill: white;
+    -fx-font-size: 12px;
+    -fx-padding: 6 10;
+    -fx-background-radius: 6;
 }

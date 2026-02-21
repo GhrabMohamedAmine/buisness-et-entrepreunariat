@@ -58,7 +58,7 @@
                         <Label style="-fx-font-size: 24; -fx-font-weight: bold;" text="User Management" />
                         <Label styleClass="text-muted" text="Manage team access, roles, and permissions" />
                     </VBox>
-                    <Button prefHeight="40.0" prefWidth="130.0" styleClass="btn-primary" text="+ Invite User" />
+                    <Button onAction="#handleInviteUser" prefHeight="40.0" prefWidth="130.0" styleClass="btn-primary" text="+ Invite User" />
                 </HBox>
 
                 <HBox spacing="20">

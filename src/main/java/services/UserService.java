@@ -188,4 +188,11 @@ public class UserService {
         ps.setInt(2, userId);
         ps.executeUpdate();
     }
+    public void updatePassword(int userId, String newPassword) throws SQLException {
+        String req = "UPDATE utilisateurs SET password = ? WHERE id = ?";
+        PreparedStatement ps = connection.prepareStatement(req);
+        ps.setString(1, newPassword);
+        ps.setInt(2, userId);
+        ps.executeUpdate();
+    }
 }

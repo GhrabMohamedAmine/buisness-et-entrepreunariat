@@ -210,4 +210,8 @@ public class SignInController implements Initializable {
         alert.setContentText(content);
         alert.showAndWait();
     }
+    @FXML
+    private void handleForgotPassword(ActionEvent event) {
+        switchScene(event, "/SignIn/ForgotPassword_Step1.fxml");
+    }
 }

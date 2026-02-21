@@ -105,4 +105,78 @@ public class EmailService {
             e.printStackTrace();
         }
     }
+    public static void sendPasswordResetCode(String toEmail, String code) {
+        Properties props = new Properties();
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.host", SMTP_HOST);
+        props.put("mail.smtp.port", SMTP_PORT);
+
+        Session session = Session.getInstance(props, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(USERNAME, PASSWORD);
+            }
+        });
+
+        try {
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(USERNAME));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+            message.setSubject("Code de réinitialisation de mot de passe");
+
+            String content = "Bonjour,\n\n"
+                    + "Vous avez demandé la réinitialisation de votre mot de passe.\n"
+                    + "Voici votre code de vérification : " + code + "\n\n"
+                    + "Ce code est valable 10 minutes.\n\n"
+                    + "Si vous n'êtes pas à l'origine de cette demande, ignorez cet email.\n\n"
+                    + "Cordialement,\nL'équipe.";
+
+            message.setText(content);
+            Transport.send(message);
+            System.out.println("✅ Code de réinitialisation envoyé à " + toEmail);
+
+        } catch (MessagingException e) {
+            System.err.println("❌ Erreur envoi code : " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
+    public static void sendInvitationEmail(String toEmail, String firstName, String password) {
+        Properties props = new Properties();
+        props.put("mail.smtp.auth", "true");
+        props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.host", SMTP_HOST);
+        props.put("mail.smtp.port", SMTP_PORT);
+
+        Session session = Session.getInstance(props, new Authenticator() {
+            @Override
+            protected PasswordAuthentication getPasswordAuthentication() {
+                return new PasswordAuthentication(USERNAME, PASSWORD);
+            }
+        });
+
+        try {
+            Message message = new MimeMessage(session);
+            message.setFrom(new InternetAddress(USERNAME));
+            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(toEmail));
+            message.setSubject("Bienvenue sur Nexum – Votre compte a été créé");
+
+            String content = "Bonjour " + firstName + ",\n\n"
+                    + "Votre compte sur la plateforme Nexum a été créé par un administrateur.\n"
+                    + "Voici vos identifiants de connexion :\n"
+                    + "Email : " + toEmail + "\n"
+                    + "Mot de passe temporaire : " + password + "\n\n"
+                    + "Nous vous recommandons de changer votre mot de passe après votre première connexion.\n\n"
+                    + "Cordialement,\n"
+                    + "L'équipe Nexum.";
+
+            message.setText(content);
+            Transport.send(message);
+            System.out.println("✅ Email d'invitation envoyé à " + toEmail);
+
+        } catch (MessagingException e) {
+            System.err.println("❌ Erreur envoi invitation : " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 }

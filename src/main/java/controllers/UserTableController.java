@@ -31,6 +31,7 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import javafx.stage.Modality;
 
 public class UserTableController implements Initializable {
 
@@ -341,6 +342,26 @@ public class UserTableController implements Initializable {
         } catch (IOException e) {
             System.err.println("Erreur chargement FXML : " + fxmlPath);
             e.printStackTrace();
+        }
+    }
+    @FXML
+    public void handleInviteUser(ActionEvent event) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/User/InviteUserPopup.fxml"));
+            Parent root = loader.load();
+
+            InviteUserController controller = loader.getController();
+            controller.setOnSaveCallback(this::loadUsersFromDatabase); // rafraîchir après ajout
+
+            Stage popupStage = new Stage();
+            popupStage.initModality(Modality.APPLICATION_MODAL);
+            popupStage.setTitle("Inviter un utilisateur");
+            popupStage.setScene(new Scene(root));
+            popupStage.showAndWait();
+
+        } catch (IOException e) {
+            e.printStackTrace();
+            showAlert("Erreur", "Impossible d'ouvrir le popup d'invitation.");
         }
     }
 }
