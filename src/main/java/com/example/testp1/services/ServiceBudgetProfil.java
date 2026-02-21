@@ -28,7 +28,7 @@ public class ServiceBudgetProfil implements IService<BudgetProfil> {
 
     @Override
     public void update(BudgetProfil p) throws SQLException {
-        // Validation: Ensure the ID is valid before updating
+
         if (p.getId() > 0) {
             profilDAO.update(p);
         } else {
@@ -38,7 +38,7 @@ public class ServiceBudgetProfil implements IService<BudgetProfil> {
 
     @Override
     public void delete(BudgetProfil p) throws SQLException {
-        // Validation: Ensure the ID exists before deleting
+
         if (p.getId() > 0) {
             profilDAO.delete(p.getId());
         } else {
@@ -48,7 +48,7 @@ public class ServiceBudgetProfil implements IService<BudgetProfil> {
 
     @Override
     public List<BudgetProfil> getAll() throws SQLException {
-        // Fetches the list which should only contain one item based on our rules
+
         return Collections.singletonList(profilDAO.getActiveProfile());
     }
     public void syncdata() throws SQLException {

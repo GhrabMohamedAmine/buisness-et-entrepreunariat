@@ -35,10 +35,9 @@ public class ActionTrayController {
      * Programmatic Hover & Cursor Control
      */
     private void setupIconInteraction(FontIcon icon) {
-        // 1. Force the hand cursor
+
         icon.setCursor(Cursor.HAND);
 
-        // 2. Mouse Entered: Scale Up
         icon.setOnMouseEntered(e -> {
             ScaleTransition scaleUp = new ScaleTransition(Duration.millis(150), icon);
             scaleUp.setToX(1.3);

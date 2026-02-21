@@ -10,6 +10,7 @@ module com.example.testp1 {
     requires java.desktop;
     requires java.sql;
     requires javafx.base;
+    requires com.fasterxml.jackson.annotation;
 
 
     opens com.example.testp1 to javafx.fxml;
