@@ -11,6 +11,7 @@ module com.example.testp1 {
     requires java.sql;
     requires javafx.base;
     requires com.fasterxml.jackson.annotation;
+    requires io.github.cdimascio.dotenv.java;
 
 
     opens com.example.testp1 to javafx.fxml;
