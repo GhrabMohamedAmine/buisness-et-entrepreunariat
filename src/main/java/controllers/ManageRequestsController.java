@@ -77,10 +77,9 @@ public class ManageRequestsController {
 
     private void handleAccept(ResourceAssignment a) {
         try {
-            // Optional confirmation
             if (!confirm("Accept request?", "This will reduce available quantity.")) return;
 
-            service.acceptRequest(a.getAssignmentId());
+            service.acceptRequest(a.getAssignmentId());   // ✅ stock-safe + status update (+ SMS if you add it there)
             loadPending();
 
         } catch (SQLException ex) {
@@ -92,7 +91,7 @@ public class ManageRequestsController {
         try {
             if (!confirm("Decline request?", "The request will be marked as DECLINED.")) return;
 
-            service.declineRequest(a.getAssignmentId());
+            service.declineRequest(a.getAssignmentId());  // ✅ decline (+ SMS if you add it there)
             loadPending();
 
         } catch (SQLException ex) {

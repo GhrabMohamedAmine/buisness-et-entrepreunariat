@@ -1,6 +1,7 @@
 package services;
 
 import entities.ResourceAssignment;
+import services.notifications.SmsService;
 import utils.database;
 
 import java.sql.*;
@@ -49,53 +50,60 @@ public class AdminRequestService {
     }
 
     public void declineRequest(int assignmentId) throws SQLException {
+
+        // 1) get details for SMS before update
+        AssignmentDetails d = getAssignmentDetails(assignmentId);
+
+        // 2) update status
         String sql = "UPDATE resource_assignment SET status='DECLINED' WHERE assignment_id=?";
-        PreparedStatement ps = cnx.prepareStatement(sql);
-        ps.setInt(1, assignmentId);
-        ps.executeUpdate();
+        try (PreparedStatement ps = cnx.prepareStatement(sql)) {
+            ps.setInt(1, assignmentId);
+            ps.executeUpdate();
+        }
+
+        // 3) send SMS (do NOT break decline if SMS fails)
+        sendStatusSmsSafe(d.clientCode, d.resourceName, d.qty, "DECLINED");
     }
 
     public void acceptRequest(int assignmentId) throws SQLException {
+
         // Transaction: verify availability + update assignment + reduce stock
         cnx.setAutoCommit(false);
 
+        AssignmentDetails d;
+
         try {
-            // 1) Get the request details
-            String q1 = "SELECT resource_id, quantity FROM resource_assignment WHERE assignment_id=? FOR UPDATE";
-            PreparedStatement ps1 = cnx.prepareStatement(q1);
-            ps1.setInt(1, assignmentId);
-            ResultSet rs1 = ps1.executeQuery();
+            // 0) Get details for SMS + lock assignment row
+            d = getAssignmentDetailsForUpdate(assignmentId);
 
-            if (!rs1.next()) throw new SQLException("Request not found.");
-
-            int resourceId = rs1.getInt("resource_id");
-            int qty = rs1.getInt("quantity");
-
-            // 2) Check current available quantity
+            // 1) Check current available quantity (lock resource row)
             String q2 = "SELECT available_quantity FROM resources WHERE resource_id=? FOR UPDATE";
-            PreparedStatement ps2 = cnx.prepareStatement(q2);
-            ps2.setInt(1, resourceId);
-            ResultSet rs2 = ps2.executeQuery();
+            try (PreparedStatement ps2 = cnx.prepareStatement(q2)) {
+                ps2.setInt(1, d.resourceId);
+                ResultSet rs2 = ps2.executeQuery();
 
-            if (!rs2.next()) throw new SQLException("Resource not found.");
+                if (!rs2.next()) throw new SQLException("Resource not found.");
 
-            int available = rs2.getInt("available_quantity");
-            if (qty > available) {
-                throw new SQLException("Not enough stock. Available: " + available + ", requested: " + qty);
+                int available = rs2.getInt("available_quantity");
+                if (d.qty > available) {
+                    throw new SQLException("Not enough stock. Available: " + available + ", requested: " + d.qty);
+                }
             }
 
-            // 3) Update assignment status
+            // 2) Update assignment status
             String q3 = "UPDATE resource_assignment SET status='ACCEPTED' WHERE assignment_id=?";
-            PreparedStatement ps3 = cnx.prepareStatement(q3);
-            ps3.setInt(1, assignmentId);
-            ps3.executeUpdate();
+            try (PreparedStatement ps3 = cnx.prepareStatement(q3)) {
+                ps3.setInt(1, assignmentId);
+                ps3.executeUpdate();
+            }
 
-            // 4) Reduce available quantity
+            // 3) Reduce available quantity
             String q4 = "UPDATE resources SET available_quantity = available_quantity - ? WHERE resource_id=?";
-            PreparedStatement ps4 = cnx.prepareStatement(q4);
-            ps4.setInt(1, qty);
-            ps4.setInt(2, resourceId);
-            ps4.executeUpdate();
+            try (PreparedStatement ps4 = cnx.prepareStatement(q4)) {
+                ps4.setInt(1, d.qty);
+                ps4.setInt(2, d.resourceId);
+                ps4.executeUpdate();
+            }
 
             cnx.commit();
 
@@ -104,6 +112,90 @@ public class AdminRequestService {
             throw e;
         } finally {
             cnx.setAutoCommit(true);
+        }
+
+        // 4) Send SMS AFTER commit (so client only gets message if DB really updated)
+        sendStatusSmsSafe(d.clientCode, d.resourceName, d.qty, "ACCEPTED");
+    }
+
+    // ------------------ helpers ------------------
+
+    private static class AssignmentDetails {
+        int resourceId;
+        int qty;
+        String clientCode;
+        String resourceName;
+    }
+
+    private AssignmentDetails getAssignmentDetails(int assignmentId) throws SQLException {
+        String sql =
+                "SELECT ra.resource_id, ra.quantity, ra.client_code, r.resource_name " +
+                        "FROM resource_assignment ra " +
+                        "JOIN resources r ON r.resource_id = ra.resource_id " +
+                        "WHERE ra.assignment_id = ?";
+
+        try (PreparedStatement ps = cnx.prepareStatement(sql)) {
+            ps.setInt(1, assignmentId);
+            ResultSet rs = ps.executeQuery();
+            if (!rs.next()) throw new SQLException("Request not found.");
+
+            AssignmentDetails d = new AssignmentDetails();
+            d.resourceId = rs.getInt("resource_id");
+            d.qty = rs.getInt("quantity");
+            d.clientCode = rs.getString("client_code");
+            d.resourceName = rs.getString("resource_name");
+            return d;
+        }
+    }
+
+    // For acceptRequest transaction (locks assignment row)
+    private AssignmentDetails getAssignmentDetailsForUpdate(int assignmentId) throws SQLException {
+        String sql =
+                "SELECT ra.resource_id, ra.quantity, ra.client_code, r.resource_name " +
+                        "FROM resource_assignment ra " +
+                        "JOIN resources r ON r.resource_id = ra.resource_id " +
+                        "WHERE ra.assignment_id = ? FOR UPDATE";
+
+        try (PreparedStatement ps = cnx.prepareStatement(sql)) {
+            ps.setInt(1, assignmentId);
+            ResultSet rs = ps.executeQuery();
+            if (!rs.next()) throw new SQLException("Request not found.");
+
+            AssignmentDetails d = new AssignmentDetails();
+            d.resourceId = rs.getInt("resource_id");
+            d.qty = rs.getInt("quantity");
+            d.clientCode = rs.getString("client_code");
+            d.resourceName = rs.getString("resource_name");
+            return d;
+        }
+    }
+
+    private void sendStatusSmsSafe(String clientCode, String resourceName, int qty, String status) {
+        try {
+            UserService userService = new UserService();
+            String phone = userService.getPhoneByClientCode(clientCode);
+
+            if (phone == null || phone.isBlank()) {
+                System.out.println("[SMS] No phone for client_code=" + clientCode);
+                return;
+            }
+
+            SmsService sms = new SmsService();
+
+            String msg;
+            if ("ACCEPTED".equals(status)) {
+                msg = "NEXUM: ✅ Your request for " + resourceName + " (Qty: " + qty + ") was ACCEPTED.";
+            } else if ("DECLINED".equals(status)) {
+                msg = "NEXUM: ❌ Your request for " + resourceName + " (Qty: " + qty + ") was DECLINED.";
+            } else {
+                msg = "NEXUM: Update on your request for " + resourceName + " (Qty: " + qty + "): " + status;
+            }
+
+            sms.sendSms(phone, msg);
+
+        } catch (Exception ex) {
+            // Never break admin action if SMS fails
+            System.out.println("[SMS] Failed: " + ex.getMessage());
         }
     }
 }
