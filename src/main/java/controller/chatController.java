@@ -237,15 +237,25 @@ public class chatController {
     private boolean emojiBuilt = false;
     private javafx.scene.layout.TilePane emojiSearchGrid;
     private javafx.scene.control.ScrollPane emojiSearchScroll;
+    private TextField gifSearch;
+    private TilePane gifGrid;
+    private ScrollPane gifScroll;
+    private boolean gifUiBuilt = false;
 
 
 
-
+    private record GifItem(String title, String previewUrl, String gifUrl) {}
     private int currentUserId = 2;
 
     //==========================
     //HELPER METHODS
     //==========================
+    // Set env var: KLIPY_API_KEY=xxxxx
+    private String klipyKey() {
+        String k = System.getenv("KLIPY_API_KEY");
+        return (k == null) ? "" : k.trim();
+    }
+
     private static <T> List<T> lastN(List<T> list, int n) {
         if (list == null || list.isEmpty() || n <= 0) return List.of();
         int size = list.size();
@@ -3551,21 +3561,18 @@ public class chatController {
 
         javafx.geometry.Bounds b = emojiBtn.localToScreen(emojiBtn.getBoundsInLocal());
         if (b == null) return;
-
-        // Desired popup size (must match buildEmojiPopup prefs)
         double popupW = 380;
         double popupH = 420;
 
         javafx.geometry.Rectangle2D screen = javafx.stage.Screen.getPrimary().getVisualBounds();
 
-        double x = b.getMinX() - (popupW - 36);  // anchor near emoji button
+        double x = b.getMinX() - (popupW - 36);
         double y = b.getMaxY() + 8;
 
-        // Clamp X/Y so it stays visible
         if (x + popupW > screen.getMaxX()) x = screen.getMaxX() - popupW - 8;
         if (x < screen.getMinX()) x = screen.getMinX() + 8;
 
-        if (y + popupH > screen.getMaxY()) y = b.getMinY() - popupH - 8; // open above if no space below
+        if (y + popupH > screen.getMaxY()) y = b.getMinY() - popupH - 8;
         if (y < screen.getMinY()) y = screen.getMinY() + 8;
 
         emojiPopup.show(emojiBtn, x, y);
@@ -3576,12 +3583,10 @@ public class chatController {
         emojiPopup.setAutoHide(true);
         emojiPopup.setHideOnEscape(true);
 
-        // Search field
         emojiSearch = new javafx.scene.control.TextField();
         emojiSearch.setPromptText("Search emoji...");
         emojiSearch.getStyleClass().add("eg-search");
 
-        // Search results grid + scroll
         emojiSearchGrid = new javafx.scene.layout.TilePane();
         emojiSearchGrid.setPrefColumns(10);
         emojiSearchGrid.setHgap(6);
@@ -3592,7 +3597,6 @@ public class chatController {
         emojiSearchScroll.setPrefViewportHeight(320); // IMPORTANT
         emojiSearchScroll.getStyleClass().add("eg-scroll");
 
-        // Tabs per group
         emojiTabs = new javafx.scene.control.TabPane();
         emojiTabs.getStyleClass().add("eg-tabs");
 
@@ -3612,27 +3616,20 @@ public class chatController {
             emojiTabs.getTabs().add(tab);
         }
 
-        // Root container (tabs shown by default)
-        javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(10, emojiSearch, emojiTabs);
-        root.getStyleClass().add("eg-popup");
+        javafx.scene.layout.VBox emojiRoot = new javafx.scene.layout.VBox(10, emojiSearch, emojiTabs);
+        emojiRoot.getStyleClass().add("eg-popup");
 
-        // Force a real size (prevents the "tiny corner" bug)
-        root.setPrefSize(380, 420);
-        root.setMinSize(javafx.scene.layout.Region.USE_PREF_SIZE, javafx.scene.layout.Region.USE_PREF_SIZE);
-        root.setMaxSize(javafx.scene.layout.Region.USE_PREF_SIZE, javafx.scene.layout.Region.USE_PREF_SIZE);
-
-        // Search behavior: swap tabs with search results while typing
         emojiSearch.textProperty().addListener((obs, oldVal, q) -> {
             if (q == null || q.isBlank()) {
                 // restore tabs
-                if (root.getChildren().contains(emojiSearchScroll)) root.getChildren().remove(emojiSearchScroll);
-                if (!root.getChildren().contains(emojiTabs)) root.getChildren().add(emojiTabs);
+                if (emojiRoot.getChildren().contains(emojiSearchScroll)) emojiRoot.getChildren().remove(emojiSearchScroll);
+                if (!emojiRoot.getChildren().contains(emojiTabs)) emojiRoot.getChildren().add(emojiTabs);
                 return;
             }
 
             // show search results instead of tabs
-            if (root.getChildren().contains(emojiTabs)) root.getChildren().remove(emojiTabs);
-            if (!root.getChildren().contains(emojiSearchScroll)) root.getChildren().add(emojiSearchScroll);
+            if (emojiRoot.getChildren().contains(emojiTabs)) emojiRoot.getChildren().remove(emojiTabs);
+            if (!emojiRoot.getChildren().contains(emojiSearchScroll)) emojiRoot.getChildren().add(emojiSearchScroll);
 
             java.util.List<String> results = emojiRepo.search(q, 240);
 
@@ -3648,6 +3645,21 @@ public class chatController {
             }
         });
 
+        javafx.scene.layout.VBox gifRoot = buildGifTabContent();
+        javafx.scene.control.TabPane outer = new javafx.scene.control.TabPane();
+        outer.getStyleClass().add("eg-tabs");
+        javafx.scene.control.Tab tEmoji = new javafx.scene.control.Tab("Emoji", emojiRoot);
+        tEmoji.setClosable(false);
+        javafx.scene.control.Tab tGif = new javafx.scene.control.Tab("GIF", gifRoot);
+        tGif.setClosable(false);
+        outer.getTabs().addAll(tEmoji, tGif);
+        javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(outer);
+        root.getStyleClass().add("eg-popup");
+        root.setPrefSize(380, 420);
+        root.setMinSize(javafx.scene.layout.Region.USE_PREF_SIZE, javafx.scene.layout.Region.USE_PREF_SIZE);
+        root.setMaxSize(javafx.scene.layout.Region.USE_PREF_SIZE, javafx.scene.layout.Region.USE_PREF_SIZE);
+
+        emojiPopup.getContent().clear();
         emojiPopup.getContent().add(root);
 
         // Debug (remove later)
@@ -3680,6 +3692,269 @@ public class chatController {
             grid.getChildren().add(b);
         }
         return grid;
+    }
+
+    // ==========================
+    // GIF
+    // ==========================
+
+    private VBox buildGifTabContent() {
+        // Search field
+        gifSearch = new TextField();
+        gifSearch.setPromptText("Search GIF...");
+        gifSearch.getStyleClass().add("eg-search");
+
+        // Grid
+        gifGrid = new TilePane();
+        gifGrid.setPrefColumns(2);
+        gifGrid.setHgap(8);
+        gifGrid.setVgap(8);
+        gifGrid.setPadding(new Insets(6));
+
+        gifScroll = new ScrollPane(gifGrid);
+        gifScroll.setFitToWidth(true);
+        gifScroll.setPrefViewportHeight(360);
+        gifScroll.getStyleClass().add("eg-scroll");
+
+        // Debounce typing (avoid spamming API)
+        final java.util.Timer debounce = new java.util.Timer(true);
+        final ObjectProperty<java.util.TimerTask> pending = new SimpleObjectProperty<>(null);
+
+        gifSearch.textProperty().addListener((obs, oldVal, q) -> {
+            java.util.TimerTask prev = pending.get();
+            if (prev != null) prev.cancel();
+
+            java.util.TimerTask task = new java.util.TimerTask() {
+                @Override public void run() {
+                    Platform.runLater(() -> searchKlipyGifs(q));
+                }
+            };
+            pending.set(task);
+            debounce.schedule(task, 250);
+        });
+
+        // Load something by default (optional): trending-like behavior by searching “”
+        Platform.runLater(() -> searchKlipyGifs(""));
+
+        return new VBox(10, gifSearch, gifScroll);
+    }
+
+    private void searchKlipyGifs(String query) {
+        String key = klipyKey();
+        if (key.isBlank()) {
+            gifGrid.getChildren().setAll(new Label("KLIPY_API_KEY is missing (set env var)."));
+            return;
+        }
+
+        String q = (query == null) ? "" : query.trim();
+        String url = "https://api.klipy.com/api/v1/" + encodePath(key) +
+                "/gifs/search?q=" + urlEnc(q) +
+                "&limit=24&media_filter=nanogif,tinygif,gif"; // Tenor-style media filter
+
+        HttpRequest req = HttpRequest.newBuilder(URI.create(url))
+                .GET()
+                .header("Accept", "application/json")
+                .build();
+
+        HTTP.sendAsync(req, HttpResponse.BodyHandlers.ofString())
+                .thenApply(HttpResponse::body)
+                .thenApply(this::parseKlipyGifResults)
+                .exceptionally(ex -> {
+                    ex.printStackTrace();
+                    return List.of();
+                })
+                .thenAccept(items -> Platform.runLater(() -> renderGifGrid(items)));
+    }
+
+    private void renderGifGrid(List<GifItem> items) {
+        gifGrid.getChildren().clear();
+
+        if (items == null || items.isEmpty()) {
+            gifGrid.getChildren().add(new Label("No results."));
+            return;
+        }
+
+        for (GifItem it : items) {
+
+            // Prefer preview for grid; fallback to gifUrl if preview missing
+            String preview = (it.previewUrl() != null && !it.previewUrl().isBlank())
+                    ? it.previewUrl()
+                    : it.gifUrl();
+
+            // UI: spinner while loading
+            ProgressIndicator pi = new ProgressIndicator();
+            pi.setMaxSize(28, 28);
+
+            ImageView iv = new ImageView();
+            iv.setFitWidth(160);
+            iv.setFitHeight(120);
+            iv.setPreserveRatio(true);
+            iv.setSmooth(true);
+
+            StackPane tile = new StackPane(iv, pi);
+            tile.setMinSize(160, 120);
+            tile.setMaxSize(160, 120);
+            tile.getStyleClass().add("media-thumb");
+
+            // 1) Try JavaFX URL loader first
+            Image img = new Image(preview, true); // background loading
+            iv.setImage(img);
+
+            // Hide spinner when loaded
+            img.progressProperty().addListener((o, ov, nv) -> {
+                if (nv != null && nv.doubleValue() >= 1.0) {
+                    pi.setVisible(false);
+                }
+            });
+
+            // 2) If it fails, fallback: download bytes with HttpClient and load from memory
+            img.exceptionProperty().addListener((o, ov, ex) -> {
+                if (ex != null) {
+                    System.out.println("GIF preview load failed: " + preview);
+                    ex.printStackTrace();
+
+                    // Keep spinner visible during fallback download
+                    fallbackLoadImageBytes(preview, iv, pi);
+                }
+            });
+
+            tile.setOnMouseClicked(e -> {
+                if (e.getButton() == javafx.scene.input.MouseButton.PRIMARY) {
+                    sendGifFromUrl(it.gifUrl(), it.title());
+                    emojiPopup.hide();
+                }
+            });
+
+            gifGrid.getChildren().add(tile);
+        }
+    }
+
+    private void fallbackLoadImageBytes(String url, ImageView iv, ProgressIndicator pi) {
+        try {
+            HttpRequest req = HttpRequest.newBuilder(URI.create(url))
+                    .GET()
+                    // Some CDNs behave better with UA
+                    .header("User-Agent", "Mozilla/5.0")
+                    .build();
+
+            HTTP.sendAsync(req, HttpResponse.BodyHandlers.ofByteArray())
+                    .thenAccept(resp -> {
+                        byte[] bytes = resp.body();
+                        if (bytes == null || bytes.length == 0) return;
+
+                        Platform.runLater(() -> {
+                            try (InputStream in = new ByteArrayInputStream(bytes)) {
+                                Image img2 = new Image(in);
+                                iv.setImage(img2);
+                                pi.setVisible(false);
+                            } catch (Exception ex) {
+                                System.out.println("Fallback image decode failed: " + url);
+                                ex.printStackTrace();
+                            }
+                        });
+                    })
+                    .exceptionally(ex -> {
+                        System.out.println("Fallback download failed: " + url);
+                        ex.printStackTrace();
+                        Platform.runLater(() -> pi.setVisible(false));
+                        return null;
+                    });
+
+        } catch (Exception ex) {
+            System.out.println("Fallback request build failed: " + url);
+            ex.printStackTrace();
+            pi.setVisible(false);
+        }
+    }
+
+    private void sendGifFromUrl(String gifUrl, String title) {
+        if (selectedConversation == null || gifUrl == null || gifUrl.isBlank()) return;
+
+        HttpRequest req = HttpRequest.newBuilder(URI.create(gifUrl)).GET().build();
+
+        HTTP.sendAsync(req, HttpResponse.BodyHandlers.ofByteArray())
+                .thenAccept(resp -> {
+                    byte[] bytes = resp.body();
+                    if (bytes == null || bytes.length == 0) return;
+
+                    Platform.runLater(() -> {
+                        try {
+                            Message msg = new Message();
+                            msg.setConversationId(selectedConversation.getId());
+                            msg.setSenderId(currentUserId);
+                            msg.setBody((title == null || title.isBlank()) ? "GIF" : title);
+                            msg.setKind("ATTACHMENT");
+
+                            long messageId = messageService.ajouter(msg);
+
+                            String fileName = "gif_" + System.currentTimeMillis() + ".gif";
+                            try (InputStream in = new ByteArrayInputStream(bytes)) {
+                                messageService.insertAttachmentBlob(
+                                        messageId,
+                                        fileName,
+                                        "image/gif",
+                                        bytes.length,
+                                        in
+                                );
+                            }
+
+                            aiSummarySuppressed.add(selectedConversation.getId());
+                            loadMessages(selectedConversation.getId());
+                            loadConversations();
+
+                        } catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                    });
+                })
+                .exceptionally(ex -> {
+                    ex.printStackTrace();
+                    return null;
+                });
+    }
+
+    // ===== Helpers =====
+    private static String urlEnc(String s) {
+        try { return java.net.URLEncoder.encode(s == null ? "" : s, StandardCharsets.UTF_8); }
+        catch (Exception e) { return ""; }
+    }
+    private static String encodePath(String s) {
+        // API key is path segment; keep it safe
+        return s.replace("/", "%2F");
+    }
+
+    private List<GifItem> parseKlipyGifResults(String json) {
+        if (json == null || json.isBlank()) return List.of();
+
+        // KLIPY is Tenor-compatible in practice: results[] with media_formats.*.url
+        // We extract URLs by scanning for tinygif/gif blocks.
+        // This avoids adding a JSON library to your project.
+        List<String> tiny = extractAll(json, "\"tinygif\"\\s*:\\s*\\{[^}]*\"url\"\\s*:\\s*\"(.*?)\"");
+        List<String> gif  = extractAll(json, "\"gif\"\\s*:\\s*\\{[^}]*\"url\"\\s*:\\s*\"(.*?)\"");
+
+        int n = Math.max(tiny.size(), gif.size());
+        if (n == 0) return List.of();
+
+        List<GifItem> out = new ArrayList<>(n);
+        for (int i = 0; i < n; i++) {
+            String p = (i < tiny.size()) ? unescapeJsonUrl(tiny.get(i)) : null;
+            String g = (i < gif.size())  ? unescapeJsonUrl(gif.get(i))  : p;
+            out.add(new GifItem("GIF", p, g));
+        }
+        return out;
+    }
+
+    private static List<String> extractAll(String s, String regex) {
+        java.util.regex.Pattern p = java.util.regex.Pattern.compile(regex);
+        java.util.regex.Matcher m = p.matcher(s);
+        List<String> out = new ArrayList<>();
+        while (m.find()) out.add(m.group(1));
+        return out;
+    }
+
+    private static String unescapeJsonUrl(String u) {
+        if (u == null) return null;
+        return u.replace("\\/", "/").replace("\\u0026", "&").replace("\\\\", "\\");
     }
 
 }
