@@ -75,7 +75,7 @@
                             <ToggleButton styleClass="seg-right" text="Pending" />
                         </HBox>
                         <Region HBox.hgrow="ALWAYS" />
-                        <TextField prefWidth="250.0" promptText="Search users..." styleClass="search-field" />
+                        <TextField fx:id="searchField" prefWidth="250.0" promptText="Search users..." styleClass="search-field" />
                     </HBox>
 
                     <TableView fx:id="userTable" fixedCellSize="65.0" prefHeight="500.0" styleClass="table-view" VBox.vgrow="ALWAYS">

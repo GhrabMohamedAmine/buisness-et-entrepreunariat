@@ -4,6 +4,7 @@ import entities.User;
 import javafx.beans.property.ReadOnlyObjectWrapper;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -19,10 +20,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
+import services.EmailService;
 import services.UserService;
-import services.EmailService; // <-- Import ajouté
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -31,19 +33,20 @@ import java.sql.SQLException;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
-import javafx.stage.Modality;
 
 public class UserTableController implements Initializable {
 
     @FXML private Label topName;
     @FXML private Circle topAvatar;
     @FXML private TableView<User> userTable;
+    @FXML private TextField searchField; // Champ de recherche
 
     @FXML private TableColumn<User, User> colUser;
     @FXML private TableColumn<User, String> colEmail, colPhone, colRole, colDept, colStatus, colJoined;
     @FXML private TableColumn<User, Void> colActions;
 
     private ObservableList<User> userList = FXCollections.observableArrayList();
+    private FilteredList<User> filteredData;
     private final UserService userService = new UserService();
 
     private final ObservableList<String> roleOptions = FXCollections.observableArrayList(
@@ -61,6 +64,39 @@ public class UserTableController implements Initializable {
         setupColumns();
         loadUsersFromDatabase();
         loadCurrentUserProfile();
+
+        // Initialisation de la liste filtrée
+        filteredData = new FilteredList<>(userList, p -> true);
+        userTable.setItems(filteredData);
+
+        // Écouteur pour la recherche en temps réel
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
+            filteredData.setPredicate(user -> {
+                // Si le champ est vide, afficher tous les utilisateurs
+                if (newValue == null || newValue.isEmpty()) {
+                    return true;
+                }
+
+                String lowerCaseFilter = newValue.toLowerCase();
+
+                // Recherche sur le nom complet (prénom + nom)
+                String fullName = "";
+                if (user.getFirstName() != null && user.getName() != null) {
+                    fullName = (user.getFirstName() + " " + user.getName()).toLowerCase();
+                    if (fullName.contains(lowerCaseFilter)) {
+                        return true;
+                    }
+                }
+
+                // Recherche individuelle sur les champs
+                return (user.getFirstName() != null && user.getFirstName().toLowerCase().contains(lowerCaseFilter))
+                        || (user.getName() != null && user.getName().toLowerCase().contains(lowerCaseFilter))
+                        || (user.getEmail() != null && user.getEmail().toLowerCase().contains(lowerCaseFilter))
+                        || (user.getDepartment() != null && user.getDepartment().toLowerCase().contains(lowerCaseFilter))
+                        || (user.getRole() != null && user.getRole().toLowerCase().contains(lowerCaseFilter))
+                        || (user.getPhone() != null && user.getPhone().toLowerCase().contains(lowerCaseFilter));
+            });
+        });
     }
 
     private void loadCurrentUserProfile() {
@@ -94,6 +130,7 @@ public class UserTableController implements Initializable {
         colDept.setCellValueFactory(new PropertyValueFactory<>("department"));
         colJoined.setCellValueFactory(new PropertyValueFactory<>("joinedDate"));
 
+        // Colonne USER avec avatar et nom
         colUser.setCellValueFactory(param -> new ReadOnlyObjectWrapper<>(param.getValue()));
         colUser.setCellFactory(column -> new TableCell<User, User>() {
             @Override
@@ -139,6 +176,7 @@ public class UserTableController implements Initializable {
             }
         });
 
+        // Colonne ROLE avec ComboBox
         colRole.setCellValueFactory(new PropertyValueFactory<>("role"));
         colRole.setCellFactory(column -> new TableCell<User, String>() {
             private final ComboBox<String> roleCombo = new ComboBox<>(roleOptions);
@@ -168,6 +206,7 @@ public class UserTableController implements Initializable {
             }
         });
 
+        // Colonne STATUS avec badge
         colStatus.setCellValueFactory(new PropertyValueFactory<>("status"));
         colStatus.setCellFactory(column -> new TableCell<User, String>() {
             @Override
@@ -198,6 +237,7 @@ public class UserTableController implements Initializable {
             }
         });
 
+        // Colonne ACTIONS (boutons)
         colActions.setCellFactory(param -> new TableCell<User, Void>() {
             private final Button deleteBtn = new Button();
             private final Button statusBtn = new Button();
@@ -269,17 +309,9 @@ public class UserTableController implements Initializable {
         String newStatus = (currentStatus.equals("active") || currentStatus.equals("actif")) ? "Suspendu" : "Active";
 
         try {
-            // Mise à jour en base de données
             userService.modifierStatut(user.getId(), newStatus);
-
-            // Recharger la liste pour afficher le nouveau statut
-            loadUsersFromDatabase();
-
-            // Envoyer un email de notification dans un thread séparé (non bloquant)
-            new Thread(() -> {
-                EmailService.sendStatusChangeEmail(user.getEmail(), newStatus);
-            }).start();
-
+            loadUsersFromDatabase(); // Recharger pour mettre à jour la liste
+            new Thread(() -> EmailService.sendStatusChangeEmail(user.getEmail(), newStatus)).start();
         } catch (SQLException e) {
             e.printStackTrace();
             showAlert("Erreur", "Impossible de modifier le statut : " + e.getMessage());
@@ -309,7 +341,7 @@ public class UserTableController implements Initializable {
             List<User> users = userService.recupererTous();
             userList.clear();
             userList.addAll(users);
-            userTable.setItems(userList);
+            // filteredData se met à jour automatiquement
         } catch (SQLException e) {
             System.err.println("Erreur chargement utilisateurs : " + e.getMessage());
             e.printStackTrace();
@@ -344,6 +376,7 @@ public class UserTableController implements Initializable {
             e.printStackTrace();
         }
     }
+
     @FXML
     public void handleInviteUser(ActionEvent event) {
         try {
@@ -351,14 +384,13 @@ public class UserTableController implements Initializable {
             Parent root = loader.load();
 
             InviteUserController controller = loader.getController();
-            controller.setOnSaveCallback(this::loadUsersFromDatabase); // rafraîchir après ajout
+            controller.setOnSaveCallback(this::loadUsersFromDatabase);
 
             Stage popupStage = new Stage();
             popupStage.initModality(Modality.APPLICATION_MODAL);
             popupStage.setTitle("Inviter un utilisateur");
             popupStage.setScene(new Scene(root));
             popupStage.showAndWait();
-
         } catch (IOException e) {
             e.printStackTrace();
             showAlert("Erreur", "Impossible d'ouvrir le popup d'invitation.");
