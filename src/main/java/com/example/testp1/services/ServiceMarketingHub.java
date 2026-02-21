@@ -67,6 +67,7 @@ public class ServiceMarketingHub {
         try {
             return objectMapper.readValue(response.body(), responseClass);
         } catch (Exception e) {
+            e.printStackTrace();
             throw new RuntimeException("Error mapping " + responseClass.getSimpleName(), e);
         }
     }

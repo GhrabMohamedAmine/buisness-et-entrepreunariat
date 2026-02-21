@@ -9,6 +9,20 @@ public class CurrencyResponse {
     public String result;
     public String base_code;
 
+
+
+    @JsonProperty("conversion_rates")
+    public Map<String, Double> rates;
+
+    public CurrencyResponse() {
+    }
+
+    // 2. Add an explicit setter for conversion_rates as a backup
+    @JsonProperty("conversion_rates")
+    public void setRates(Map<String, Double> conversion_rates) {
+        this.rates = conversion_rates;
+    }
+
     public void setResult(String result) {
         this.result = result;
     }
@@ -17,9 +31,6 @@ public class CurrencyResponse {
         this.base_code = base_code;
     }
 
-    public void setRates(Map<String, Double> rates) {
-        this.rates = rates;
-    }
 
     public String getResult() {
         return result;
@@ -32,7 +43,4 @@ public class CurrencyResponse {
     public Map<String, Double> getRates() {
         return rates;
     }
-
-    @JsonProperty("conversion_rates")
-    public Map<String, Double> rates;
 }

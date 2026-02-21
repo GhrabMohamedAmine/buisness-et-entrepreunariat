@@ -15,6 +15,8 @@ module com.example.testp1 {
     requires com.fasterxml.jackson.databind;
     requires java.net.http;
 
+    opens com.example.testp1.entities to com.fasterxml.jackson.databind;
+
 
     opens com.example.testp1 to javafx.fxml;
     exports com.example.testp1;
