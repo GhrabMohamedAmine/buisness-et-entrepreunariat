@@ -1205,3 +1205,36 @@
     -fx-background-insets: 0;
     -fx-padding: 0;
 }
+
+.eg-popup {
+    -fx-background-color: white;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-width: 1;
+    -fx-border-color: rgba(124,58,237,0.30);
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 18, 0.2, 0, 6);
+    -fx-padding: 10;
+}
+
+.eg-tabs .tab-header-area { -fx-background-color: transparent; }
+.eg-tabs .tab-label { -fx-font-weight: 700; }
+.eg-tabs .tab:selected .tab-label { -fx-text-fill: #7c3aed; }
+
+.eg-search {
+    -fx-background-radius: 999;
+    -fx-border-radius: 999;
+    -fx-background-color: rgba(124,58,237,0.08);
+    -fx-border-color: rgba(124,58,237,0.25);
+    -fx-padding: 10 12;
+}
+
+.eg-scroll { -fx-background-color: transparent; -fx-background: transparent; }
+.eg-scroll > .viewport { -fx-background-color: transparent; }
+
+.eg-emoji-btn {
+    -fx-background-color: transparent;
+    -fx-background-radius: 12;
+    -fx-padding: 6 8;
+    -fx-font-size: 18px;
+}
+.eg-emoji-btn:hover { -fx-background-color: rgba(124,58,237,0.10); }

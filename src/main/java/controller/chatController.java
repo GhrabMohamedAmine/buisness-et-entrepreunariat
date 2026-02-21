@@ -5,6 +5,7 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -15,6 +16,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 import model.Conversation;
 import model.Message;
+import services.EmojiRepo;
 import services.ServiceConversation;
 import services.ServiceMessage;
 import org.kordamp.ikonli.javafx.FontIcon;
@@ -228,6 +230,14 @@ public class chatController {
     // LM Studio / OpenAI-compatible endpoint (recommended)
     private static final String LM_CHAT_URL = "http://localhost:1234/v1/chat/completions";
     private static final String LM_MODEL = "dolphin3.0-llama3.1-8b";
+    private EmojiRepo emojiRepo;
+    private javafx.stage.Popup emojiPopup;
+    private TabPane emojiTabs;
+    private TextField emojiSearch;
+    private boolean emojiBuilt = false;
+    private javafx.scene.layout.TilePane emojiSearchGrid;
+    private javafx.scene.control.ScrollPane emojiSearchScroll;
+
 
 
 
@@ -384,6 +394,8 @@ public class chatController {
 
     @FXML
     public void initialize() {
+        emojiRepo = EmojiRepo.load();
+        emojiBtn.setOnAction(e -> toggleEmojiPopup());
         initVlcOnce();
         newMsgPrimaryBtn.getStyleClass().add("overlay-btn-primary");
         newMsgBackBtn.getStyleClass().add("overlay-btn");
@@ -3522,4 +3534,152 @@ public class chatController {
 
         boolean show = unread >= 10 && unread > seenAt;
     }
+    // ==========================
+    // API
+    // ==========================
+
+    private void toggleEmojiPopup() {
+        if (!emojiBuilt) {
+            buildEmojiPopup();
+            emojiBuilt = true;
+        }
+
+        if (emojiPopup.isShowing()) {
+            emojiPopup.hide();
+            return;
+        }
+
+        javafx.geometry.Bounds b = emojiBtn.localToScreen(emojiBtn.getBoundsInLocal());
+        if (b == null) return;
+
+        // Desired popup size (must match buildEmojiPopup prefs)
+        double popupW = 380;
+        double popupH = 420;
+
+        javafx.geometry.Rectangle2D screen = javafx.stage.Screen.getPrimary().getVisualBounds();
+
+        double x = b.getMinX() - (popupW - 36);  // anchor near emoji button
+        double y = b.getMaxY() + 8;
+
+        // Clamp X/Y so it stays visible
+        if (x + popupW > screen.getMaxX()) x = screen.getMaxX() - popupW - 8;
+        if (x < screen.getMinX()) x = screen.getMinX() + 8;
+
+        if (y + popupH > screen.getMaxY()) y = b.getMinY() - popupH - 8; // open above if no space below
+        if (y < screen.getMinY()) y = screen.getMinY() + 8;
+
+        emojiPopup.show(emojiBtn, x, y);
+    }
+
+    private void buildEmojiPopup() {
+        emojiPopup = new javafx.stage.Popup();
+        emojiPopup.setAutoHide(true);
+        emojiPopup.setHideOnEscape(true);
+
+        // Search field
+        emojiSearch = new javafx.scene.control.TextField();
+        emojiSearch.setPromptText("Search emoji...");
+        emojiSearch.getStyleClass().add("eg-search");
+
+        // Search results grid + scroll
+        emojiSearchGrid = new javafx.scene.layout.TilePane();
+        emojiSearchGrid.setPrefColumns(10);
+        emojiSearchGrid.setHgap(6);
+        emojiSearchGrid.setVgap(6);
+
+        emojiSearchScroll = new javafx.scene.control.ScrollPane(emojiSearchGrid);
+        emojiSearchScroll.setFitToWidth(true);
+        emojiSearchScroll.setPrefViewportHeight(320); // IMPORTANT
+        emojiSearchScroll.getStyleClass().add("eg-scroll");
+
+        // Tabs per group
+        emojiTabs = new javafx.scene.control.TabPane();
+        emojiTabs.getStyleClass().add("eg-tabs");
+
+        for (var entry : emojiRepo.byGroup().entrySet()) {
+            String groupName = entry.getKey();
+            java.util.List<String> emojis = entry.getValue();
+
+            javafx.scene.layout.TilePane grid = createEmojiGrid(emojis);
+
+            javafx.scene.control.ScrollPane sp = new javafx.scene.control.ScrollPane(grid);
+            sp.setFitToWidth(true);
+            sp.setPrefViewportHeight(320); // IMPORTANT
+            sp.getStyleClass().add("eg-scroll");
+
+            javafx.scene.control.Tab tab = new javafx.scene.control.Tab(groupName, sp);
+            tab.setClosable(false);
+            emojiTabs.getTabs().add(tab);
+        }
+
+        // Root container (tabs shown by default)
+        javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(10, emojiSearch, emojiTabs);
+        root.getStyleClass().add("eg-popup");
+
+        // Force a real size (prevents the "tiny corner" bug)
+        root.setPrefSize(380, 420);
+        root.setMinSize(javafx.scene.layout.Region.USE_PREF_SIZE, javafx.scene.layout.Region.USE_PREF_SIZE);
+        root.setMaxSize(javafx.scene.layout.Region.USE_PREF_SIZE, javafx.scene.layout.Region.USE_PREF_SIZE);
+
+        // Search behavior: swap tabs with search results while typing
+        emojiSearch.textProperty().addListener((obs, oldVal, q) -> {
+            if (q == null || q.isBlank()) {
+                // restore tabs
+                if (root.getChildren().contains(emojiSearchScroll)) root.getChildren().remove(emojiSearchScroll);
+                if (!root.getChildren().contains(emojiTabs)) root.getChildren().add(emojiTabs);
+                return;
+            }
+
+            // show search results instead of tabs
+            if (root.getChildren().contains(emojiTabs)) root.getChildren().remove(emojiTabs);
+            if (!root.getChildren().contains(emojiSearchScroll)) root.getChildren().add(emojiSearchScroll);
+
+            java.util.List<String> results = emojiRepo.search(q, 240);
+
+            emojiSearchGrid.getChildren().clear();
+            for (String em : results) {
+                javafx.scene.control.Button b = new javafx.scene.control.Button(em);
+                b.getStyleClass().add("eg-emoji-btn");
+                b.setOnAction(e -> {
+                    insertAtCaret(messageInput, em);
+                    emojiPopup.hide();
+                });
+                emojiSearchGrid.getChildren().add(b);
+            }
+        });
+
+        emojiPopup.getContent().add(root);
+
+        // Debug (remove later)
+        System.out.println("Emoji groups loaded: " + emojiRepo.byGroup().size());
+    }
+
+    private void insertAtCaret(javafx.scene.control.TextField tf, String s) {
+        int start = tf.getSelection().getStart();
+        int end = tf.getSelection().getEnd();
+        String t = tf.getText() == null ? "" : tf.getText();
+
+        tf.setText(t.substring(0, start) + s + t.substring(end));
+        tf.positionCaret(start + s.length());
+        tf.requestFocus();
+    }
+
+    private javafx.scene.layout.TilePane createEmojiGrid(java.util.List<String> emojis) {
+        javafx.scene.layout.TilePane grid = new javafx.scene.layout.TilePane();
+        grid.setPrefColumns(10);
+        grid.setHgap(6);
+        grid.setVgap(6);
+
+        for (String em : emojis) {
+            javafx.scene.control.Button b = new javafx.scene.control.Button(em);
+            b.getStyleClass().add("eg-emoji-btn");
+            b.setOnAction(e -> {
+                insertAtCaret(messageInput, em);
+                emojiPopup.hide();
+            });
+            grid.getChildren().add(b);
+        }
+        return grid;
+    }
+
 }

@@ -2,7 +2,6 @@ module org.example.yedikpromax {
     requires javafx.controls;
     requires javafx.fxml;
     requires javafx.web;
-
     requires org.controlsfx.controls;
     requires com.dlsc.formsfx;
     requires net.synedra.validatorfx;
@@ -12,17 +11,16 @@ module org.example.yedikpromax {
     requires eu.hansolo.tilesfx;
     requires com.almasb.fxgl.all;
     requires atlantafx.base;
-
     requires java.sql;
     requires java.desktop;
     requires java.net.http;
-
     requires com.sun.jna;
     requires uk.co.caprica.vlcj;
-
     requires javafx.swing;
+    requires com.google.gson;
 
     opens org.example.yedikpromax to javafx.fxml;
+    opens services to com.google.gson;
     exports org.example.yedikpromax;
 
     exports controller;
