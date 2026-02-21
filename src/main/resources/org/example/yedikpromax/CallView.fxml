@@ -1,0 +1,76 @@
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.web.WebView?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controller.CallController"
+            styleClass="call-root" stylesheets="@call-view.css">
+
+    <!-- HEADER -->
+    <top>
+        <HBox styleClass="call-header" spacing="12">
+            <VBox spacing="2">
+                <Label fx:id="titleLabel" text="Call" styleClass="call-title"/>
+                <Label fx:id="subLabel" text="Connecting…" styleClass="call-subtitle"/>
+            </VBox>
+
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <!-- Open in browser (reliable fallback) -->
+            <Button onAction="#openInBrowser" styleClass="call-action">
+                <graphic>
+                    <FontIcon iconLiteral="mdi2o-open-in-new" styleClass="call-icon"/>
+                </graphic>
+            </Button>
+
+            <!-- Hang up -->
+            <Button onAction="#hangup" styleClass="call-hang">
+                <graphic>
+                    <FontIcon iconLiteral="mdi2p-phone-hangup" styleClass="call-icon-hang"/>
+                </graphic>
+            </Button>
+        </HBox>
+    </top>
+
+    <!-- WEB (JITSI) -->
+    <center>
+        <StackPane styleClass="call-body">
+            <WebView fx:id="webView" styleClass="call-web"/>
+        </StackPane>
+    </center>
+
+    <!-- CONTROLS BAR (visual + future wiring) -->
+    <bottom>
+        <HBox styleClass="call-controls" spacing="14">
+            <Region HBox.hgrow="ALWAYS"/>
+
+            <Button onAction="#toggleMute" styleClass="call-ctl">
+                <graphic>
+                    <FontIcon iconLiteral="mdi2m-microphone" styleClass="call-icon"/>
+                </graphic>
+            </Button>
+
+            <Button onAction="#toggleCamera" styleClass="call-ctl">
+                <graphic>
+                    <FontIcon iconLiteral="mdi2v-video" styleClass="call-icon"/>
+                </graphic>
+            </Button>
+
+            <Button onAction="#hangup" styleClass="call-hang-big">
+                <graphic>
+                    <FontIcon iconLiteral="mdi2p-phone-hangup" styleClass="call-icon-hang"/>
+                </graphic>
+            </Button>
+
+            <Region HBox.hgrow="ALWAYS"/>
+        </HBox>
+    </bottom>
+
+</BorderPane>

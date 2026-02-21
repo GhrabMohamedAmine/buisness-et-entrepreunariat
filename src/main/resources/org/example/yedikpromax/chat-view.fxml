@@ -122,18 +122,19 @@
                                         </VBox>
 
                                         <Region HBox.hgrow="ALWAYS"/>
-
-                                        <!-- Removed AI header button as requested -->
-
-                                        <Button styleClass="icon-button">
+                                        <Button fx:id="audioCallBtn"
+                                                styleClass="call-audio"
+                                                onAction="#handleAudioCall">
                                             <graphic>
-                                                <FontIcon iconLiteral="mdi2p-phone-outline" styleClass="icon"/>
+                                                <FontIcon iconLiteral="mdi2p-phone-outline" styleClass="call-icon"/>
                                             </graphic>
                                         </Button>
 
-                                        <Button styleClass="icon-button">
+                                        <Button fx:id="videoCallBtn"
+                                                styleClass="call-video"
+                                                onAction="#handleVideoCall">
                                             <graphic>
-                                                <FontIcon iconLiteral="mdi2v-video-outline" styleClass="icon"/>
+                                                <FontIcon iconLiteral="mdi2v-video-outline" styleClass="call-icon"/>
                                             </graphic>
                                         </Button>
 

@@ -1,5 +1,6 @@
 package controller;
 
+import controller.CallController;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ObjectProperty;
@@ -3955,6 +3956,54 @@ public class chatController {
     private static String unescapeJsonUrl(String u) {
         if (u == null) return null;
         return u.replace("\\/", "/").replace("\\u0026", "&").replace("\\\\", "\\");
+    }
+
+    // ==========================
+    // call
+    // ==========================
+
+    @FXML
+    private void handleAudioCall() {
+        openCallWindow(false);
+    }
+
+    @FXML
+    private void handleVideoCall() {
+        openCallWindow(true);
+    }
+
+    private void openCallWindow(boolean videoEnabled) {
+        if (selectedConversation == null) return;
+
+        try {
+            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
+                    getClass().getResource("/org/example/yedikpromax/callView.fxml")
+            );
+
+            javafx.scene.Parent root = loader.load();
+
+            javafx.scene.Scene scene = new javafx.scene.Scene(root, 980, 640);
+
+            // IMPORTANT: Call window does NOT inherit chat CSS automatically
+            scene.getStylesheets().add(
+                    getClass().getResource("/org/example/yedikpromax/call-view.css").toExternalForm()
+            );
+
+            javafx.stage.Stage stage = new javafx.stage.Stage();
+            stage.setTitle(videoEnabled ? "Video call" : "Audio call");
+            stage.setScene(scene);
+
+            CallController call = loader.getController();
+
+            // Same conversation => same room for both users
+            String roomName = "yedik-" + selectedConversation.getId();
+            call.init(stage, roomName, videoEnabled);
+
+            stage.show();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }
