@@ -117,6 +117,10 @@ public class OverviewController {
             }
         });
     }
+    @FXML
+    public void navigateToMH(){
+        FinanceController.getInstance().navigateToMH();
+    }
 
     private void updateDashboardHeader() {
         try {

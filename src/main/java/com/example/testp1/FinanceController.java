@@ -41,6 +41,9 @@ public class FinanceController {
         currentBudgetId = budgetId; // Store the ID before loading
         loadView("PBpage.fxml");     // Your original loading logic
     }
+    public void navigateToMH() {
+        loadView("MarketHub.fxml");
+    }
 
     /**
      * Swaps the content of the main StackPane.

@@ -7,8 +7,7 @@
 <?import javafx.scene.layout.*?>
 <?import org.kordamp.ikonli.javafx.*?>
 
-
-<StackPane  xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.OverviewController">
+<StackPane xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.OverviewController">
    <children>
       <AnchorPane fx:id="ovContent" prefHeight="886" prefWidth="1213" style="-fx-background-color: #F5F5F4">
           <stylesheets>
@@ -27,6 +26,12 @@
               <fx:include fx:id="actionTray" source="ActionTray.fxml" />
 
           </HBox>
+
+          <Button alignment="CENTER" layoutX="822.0" layoutY="58.0" styleClass="splash-button" text="MarketHub" onAction="#navigateToMH">
+              <graphic>
+                  <FontIcon iconColor="white" iconLiteral="mdi2h-hubspot" iconSize="20" />
+              </graphic>
+          </Button>
 
           <HBox alignment="CENTER" spacing="20" AnchorPane.leftAnchor="64.0" AnchorPane.rightAnchor="64.0" AnchorPane.topAnchor="130.0">
               <StatCard fx:id="cardTotal" />
@@ -65,14 +70,14 @@
                       <tabs>
                           <Tab text="Budget vs Actual">
                               <VBox alignment="CENTER" spacing="20" styleClass="tab-content">
-                                  <FontIcon iconLiteral="mdi2c-cog-outline" iconSize="20"/>
-                                  <Label styleClass="sub-title" text="In Develompent" alignment="CENTER"  />
+                                  <FontIcon iconLiteral="mdi2c-cog-outline" iconSize="20" />
+                                  <Label alignment="CENTER" styleClass="sub-title" text="In Develompent" />
                               </VBox>
                           </Tab>
                           <Tab text="Misc">
                               <VBox spacing="15" styleClass="tab-content">
-                                  <FontIcon iconLiteral="mdi2c-cog-outline" iconSize="20"/>
-                                  <Label styleClass="sub-title" text="In Develompent" alignment="CENTER"  />
+                                  <FontIcon iconLiteral="mdi2c-cog-outline" iconSize="20" />
+                                  <Label alignment="CENTER" styleClass="sub-title" text="In Develompent" />
                               </VBox>
                           </Tab>
                       </tabs>
@@ -81,8 +86,8 @@
           </HBox>
       </AnchorPane>
        <AddProjectBudget fx:id="addProjectBudget" />
-       <AddBudgetProfile fx:id="addBudgetProfile"/>
+       <AddBudgetProfile fx:id="addBudgetProfile" />
        <Warning fx:id="warningOverlay" />
-       <DeleteConfirmation fx:id="deleteConfirmOverlay"/>
+       <DeleteConfirmation fx:id="deleteConfirmOverlay" />
    </children>
 </StackPane>

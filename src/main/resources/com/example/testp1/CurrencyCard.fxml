@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.Region?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<HBox fx:id="cardRoot" alignment="CENTER_LEFT" prefWidth="300.0" spacing="15.0"
+      styleClass="currency-card" stylesheets="@../../styles/nexum.css"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.testp1.CurrencyCardController">
+
+    <VBox alignment="CENTER" minWidth="50" minHeight="50"
+          style="-fx-background-color: -color-accent-subtle; -fx-background-radius: 50;">
+        <Label fx:id="currencyCode" text="USD" styleClass="text-currency-code" />
+    </VBox>
+
+    <VBox alignment="CENTER_LEFT" HBox.hgrow="ALWAYS">
+        <Label fx:id="currencyName" text="United States Dollar" styleClass="text-data-label" />
+        <Label fx:id="countryName" text="United States" styleClass="text-sub-info" />
+    </VBox>
+
+    <Region HBox.hgrow="ALWAYS" />
+
+    <VBox alignment="CENTER_RIGHT">
+        <Label fx:id="exchangeRate" text="0.322" styleClass="text-rate-value" />
+        <Label text="Per 1 TND" styleClass="text-sub-info" />
+    </VBox>
+</HBox>

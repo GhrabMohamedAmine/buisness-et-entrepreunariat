@@ -12,6 +12,8 @@ module com.example.testp1 {
     requires javafx.base;
     requires com.fasterxml.jackson.annotation;
     requires io.github.cdimascio.dotenv.java;
+    requires com.fasterxml.jackson.databind;
+    requires java.net.http;
 
 
     opens com.example.testp1 to javafx.fxml;

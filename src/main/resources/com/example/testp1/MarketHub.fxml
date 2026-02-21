@@ -1,14 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import java.lang.*?>
-<?import java.util.*?>
-<?import javafx.scene.*?>
+<?import java.net.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.*?>
 
-<AnchorPane xmlns="http://javafx.com/javafx"
-            xmlns:fx="http://javafx.com/fxml"
-            fx:controller="CONTROLLER_NAME"
-            prefHeight="400.0" prefWidth="600.0">
+<StackPane xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.MarketHubController">
+    <children>
+        <AnchorPane fx:id="mainPageWrapper" prefHeight="886" prefWidth="1213" style="-fx-background-color: #F5F5F4">
+            <stylesheets>
+                <URL value="@../../styles/nexum.css" />
+            </stylesheets>
 
-</AnchorPane>
+            <HBox alignment="CENTER_LEFT" prefHeight="26.0" prefWidth="1086.0" spacing="8" AnchorPane.leftAnchor="64.0" AnchorPane.topAnchor="30.0">
+                <Label onMouseClicked="#handleBackToOverview" styleClass="splash-body-label" text="Financial Overview" />
+                <FontIcon iconColor="#78716C" iconLiteral="mdi2c-chevron-right" iconSize="16" />
+                <Label styleClass="section-title" text="Global Market Intelligence" />
+                <Region HBox.hgrow="ALWAYS" />
+                <FontIcon fx:id="refreshIcon" iconLiteral="mdi2r-refresh" iconSize="20"
+                          styleClass="action-icon" onMouseClicked="#handleRefreshData" />
+            </HBox>
+
+            <VBox spacing="25" styleClass="project-header-card" AnchorPane.leftAnchor="64.0" AnchorPane.rightAnchor="64.0" AnchorPane.topAnchor="75.0">
+                <HBox alignment="TOP_LEFT">
+                    <VBox spacing="8" HBox.hgrow="ALWAYS">
+                        <Label styleClass="project-title-large" text="Currency Exchange Hub" />
+                        <Label fx:id="baseCurrencyLabel" styleClass="budget-code-label" text="Base: TND (Tunisian Dinar)" />
+                    </VBox>
+                    <HBox alignment="CENTER_RIGHT" spacing="45">
+                        <VBox spacing="4">
+                            <Label styleClass="stat-header-small" text="Last Sync" />
+                            <Label fx:id="lastSyncLabel" styleClass="stat-val-black" text="LIVE" />
+                        </VBox>
+                        <VBox spacing="4">
+                            <Label styleClass="stat-header-small" text="Market Status" />
+                            <Label styleClass="stat-val-green" text="OPEN" />
+                        </VBox>
+                    </HBox>
+                </HBox>
+            </VBox>
+
+            <VBox layoutX="64.0" layoutY="308.0" prefHeight="493.0" prefWidth="1086.0" spacing="20" AnchorPane.bottomAnchor="50.0" AnchorPane.topAnchor="280.0">
+                <HBox alignment="CENTER_LEFT" spacing="25" style="-fx-padding: 0 0 10 0; -fx-border-color: #E7E5E4; -fx-border-width: 0 0 1 0;">
+                    <Button fx:id="majorTabBtn" onAction="#showMajorMarkets" styleClass="tab-active" text="Major Markets" />
+                    <Button fx:id="regionalTabBtn" onAction="#showRegionalMarkets" styleClass="tab-inactive" text="Regional Markets" />
+                </HBox>
+
+                <StackPane VBox.vgrow="ALWAYS">
+                    <ScrollPane fx:id="majorContent" fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;">
+                        <TilePane fx:id="majorGrid" hgap="20" vgap="20" prefColumns="2" style="-fx-padding: 10 0 0 0;" />
+                    </ScrollPane>
+
+                    <ScrollPane fx:id="regionalContent" visible="false" managed="false" fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;">
+                        <TilePane fx:id="regionalGrid" hgap="20" vgap="20" prefColumns="2" style="-fx-padding: 10 0 0 0;" />
+                    </ScrollPane>
+                </StackPane>
+            </VBox>
+        </AnchorPane>
+    </children>
+</StackPane>
