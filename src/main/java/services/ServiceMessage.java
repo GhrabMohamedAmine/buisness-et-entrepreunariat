@@ -221,5 +221,27 @@ public class ServiceMessage implements IService<Message> {
         }
     }
 
+    public int countUnread(long conversationId, int userId) throws SQLException {
+        String sql =
+                "SELECT COUNT(*) " +
+                        "FROM messages m " +
+                        "JOIN conversation_participants cp " +
+                        "  ON cp.conversation_id = m.conversation_id " +
+                        " AND cp.user_id = ? " +
+                        " AND cp.left_at IS NULL " +
+                        "WHERE m.conversation_id = ? " +
+                        "  AND m.sender_id <> ? " +
+                        "  AND m.id > IFNULL(cp.last_read_message_id, 0)";
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ps.setLong(2, conversationId);
+            ps.setInt(3, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        }
+    }
 
 }

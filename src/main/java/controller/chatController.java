@@ -22,7 +22,10 @@ import java.io.InputStream;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-
+import java.net.http.*;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import javafx.animation.FadeTransition;
 import javafx.scene.control.TextField;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
@@ -40,7 +43,6 @@ import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
-
 import java.io.*;
 import model.ParticipantView;
 import java.util.*;
@@ -126,6 +128,10 @@ public class chatController {
     @FXML private VBox linksBox;
     @FXML private Button mediaBackBtn;
     @FXML private StackPane mediaOverlay;
+    @FXML private StackPane aiSummaryOverlay;
+    @FXML private Label aiSummaryTitle;
+    @FXML private TextArea aiSummaryText;
+    @FXML private ProgressIndicator aiSummaryLoading;
 
     @FXML private void toggleChatInfo()   { toggleSection(secChatInfo,   chevChatInfo); }
     @FXML private void toggleCustomize()  { toggleSection(secCustomize,  chevCustomize); }
@@ -209,6 +215,19 @@ public class chatController {
     private FilterMode currentFilter = FilterMode.ALL;
     private List<Conversation> allConversations = new ArrayList<>();
     private boolean restoreDrawerAfterMedia = false;
+    private static final String LM_BASE = "http://localhost:1234/v1";
+    private final Set<Long> aiSummarySuppressed = new HashSet<>();
+    private final Map<Long, Integer> aiSummarySeenAtUnread = new HashMap<>(); // convId -> unread count when dismissed
+    private long aiPendingConvId = -1;
+    private int aiPendingUnreadCount = 0;
+    private String aiPendingTitle = "";
+    private List<Message> aiPendingMessages = List.of();
+    private final HttpClient http = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
+            .build();
+    // LM Studio / OpenAI-compatible endpoint (recommended)
+    private static final String LM_CHAT_URL = "http://localhost:1234/v1/chat/completions";
+    private static final String LM_MODEL = "dolphin3.0-llama3.1-8b";
 
 
 
@@ -217,6 +236,12 @@ public class chatController {
     //==========================
     //HELPER METHODS
     //==========================
+    private static <T> List<T> lastN(List<T> list, int n) {
+        if (list == null || list.isEmpty() || n <= 0) return List.of();
+        int size = list.size();
+        int from = Math.max(0, size - n);
+        return new ArrayList<>(list.subList(from, size));
+    }
 
     private static void initVlcOnce() {
         if (!VLC_INIT.compareAndSet(false, true)) return;
@@ -820,12 +845,34 @@ public class chatController {
 
         try {
             List<Message> messages = messageService.listByConversation(conversationId, 100);
-            if (messages.isEmpty()) return;
+            if (messages.isEmpty()) {
+                return;
+            }
+
             boolean isGroup = selectedConversation != null
                     && "GROUP".equalsIgnoreCase(selectedConversation.getType());
 
             long otherLastRead = messageService.getMaxReadByOthers(conversationId, currentUserId);
 
+            // ===== UNREAD BEFORE we mark read (DB) =====
+            int unreadBefore = 0;
+            try {
+                unreadBefore = messageService.countUnread(conversationId, currentUserId);
+            } catch (SQLException ignored) {}
+
+            // ===== AI gating: show when unread >= 10 and not dismissed for this unread count =====
+            int seenAt = aiSummarySeenAtUnread.getOrDefault(conversationId, 0);
+            boolean showAi = unreadBefore >= 10 && unreadBefore > seenAt;
+
+            // cache pending context for popup / button
+            aiPendingConvId = conversationId;
+            aiPendingUnreadCount = unreadBefore;
+            aiPendingTitle = (selectedConversation == null || selectedConversation.getTitle() == null || selectedConversation.getTitle().isBlank())
+                    ? "Conversation"
+                    : selectedConversation.getTitle();
+            aiPendingMessages = new ArrayList<>(messages);
+
+            // ===== Render messages normally =====
             for (Message msg : messages) {
                 boolean outgoing = msg.getSenderId() == currentUserId;
 
@@ -835,45 +882,38 @@ public class chatController {
                 VBox bubbleBox = new VBox(6);
                 bubbleBox.setAlignment(outgoing ? Pos.TOP_RIGHT : Pos.TOP_LEFT);
 
-                // GROUP incoming: sender name above bubble
                 if (isGroup && !outgoing) {
                     Label sender = new Label(senderName(msg.getSenderId()));
                     sender.getStyleClass().add("sender-name");
                     bubbleBox.getChildren().add(sender);
                 }
 
-                // Bubble
                 Node bubbleNode = buildMessageNode(msg, outgoing);
                 bubbleBox.getChildren().add(bubbleNode);
+
                 if (outgoing) {
                     attachBubbleMenu(bubbleNode, msg);
                     showBubbleMenu(bubbleNode, msg);
                 }
 
-
-                // Footer line: [seen bubbles  time] OR [time ticks] for DM
                 HBox footer = new HBox(6);
                 footer.setAlignment(outgoing ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
 
-                // Optional "édité"
                 if (msg.getEditedAt() != null) {
                     Label edited = new Label("édité");
                     edited.getStyleClass().add(outgoing ? "edited-out" : "edited-in");
                     footer.getChildren().add(edited);
                 }
 
-                // GROUP outgoing: add seen bubbles on the left of time (same line)
                 if (isGroup && outgoing) {
                     HBox seenRow = buildSeenRow(conversationId, msg.getId(), currentUserId);
                     footer.getChildren().add(seenRow);
                 }
 
-                // Time
                 Label time = new Label(formatBubbleTime(msg.getCreatedAt()));
                 time.getStyleClass().add(outgoing ? "timestamp-out" : "timestamp");
                 footer.getChildren().add(time);
 
-                // DM outgoing: add ticks after time (same line)
                 if (!isGroup && outgoing) {
                     FontIcon ticks = new FontIcon("mdi2c-check-all");
                     ticks.setIconSize(14);
@@ -886,14 +926,33 @@ public class chatController {
                 }
 
                 bubbleBox.getChildren().add(footer);
-
                 row.getChildren().add(bubbleBox);
                 messagesContainer.getChildren().add(row);
             }
-            // Mark as read (your pointer)
-            long lastId = messages.get(messages.size() - 1).getId(); // assumes ASC order
+
+            // ===== Add ONE AI chip at the VERY BOTTOM (only if showAi) =====
+            if (showAi) {
+                final int unreadSnap = unreadBefore;
+                final long convIdSnap = conversationId;
+                final String titleSnap = aiPendingTitle;
+                final List<Message> snap = new ArrayList<>(messages);
+
+                addAiSummaryChip(() -> {
+                    // dismiss for this unread burst; it will reappear only if unread increases later
+                    aiSummarySeenAtUnread.put(convIdSnap, unreadSnap);
+
+                    List<Message> toSummarize = lastN(snap, 10);
+
+                    openAiSummaryFrom(titleSnap, toSummarize);
+                });
+            }
+
+            // ===== Mark as read once (after rendering) =====
+            long lastId = messages.get(messages.size() - 1).getId();
             messageService.markRead(conversationId, currentUserId, lastId);
+
             Platform.runLater(() -> messagesScroll.setVvalue(1.0));
+
         } catch (SQLException e) {
             e.printStackTrace();
         }
@@ -1010,7 +1069,7 @@ public class chatController {
                 && lastRecordedFile != null && lastRecordedFile.exists()) {
             try {
                 sendAttachment(lastRecordedFile);
-
+                aiSummarySuppressed.add(selectedConversation.getId());
                 cleanupPreviewPlayer();
                 lastRecordedFile = null;
                 setComposerModeNormalUI();
@@ -1040,7 +1099,7 @@ public class chatController {
                 editingMessage.setBody(body);
                 editingMessage.setSenderId(currentUserId);
                 messageService.modifier(editingMessage);
-
+                aiSummarySuppressed.add(editingMessage.getConversationId());
                 loadMessages(editingMessage.getConversationId());
                 loadConversations();
                 cancelEdit();
@@ -1054,7 +1113,7 @@ public class chatController {
             msg.setBody(body);
 
             messageService.ajouter(msg);
-
+            aiSummarySuppressed.add(selectedConversation.getId());
             messageInput.clear();
             loadMessages(selectedConversation.getId());
             loadConversations();
@@ -1588,6 +1647,7 @@ public class chatController {
 
         applyAvatar(chatAvatarCircle, conv.getAvatar(), conv.getType());
         loadMessages(conv.getId());
+        updateAiSummaryAvailability();
 
 
         try {
@@ -3244,5 +3304,222 @@ public class chatController {
     private void hideDrawer() {
         drawerOverlay.setVisible(false);
         drawerOverlay.setManaged(false);
+    }
+    // ==========================
+    // AI Summary Chip Logic
+    // ==========================
+
+    private void addAiSummaryChip(Runnable onClick) {
+        // Prevent duplicates
+        if (messagesContainer.lookup(".ai-chip-wrap") != null) {
+            return;
+        }
+
+        HBox wrap = new HBox();
+        wrap.getStyleClass().add("ai-chip-wrap");
+        wrap.setAlignment(Pos.CENTER);
+
+        StackPane chip = new StackPane();
+        chip.getStyleClass().add("ai-chip");
+        chip.setPickOnBounds(true);
+        chip.setStyle("-fx-cursor: hand;");
+
+        Label t = new Label("RÉSUMÉ IA");
+        t.getStyleClass().add("ai-chip-label");
+
+        chip.getChildren().add(t);
+        wrap.getChildren().add(chip);
+
+        chip.setOnMouseClicked(e -> {
+            e.consume();
+            if (onClick != null) onClick.run();
+        });
+
+        messagesContainer.getChildren().add(wrap);
+        Platform.runLater(() -> messagesScroll.setVvalue(1.0));
+    }
+
+    //=========================
+    // Calls LM Studio OpenAI-compatible /v1/chat/completions and returns the assistant text.
+    //==========================
+    private String lmStudioChatSummary(String conversationTitle, List<Message> contextMsgs) throws Exception {
+        StringBuilder convo = new StringBuilder();
+        for (Message m : contextMsgs) {
+            boolean outgoing = (m.getSenderId() == currentUserId);
+            String who = outgoing ? "Moi" : "Autre";
+            String body = m.getBody() == null ? "" : m.getBody().trim();
+            if (!body.isEmpty()) convo.append(who).append(": ").append(body).append("\n");
+        }
+
+        String system =
+                "Tu es un assistant qui résume une conversation de messagerie.\n" +
+                        "Retourne un résumé court en français, en 3 parties:\n" +
+                        "1) Sujet (1 ligne)\n" +
+                        "2) Points clés (3 bullets max)\n" +
+                        "3) Action suivante (1 ligne)\n" +
+                        "Sois factuel, pas de blabla.";
+
+        String user =
+                "Titre: " + (conversationTitle == null ? "Conversation" : conversationTitle) + "\n" +
+                        "Messages:\n" + convo;
+
+        String json =
+                "{"
+                        + "\"model\":\"" + escapeJson(LM_MODEL) + "\","
+                        + "\"temperature\":0.2,"
+                        + "\"messages\":["
+                        +   "{\"role\":\"system\",\"content\":\"" + escapeJson(system) + "\"},"
+                        +   "{\"role\":\"user\",\"content\":\"" + escapeJson(user) + "\"}"
+                        + "]"
+                        + "}";
+
+        HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(LM_BASE + "/chat/completions"))
+                // LM Studio accepts any string api_key; OpenAI client examples use "lm-studio"
+                .header("Authorization", "Bearer lm-studio")
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                .build();
+
+        HttpResponse<String> resp = http.send(req, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+        if (resp.statusCode() < 200 || resp.statusCode() >= 300) {
+            throw new RuntimeException("LM Studio HTTP " + resp.statusCode() + ": " + resp.body());
+        }
+
+        // Minimal JSON extraction (no extra libs):
+        // expects: choices[0].message.content
+        String body = resp.body();
+        int idx = body.indexOf("\"content\"");
+        if (idx < 0) return "Résumé indisponible.";
+        int start = body.indexOf(':', idx);
+        int q1 = body.indexOf('"', start + 1);
+        int q2 = q1;
+        while (true) {
+            q2 = body.indexOf('"', q2 + 1);
+            if (q2 < 0) break;
+            if (body.charAt(q2 - 1) != '\\') break; // not escaped quote
+        }
+        if (q1 < 0 || q2 < 0 || q2 <= q1) return "Résumé indisponible.";
+        String raw = body.substring(q1 + 1, q2);
+        return raw.replace("\\n", "\n").replace("\\\"", "\"").replace("\\\\", "\\").trim();
+    }
+
+    private StackPane popupHost() {
+        // 1) preferred: your @FXML root (if wired)
+        if (root != null) return root;
+
+        // 2) fallback: nearest StackPane parent in the scene graph
+        if (messagesScroll != null && messagesScroll.getScene() != null) {
+            var r = messagesScroll.getScene().getRoot();
+            if (r instanceof StackPane sp) return sp;
+        }
+        if (messagesContainer != null && messagesContainer.getScene() != null) {
+            var r = messagesContainer.getScene().getRoot();
+            if (r instanceof StackPane sp) return sp;
+        }
+        return null;
+    }
+
+    private void openAiSummaryFrom(String title, List<Message> toSummarize) {
+        aiPendingTitle = (title == null || title.isBlank()) ? "Conversation" : title;
+        aiPendingMessages = (toSummarize == null) ? List.of() : new ArrayList<>(toSummarize);
+
+        openAiSummary();
+    }
+
+    private String escapeJson(String s) {
+        if (s == null) return "";
+        StringBuilder out = new StringBuilder();
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            switch (c) {
+                case '"'  -> out.append("\\\"");
+                case '\\' -> out.append("\\\\");
+                case '\b' -> out.append("\\b");
+                case '\f' -> out.append("\\f");
+                case '\n' -> out.append("\\n");
+                case '\r' -> out.append("\\r");
+                case '\t' -> out.append("\\t");
+                default -> {
+                    if (c < 0x20) {
+                        out.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        out.append(c);
+                    }
+                }
+            }
+        }
+        return out.toString();
+    }
+
+    @FXML
+    private void openAiSummary() {
+
+        if (aiSummaryOverlay == null) return;
+
+        aiSummaryTitle.setText("Résumé IA");
+        aiSummaryText.clear();
+
+        aiSummaryLoading.setVisible(true);
+        aiSummaryLoading.setManaged(true);
+
+        aiSummaryOverlay.setVisible(true);
+        aiSummaryOverlay.setManaged(true);
+
+        final long convIdSnap = aiPendingConvId;
+        final String titleSnap = aiPendingTitle;
+        final List<Message> msgsSnap = new ArrayList<>(aiPendingMessages);
+
+        new Thread(() -> {
+            try {
+                String summary = lmStudioChatSummary(titleSnap, msgsSnap);
+
+                Platform.runLater(() -> {
+                    // Ignore result if user changed conversation
+                    if (selectedConversation == null ||
+                            selectedConversation.getId() != convIdSnap) {
+                        return;
+                    }
+
+                    aiSummaryLoading.setVisible(false);
+                    aiSummaryLoading.setManaged(false);
+                    aiSummaryText.setText(summary == null ? "" : summary);
+                });
+
+            } catch (Exception ex) {
+                Platform.runLater(() -> {
+                    aiSummaryLoading.setVisible(false);
+                    aiSummaryLoading.setManaged(false);
+                    aiSummaryText.setText("Résumé indisponible (LM Studio non joignable).");
+                });
+            }
+        }).start();
+    }
+
+    @FXML
+    private void closeAiSummary() {
+        aiSummaryOverlay.setVisible(false);
+        aiSummaryOverlay.setManaged(false);
+
+        // suppress chip until unread increases again
+        if (aiPendingConvId > 0) {
+            aiSummarySeenAtUnread.put(aiPendingConvId, aiPendingUnreadCount);
+        }
+    }
+
+    private void updateAiSummaryAvailability() {
+        if (selectedConversation == null) {
+            return;
+        }
+
+        long convId = selectedConversation.getId();
+
+        // aiPendingUnreadCount is set in loadMessages()
+        int unread = aiPendingUnreadCount;
+
+        // user dismissed/used AI at this unread count -> don’t show again until unread increases
+        int seenAt = aiSummarySeenAtUnread.getOrDefault(convId, 0);
+
+        boolean show = unread >= 10 && unread > seenAt;
     }
 }

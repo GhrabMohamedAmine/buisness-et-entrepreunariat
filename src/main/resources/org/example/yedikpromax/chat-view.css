@@ -1148,3 +1148,60 @@
     -fx-border-width: 1;
     -fx-cursor: hand;
 }
+/* ===== AI Summary chip (center like "TODAY") ===== */
+.ai-chip-wrap {
+    -fx-padding: 12 0 6 0;
+    -fx-alignment: center;
+}
+
+.ai-chip {
+    -fx-background-color: rgba(124, 58, 237, 0.10); /* purple tint */
+    -fx-border-color: rgba(124, 58, 237, 0.35);
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-padding: 6 12 6 12;
+}
+
+.ai-chip-label {
+    -fx-text-fill: #7c3aed;
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-letter-spacing: 0.6px;
+}
+
+/* ===== AI Summary popup ===== */
+.ai-summary-popup {
+    -fx-background-color: white;
+    -fx-border-color: rgba(124, 58, 237, 0.35);
+    -fx-border-radius: 14;
+    -fx-background-radius: 14;
+    -fx-padding: 12;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.18), 18, 0.2, 0, 6);
+}
+
+.ai-summary-title {
+    -fx-text-fill: #7c3aed;
+    -fx-font-weight: 800;
+    -fx-font-size: 12px;
+}
+
+.ai-summary-text {
+    -fx-text-fill: #222;
+    -fx-font-size: 12px;
+}
+.ai-summary-text {
+    -fx-background-color: transparent;
+    -fx-control-inner-background: transparent;
+    -fx-background-insets: 0;
+    -fx-background-radius: 0;
+    -fx-border-color: transparent;
+    -fx-faint-focus-color: transparent;
+    -fx-focus-color: transparent;
+    -fx-padding: 0;
+}
+
+.ai-summary-text .content {
+    -fx-background-color: transparent;
+    -fx-background-insets: 0;
+    -fx-padding: 0;
+}
