@@ -66,7 +66,7 @@
               </VBox>
 
               <VBox prefWidth="400.0" styleClass="content-card">
-                  <TabPane styleClass="modern-tabs" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
+                  <TabPane  fx:id="sidebarTabPane" styleClass="modern-tabs" tabClosingPolicy="UNAVAILABLE" VBox.vgrow="ALWAYS">
                       <tabs>
                           <Tab text="Budget vs Actual">
                               <VBox alignment="CENTER" spacing="20" styleClass="tab-content">
@@ -74,11 +74,22 @@
                                   <Label alignment="CENTER" styleClass="sub-title" text="In Develompent" />
                               </VBox>
                           </Tab>
-                          <Tab text="Misc">
-                              <VBox spacing="15" styleClass="tab-content">
-                                  <FontIcon iconLiteral="mdi2c-cog-outline" iconSize="20" />
-                                  <Label alignment="CENTER" styleClass="sub-title" text="In Develompent" />
-                              </VBox>
+                          <Tab fx:id="miscTab" text="Misc">
+                              <content>
+                                  <ScrollPane fitToWidth="true" hbarPolicy="NEVER"
+                                              style="-fx-background-color: transparent; -fx-background: transparent;">
+                                      <content>
+                                          <VBox fx:id="newsSidebarVBox" spacing="15" styleClass="tab-content">
+                                              <children>
+                                                  <VBox alignment="CENTER" spacing="10" fx:id="placeholderContent">
+                                                      <FontIcon iconLiteral="mdi2c-cog-outline" iconSize="20" />
+                                                      <Label alignment="CENTER" styleClass="sub-title" text="Fetching Latest News..." />
+                                                  </VBox>
+                                              </children>
+                                          </VBox>
+                                      </content>
+                                  </ScrollPane>
+                              </content>
                           </Tab>
                       </tabs>
                   </TabPane>

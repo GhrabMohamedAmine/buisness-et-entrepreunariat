@@ -1,14 +1,23 @@
 package com.example.testp1;
 
+import com.example.testp1.entities.Article;
 import com.example.testp1.entities.BudgetProfil;
 import com.example.testp1.entities.ProjectBudget;
 import com.example.testp1.model.ProjectDAO;
 import com.example.testp1.services.ServiceBudgetProfil;
+import com.example.testp1.services.ServiceMarketingHub;
 import com.example.testp1.services.ServiceProjectBudget;
+import javafx.application.Platform;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 
+import java.io.IOException;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -37,9 +46,32 @@ public class OverviewController {
     private Warning warningOverlay;
     @FXML
     private DeleteConfirmation deleteConfirmOverlay;
+    @FXML
+    private VBox newsSidebarVBox;
+    @FXML
+    private VBox placeholderContent;
+
+    private ServiceMarketingHub marketService = new ServiceMarketingHub();
+    @FXML
+    private TabPane sidebarTabPane;
+    @FXML
+    private Tab miscTab;
 
     @FXML
     public void initialize() {
+
+        if (sidebarTabPane != null) {
+            sidebarTabPane.getSelectionModel().selectedItemProperty().addListener((obs, oldTab, newTab) -> {
+                if (newTab == miscTab) {
+                    newsSidebarVBox.getChildren().clear();
+                    // Only load if the VBox is empty (prevents re-fetching every click)
+                    if (newsSidebarVBox.getChildren().isEmpty()) {
+                        System.out.println("it reached thourgh here");
+                        syncNewsFeed();
+                    }
+                }
+            });
+        }
 
         if (actionTrayController != null) {
             actionTrayController.setOverviewController(this);
@@ -120,6 +152,44 @@ public class OverviewController {
     @FXML
     public void navigateToMH(){
         FinanceController.getInstance().navigateToMH();
+    }
+
+    public void syncNewsFeed() {
+        System.out.println("[DEBUG] syncNewsFeed triggered...");
+
+        marketService.getLatestBusinessNews().thenAccept(newsResponse -> {
+            Platform.runLater(() -> {
+                // Check if API actually sent data
+                if (newsResponse == null || newsResponse.articles == null || newsResponse.articles.isEmpty()) {
+                    System.out.println("[DEBUG] API returned ZERO articles. Check your API Key!");
+                    return;
+                }
+
+                System.out.println("[DEBUG] Received " + newsResponse.articles.size() + " articles.");
+                newsSidebarVBox.getChildren().clear();
+
+                for (Article article : newsResponse.articles) {
+                    try {
+                        // Try using an absolute path to be safe
+                        FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/example/testp1/NewsCard.fxml"));
+                        HBox card = loader.load();
+
+                        NewsCardController controller = loader.getController();
+                        controller.setArticleData(article);
+
+                        newsSidebarVBox.getChildren().add(card);
+                    } catch (Exception e) {
+                        System.err.println("[DEBUG] Failed to load NewsCard.fxml for article: " + article.title);
+                        e.printStackTrace(); // This will tell us if a dependency (like Ikonli) is missing
+                    }
+                }
+                System.out.println("[DEBUG] Injection complete. " + newsSidebarVBox.getChildren().size() + " cards added.");
+            });
+        }).exceptionally(ex -> {
+            System.err.println("[DEBUG] API call failed: " + ex.getMessage());
+            ex.printStackTrace();
+            return null;
+        });
     }
 
     private void updateDashboardHeader() {

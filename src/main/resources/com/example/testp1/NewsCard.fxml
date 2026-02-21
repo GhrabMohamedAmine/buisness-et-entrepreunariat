@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.*?>
+
+<HBox fx:id="newsCardRoot" alignment="CENTER_LEFT" prefHeight="100.0" prefWidth="360.0"
+      stylesheets="@../../styles/nexum.css" spacing="12.0" styleClass="news-card-container"
+      onMouseClicked="#handleCardClicked" xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.testp1.NewsCardController">
+
+    <children>
+        <StackPane styleClass="news-image-wrapper" minWidth="100.0" maxWidth="100.0" prefWidth="100.0">
+            <ImageView fx:id="thumbnailView" fitHeight="70.0" fitWidth="100.0"
+                       pickOnBounds="true" preserveRatio="false" />
+        </StackPane>
+
+        <VBox spacing="4.0" HBox.hgrow="ALWAYS" minWidth="0.0">
+            <children>
+                <HBox alignment="CENTER_LEFT" spacing="8.0">
+                    <Label fx:id="sourceLabel" styleClass="news-source-badge" text="CNBC" />
+                    <Label fx:id="dateLabel" styleClass="text-sub-info" text="2h ago" />
+                </HBox>
+
+                <Label fx:id="titleLabel"
+                       style="-fx-font-size: 13px; -fx-font-weight: bold; -fx-text-fill: #1C1917;"
+                       wrapText="true"
+                       text="Stock futures are little changed ahead of key economic data..."
+                       VBox.vgrow="ALWAYS" />
+            </children>
+        </VBox>
+
+        <FontIcon iconLiteral="mdi2c-chevron-right" iconSize="18" iconColor="#A8A29E" />
+    </children>
+</HBox>

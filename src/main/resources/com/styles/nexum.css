@@ -984,3 +984,42 @@
     -fx-border-width: 1px;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 4);
 }
+
+.news-card-container {
+    -fx-padding: 12;
+    -fx-background-color: -color-bg-default; /* or #FFFFFF */
+    -fx-background-radius: 12;
+    -fx-border-color: #E7E5E4; /* Nexum light border */
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-cursor: hand;
+    -fx-transition: all 0.2s ease-in-out;
+}
+
+.news-card-container:hover {
+    -fx-background-color: #F8F7F6; /* Very subtle grey on hover */
+    -fx-border-color: #7F22FE; /* Your Nexum primary color */
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 8, 0, 0, 4);
+}
+
+/* Source Badge */
+.news-source-badge {
+    -fx-padding: 2 10;
+    -fx-background-color: rgba(127, 34, 254, 0.1); /* Very light purple tint */
+    -fx-text-fill: #7F22FE; /* Your Purple */
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+}
+
+/* Image treatment */
+.news-image-wrapper {
+    -fx-background-color: #E7E5E4;
+    -fx-background-radius: 8;
+    -fx-overflow: hidden; /* Clips the image to the radius */
+}
+
+.news-image-wrapper .image-view {
+    /* Ensure the image fits nicely */
+    -fx-background-radius: 8;
+}

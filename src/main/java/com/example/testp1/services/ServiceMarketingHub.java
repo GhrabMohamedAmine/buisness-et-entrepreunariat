@@ -2,6 +2,7 @@ package com.example.testp1.services;
 
 import com.example.testp1.entities.CurrencyResponse;
 //import com.example.testp1.entities.NewsResponse; //
+import com.example.testp1.entities.NewsResponse;
 import com.example.utils.Config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -44,18 +45,23 @@ public class ServiceMarketingHub {
      * Fetches the latest global business and financial news.
      * @return A CompletableFuture containing the NewsResponse.
      */
-//    public CompletableFuture<NewsResponse> getLatestBusinessNews() {
-//        String apiKey = Config.get("NEWS_API_KEY");
-//        String url = "https://newsapi.org/v2/top-headlines?category=business&language=en&apiKey=" + apiKey;
-//
-//        HttpRequest request = HttpRequest.newBuilder()
-//                .uri(URI.create(url))
-//                .GET()
-//                .build();
-//
-//        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-//                .thenApply(response -> handleResponse(response, NewsResponse.class));
-//    }
+    public CompletableFuture<NewsResponse> getLatestBusinessNews() {
+        // 1. Pull the key from your .env via your Config utility
+        String apiKey = Config.get("NEWS_API_KEY");
+
+        // 2. Build the URL (Filtering for business category and English language)
+        String url = "https://newsapi.org/v2/top-headlines?category=business&language=en&apiKey=" + apiKey;
+
+        // 3. Create the HTTP Request
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .GET()
+                .build();
+
+        // 4. Send asynchronously and funnel the response through our handleResponse helper
+        return httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(response -> handleResponse(response, NewsResponse.class));
+    }
 
     /**
      * Helper method to validate status codes and translate JSON to Java objects.

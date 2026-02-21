@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.image.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.*?>
+
+<StackPane xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.ArticleDetailController">
+    <children>
+        <AnchorPane prefHeight="886" prefWidth="1213" style="-fx-background-color: #F5F5F4">
+            <stylesheets>
+                <URL value="@../../styles/nexum.css" />
+            </stylesheets>
+
+            <VBox spacing="20" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="64.0" AnchorPane.rightAnchor="64.0" AnchorPane.topAnchor="30.0">
+                <children>
+
+                    <HBox alignment="CENTER_LEFT" prefHeight="26.0" spacing="8">
+                        <children>
+                            <Label onMouseClicked="#handleBackToHub" styleClass="splash-body-label" text="Financial Overview " />
+                            <FontIcon iconColor="#78716C" iconLiteral="mdi2c-chevron-right" iconSize="16" />
+                            <Label fx:id="breadcrumbSource" styleClass="section-title" text="News Reader" />
+                            <Region HBox.hgrow="ALWAYS" />
+                            <Button onAction="#handleOpenInBrowser" styleClass="splash-button">
+                                <graphic>
+                                    <FontIcon iconLiteral="mdi2o-open-in-new" iconSize="16" />
+                                </graphic>
+                            </Button>
+                        </children>
+                    </HBox>
+
+                    <VBox spacing="20" styleClass="project-header-card">
+                        <children>
+                            <HBox alignment="TOP_LEFT">
+                                <VBox spacing="8" HBox.hgrow="ALWAYS">
+                                    <Label fx:id="detailTitle" styleClass="project-title-large" text="Article Title Loading..." wrapText="true" />
+                                    <HBox spacing="15" alignment="CENTER_LEFT">
+                                        <Label fx:id="detailSourceBadge" styleClass="news-source-badge" text="SOURCE" />
+                                        <Label fx:id="detailDate" styleClass="budget-code-label" text="Published: --/--/----" />
+                                    </HBox>
+                                </VBox>
+                            </HBox>
+                        </children>
+                    </VBox>
+
+                    <ScrollPane fitToWidth="true" hbarPolicy="NEVER" VBox.vgrow="ALWAYS"
+                                style="-fx-background-color: transparent; -fx-background: transparent;">
+                        <content>
+                            <VBox spacing="25" style="-fx-padding: 10 20 40 0;">
+                                <children>
+                                    <StackPane alignment="CENTER" maxHeight="400.0" maxWidth="800.0"
+                                               style="-fx-background-color: #E7E5E4; -fx-background-radius: 12; -fx-overflow: hidden;">
+                                        <ImageView fx:id="articleImageView"
+                                                   fitHeight="380.0"
+                                                   fitWidth="750.0"
+                                                   pickOnBounds="true"
+                                                   preserveRatio="true" />
+                                    </StackPane>
+
+                                    <VBox spacing="15">
+                                        <Label styleClass="stat-header-small" text="INSIGHT SUMMARY" />
+                                        <Label fx:id="articleContent"
+                                               styleClass="text-data-label"
+                                               style="-fx-font-size: 16px; -fx-line-spacing: 1.6; -fx-text-fill: #44403C;"
+                                               wrapText="true"
+                                               maxWidth="800.0" />
+                                    </VBox>
+
+                                    <Separator prefWidth="200.0" style="-fx-opacity: 0.3;" />
+
+                                    <HBox alignment="CENTER_LEFT" spacing="10">
+                                        <Label styleClass="text-sub-info" text="To view the full interactive report:" />
+                                        <Hyperlink fx:id="articleHyperlink" onAction="#handleOpenInBrowser"
+                                                   style="-fx-font-weight: bold; -fx-text-fill: #7F22FE;"
+                                                   text="Open Original Source" />
+                                    </HBox>
+                                </children>
+                            </VBox>
+                        </content>
+                    </ScrollPane>
+                </children>
+            </VBox>
+        </AnchorPane>
+    </children>
+</StackPane>

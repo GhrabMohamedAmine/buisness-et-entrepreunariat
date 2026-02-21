@@ -64,4 +64,29 @@ public class FinanceController {
             e.printStackTrace();
         }
     }
+    /**
+     * Specialized loader for API-driven views that require data passing.
+     * @param fxmlPath The path to the FXML file.
+     * @return The controller instance of the loaded FXML.
+     */
+    public <T> T loadViewAPI(String fxmlPath) {
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource(fxmlPath));
+            Parent root = loader.load();
+
+            // 1. Perform the actual UI swap (Reusing your existing container logic)
+            // Assuming 'mainContent' is your AnchorPane or StackPane for switching views
+            mainStack.getChildren().setAll(root);
+
+            // 2. Return the controller to the caller
+            return loader.getController();
+
+        } catch (IOException e) {
+            System.err.println("Critical Failure in loadViewAPI: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+
 }
