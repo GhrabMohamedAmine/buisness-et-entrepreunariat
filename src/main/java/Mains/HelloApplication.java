@@ -6,8 +6,6 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.io.IOException;
-
 public class HelloApplication extends Application {
     @Override
     public void start(Stage stage) throws Exception {
@@ -21,9 +19,9 @@ public class HelloApplication extends Application {
 
         Scene scene = new Scene(loader.load(), 1200, 800);
         scene.getStylesheets().addAll(
-                getClass().getResource("/css/stylesheet.css").toExternalForm(),
-                getClass().getResource("/css/buttons.css").toExternalForm(),
-                getClass().getResource("/css/project-css.css").toExternalForm()
+                getClass().getResource("/styles/stylesheet.css").toExternalForm(),
+                getClass().getResource("/styles/buttons.css").toExternalForm(),
+                getClass().getResource("/styles/project-css.css").toExternalForm()
         );
 
 

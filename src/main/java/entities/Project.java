@@ -42,16 +42,7 @@ public class Project {
 
     }
 
-    // --- Property Methods (Required for JavaFX Data Binding) ---
-    public IntegerProperty idProperty() { return id; }
-    public StringProperty nameProperty() { return name; }
-    public StringProperty descriptionProperty() { return description; }
-    public IntegerProperty progressProperty() { return progress; }
-    public DoubleProperty budgetProperty() { return budget; }
-    public StringProperty startDateProperty() { return startDate; }
-    public StringProperty endDateProperty() { return endDate; }
-    public IntegerProperty assignedToProperty() { return assignedTo; }
-    public ObservableValue<Number> createdByProperty() { return createdby; }
+
 
     // --- Standard Getters (Useful for Logic) ---
     public int getId() { return id.get(); }
