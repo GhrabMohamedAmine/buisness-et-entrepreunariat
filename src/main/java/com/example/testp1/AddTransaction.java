@@ -134,6 +134,36 @@ public class AddTransaction extends StackPane {
         anim.play();
     }
 
+    public void showWithData(int budgetId, Node wrapper, org.json.JSONObject qrData) {
+        this.currentBudgetId = budgetId;
+
+        // 1. Clear any old error labels
+        // clearErrors(); // Uncomment if you have this method
+
+        // 2. Safely inject the parsed JSON data into your JavaFX fields
+        try {
+            if (qrData.has("cost")) {
+                costField.setText(String.valueOf(qrData.getDouble("cost")));
+            }
+            if (qrData.has("category")) {
+                categoryField.setText(qrData.getString("category"));
+            }
+            // FIXED: Now looking for the "reference" key
+            if (qrData.has("reference")) {
+                refField.setText(qrData.getString("reference"));
+            }
+            if (qrData.has("date")) {
+                transactionDatePicker.setValue(java.time.LocalDate.parse(qrData.getString("date")));
+            }
+        } catch (Exception e) {
+            System.err.println("-> Warning: Could not map all QR fields to the UI.");
+            e.printStackTrace();
+        }
+
+        // 3. Play your exact same Nexum blur/pop-in animation!
+        triggerOpenSequence(wrapper);
+    }
+
     @FXML
     private void handleSave() {
         clearErrors();

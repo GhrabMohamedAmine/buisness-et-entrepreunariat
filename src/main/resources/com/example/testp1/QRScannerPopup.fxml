@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.image.ImageView?>
+<?import java.net.URL?>
+
+<StackPane fx:id="rootPane" visible="false" mouseTransparent="true" xmlns="http://javafx.com/javafx/17.0.12"
+           xmlns:fx="http://javafx.com/fxml/1" prefHeight="886.0" prefWidth="1213.0"
+           fx:controller="com.example.testp1.QRScannerPopupController">
+
+    <stylesheets>
+        <URL value="@../../styles/nexum.css" />
+    </stylesheets>
+
+    <Region fx:id="dimOverlay" styleClass="modal-overlay" onMouseClicked="#hide" opacity="0.0" />
+
+    <VBox fx:id="popupCard" maxWidth="500.0" maxHeight="500.0" spacing="25" styleClass="popup-card"
+          StackPane.alignment="CENTER">
+
+        <HBox alignment="CENTER_LEFT">
+            <VBox spacing="5" HBox.hgrow="ALWAYS">
+                <Label text="Scan QR Receipt" styleClass="splash-title-label" style="-fx-font-size: 24px;" />
+                <Label text="Hold the QR code up to the laptop camera" styleClass="splash-body-label" />
+            </VBox>
+            <Button onAction="#hide" styleClass="close-button" text="✕"
+                    style="-fx-background-color: transparent; -fx-cursor: hand;" />
+        </HBox>
+
+        <VBox spacing="15" alignment="CENTER">
+            <StackPane style="-fx-border-color: #10B981; -fx-border-width: 3; -fx-border-radius: 8; -fx-background-color: #000000; -fx-background-radius: 8;">
+                <ImageView fx:id="viewfinder" fitHeight="300.0" fitWidth="400.0" pickOnBounds="true" preserveRatio="true" />
+            </StackPane>
+            <Label fx:id="statusLabel" text="Camera initializing..." style="-fx-font-size: 12px; -fx-text-fill: #3B82F6;" />
+        </VBox>
+
+        <HBox alignment="CENTER_RIGHT" spacing="15">
+            <Button onAction="#hide" prefWidth="110.0" styleClass="white-button" text="Cancel" />
+        </HBox>
+    </VBox>
+</StackPane>

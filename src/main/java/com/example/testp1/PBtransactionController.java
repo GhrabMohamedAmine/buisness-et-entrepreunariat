@@ -94,7 +94,19 @@ public class PBtransactionController {
         // Check if the link to the Boss (PBpageController) is active
         if (parentController != null) {
             // Call the show function we just created in the Boss
+
             parentController.triggerAddTransactionSequence();
+        } else {
+            System.err.println("Communication Error: Parent Controller is not linked!");
+        }
+    }
+
+    @FXML
+    private void openQRScanner(){
+        if (parentController != null) {
+            // Call the show function we just created in the Boss
+
+            parentController.triggerQRScanSequence();
         } else {
             System.err.println("Communication Error: Parent Controller is not linked!");
         }

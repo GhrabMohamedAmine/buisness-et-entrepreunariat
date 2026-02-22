@@ -86,5 +86,6 @@
         <AddTransaction fx:id="addTransactionPage"/>
         <UpdateTransaction fx:id="updateTransactionPage"/>
         <AddProjectBudget fx:id="updateCurrentProjectBudget"/>
+        <fx:include fx:id="qrScannerPopup" source="QRScannerPopup.fxml" />
     </children>
 </StackPane>

@@ -66,14 +66,12 @@
             </padding>
             <children>
                 <Label text="Quick Actions" styleClass="section-title" />
-                <Label text="Tools for bulk editing or reporting" styleClass="text-muted" style="-fx-font-size: 12px;" />
+                <Label text="Tools for filling or reporting" styleClass="text-muted" style="-fx-font-size: 12px;" />
 
                 <Separator style="-fx-padding: 10 0;" />
 
-                <VBox alignment="CENTER" spacing="15" VBox.vgrow="ALWAYS">
-                    <FontIcon iconLiteral="mdi2t-tools" iconSize="48" styleClass="text-muted" />
-                    <Label text="Advanced modules will be available here."
-                           textAlignment="CENTER" wrapText="true" styleClass="text-muted" />
+                <VBox alignment="TOP_CENTER" spacing="15" VBox.vgrow="ALWAYS">
+                    <Button text="Scan QR for transaction" onAction="#openQRScanner" styleClass="splash-button"/>
                 </VBox>
             </children>
         </VBox>

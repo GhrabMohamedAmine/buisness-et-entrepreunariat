@@ -5,10 +5,13 @@ import com.example.testp1.entities.Transaction;
 import com.example.testp1.model.ProjectDAO;
 import com.example.testp1.services.ServiceProjectBudget; // Corrected service name
 import com.example.testp1.services.ServiceTransaction;
+import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.layout.AnchorPane;
+import javafx.util.Duration;
+import org.json.JSONObject;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.sql.SQLException;
@@ -76,6 +79,8 @@ public class PBpageController {
     private PBtransactionController transactionTabController;
     @FXML
     private AnchorPane expensesContent;
+    @FXML
+    private QRScannerPopupController qrScannerPopupController;
 
     @FXML
     public void initialize() {
@@ -144,6 +149,45 @@ public class PBpageController {
                 transactionTabController.refreshList();
             });
 
+        }
+    }
+    public void triggerQRScanSequence() {
+        if (currentBudget != null) {
+
+            // 1. Trigger the scanner popup and blur the main wrapper
+            qrScannerPopupController.show(mainPageWrapper, (scannedData) -> {
+                System.out.println("-> Raw QR Data Received: " + scannedData);
+                try {
+                    // 2. Parse the scanned string into a JSON Object
+                    JSONObject qrJson = new JSONObject(scannedData);
+
+                    // 3. Create a tiny delay so the camera popup finishes its closing animation first
+                    PauseTransition delay = new PauseTransition(Duration.millis(250));
+                    delay.setOnFinished(event -> {
+
+                        // 4. Pop open the Add Transaction window using your new Doorway B!
+                        addTransactionPage.showWithData(currentBudget.getId(), mainPageWrapper, qrJson);
+
+                        // 5. Re-attach your normal save logic so the table updates when they hit submit
+                        addTransactionPage.setOnSaveSuccess(() -> {
+                            loadBudgetData(currentBudget.getId());
+                            if (transactionTabController != null) {
+                                transactionTabController.refreshList();
+                            }
+                        });
+
+                    });
+                    delay.play(); // Start the delay timer
+
+                } catch (Exception e) {
+                    System.err.println("-> ERROR: Scanned QR code does not contain valid JSON.");
+                    e.printStackTrace();
+                }
+
+            });
+
+        } else {
+            System.err.println("-> Cannot open scanner: No active budget selected.");
         }
     }
 

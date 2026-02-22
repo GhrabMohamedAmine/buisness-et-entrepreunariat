@@ -15,6 +15,10 @@ module com.example.testp1 {
     requires com.fasterxml.jackson.databind;
     requires java.net.http;
     requires org.json;
+    requires webcam.capture;
+    requires com.google.zxing;
+    requires com.google.zxing.javase;
+    requires javafx.swing;
 
     opens com.example.testp1.entities to com.fasterxml.jackson.databind;
 
