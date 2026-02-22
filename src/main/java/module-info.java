@@ -12,6 +12,7 @@ module Nexum {
 
     opens controllers to javafx.fxml;
     opens entities to javafx.base;
+    opens services.ai to com.fasterxml.jackson.databind;
 
     exports Mains;
 }

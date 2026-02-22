@@ -1,6 +1,7 @@
 package controllers;
 
 import entities.Resource;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.fxml.FXML;
@@ -55,41 +56,40 @@ public class ResourcesCatalogController {
     }
     @FXML
     private void openAIRecommend() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("AI Recommendation");
-        dialog.setHeaderText("Describe your project");
-        dialog.setContentText("Project description:");
+        try {
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/front/ai-chat.fxml"));
+            Parent root = loader.load();
 
-        dialog.showAndWait().ifPresent(desc -> {
-            try {
-                List<Recommendation> recs = aiService.recommend(desc, 5);
+            AiChatController chat = loader.getController();
 
-                if (recs.isEmpty()) {
-                    new Alert(Alert.AlertType.INFORMATION, "No recommendations found.").showAndWait();
-                    return;
+            chat.setListener((resourceId, qty) -> {
+                // 1) select row in table
+                Resource found = null;
+                for (Resource r : resourcesTable.getItems()) {
+                    if (r.getId() == resourceId) { found = r; break; }
                 }
+                if (found != null) {
+                    final Resource finalFound = found;
+                    Platform.runLater(() -> {
+                        resourcesTable.getSelectionModel().select(finalFound);
+                        resourcesTable.scrollTo(finalFound);
 
-                // highlight or auto-sort table
-                // easiest: show in alert list
-                StringBuilder sb = new StringBuilder();
-                for (Recommendation r : recs) {
-                    sb.append("• ")
-                            .append(r.resource().getName())
-                            .append(" | suggested: ").append(r.suggestedQty())
-                            .append(" | score: ").append(r.score())
-                            .append("\n");
+                        // OPTIONAL: directly open request popup with forced resource
+                        // openRequestPopup(finalFound);
+                    });
                 }
+            });
 
-                Alert a = new Alert(Alert.AlertType.INFORMATION);
-                a.setTitle("Top Recommendations");
-                a.setHeaderText("AI Suggestions");
-                a.setContentText(sb.toString());
-                a.showAndWait();
+            Stage stage = new Stage();
+            stage.setTitle("AI Assistant");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(root));
+            stage.setResizable(false);
+            stage.showAndWait();
 
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     private void loadResources() {
