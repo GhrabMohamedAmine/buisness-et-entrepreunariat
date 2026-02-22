@@ -2,6 +2,7 @@
 import com.example.testp1.entities.Article;
 import com.example.testp1.entities.CurrencyResponse;
 import com.example.testp1.entities.NewsResponse;
+import com.example.testp1.entities.ProjectAnalysisResult;
 import com.example.testp1.services.ServiceProjectAnalysis;
 import com.example.utils.Config;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -64,10 +65,10 @@ public class ApiTest {
         double budget = 5000.0;
         double spent = 1200.0;
         String mockTransactions = "[{\"date\": \"2026-02-01\", \"amount\": 400}, {\"date\": \"2026-02-10\", \"amount\": 800}]";
-
+        ProjectAnalysisResult result = new ProjectAnalysisResult();
         // This will now block and wait until the console prints the exact response
-        analyst.fetchProjectProjection(budget, spent, mockTransactions);
-
+        result =  analyst.analyzeProject(1, "We are hiring 2 new developers next month which will increase costs by 5000.");
+        System.out.println("Project Analysis Result: " + result);
         System.out.println("--- Test Ended ---");
 
     }

@@ -1,5 +1,6 @@
 package com.example.testp1;
 
+import com.example.testp1.entities.ProjectAnalysisResult;
 import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
 import javafx.scene.layout.VBox;
@@ -21,6 +22,11 @@ public class AnalysisTabController {
     @FXML private AnalysisLoadingController loadingViewController;
     @FXML private AnalysisResultController resultViewController;
 
+    private PBpageController parentController = new PBpageController();
+
+    private int currentIdSubject = parentController.getAnaTarget();
+
+
 
 
     private double currentProjectBudget;
@@ -31,6 +37,7 @@ public class AnalysisTabController {
     public void initialize() {
 
         setupViewController.setOnSimulationRequested(this::startAiAnalysis);
+        System.out.println(currentIdSubject);
     }
 
     /**
@@ -54,30 +61,33 @@ public class AnalysisTabController {
 
         loadingViewController.playAnimation(); // Start the CSS-style rotation
 
-        System.out.println("-> Starting 7-second simulation timer...");
-        PauseTransition apiSimulationTimer = new PauseTransition(Duration.seconds(7));
+        CompletableFuture.runAsync(() -> {
+            ServiceProjectAnalysis aiService = new ServiceProjectAnalysis();
 
-        // This block runs exactly when the 7 seconds are up
-        apiSimulationTimer.setOnFinished(event -> {
+            // USE THE ID WE GRABBED EARLIER!
+            int budgetId = currentIdSubject;
 
-            System.out.println("-> Simulation finished! Transitioning to Results Dashboard.");
+            // HAND THE TEXT DIRECTLY TO THE AI SERVICE HERE!
+            ProjectAnalysisResult realAiData = aiService.analyzeProject(budgetId, userContext);
 
-            // 3. Stop the spinning animation and hide the loading view
-            loadingViewController.stopAnimation();
-            loadingView.setVisible(false);
-            loadingView.setManaged(false);
+            // 3. When finished, switch UI back on the Main Thread
+            Platform.runLater(() -> {
+                loadingViewController.stopAnimation();
+                loadingView.setVisible(false);
+                loadingView.setManaged(false);
 
-            // 4. Show the Results View
-            resultView.setVisible(true);
-            resultView.setManaged(true);
+                // Show Results View
+                resultView.setVisible(true);
+                resultView.setManaged(true);
 
-            // 5. Fire the mock data to trigger the circle animation and draw the chart!
-            if (resultViewController != null) {
-                resultViewController.injectMockData();
-            }
+                // Inject the data directly into the UI!
+                if (realAiData != null && resultViewController != null) {
+                    // We pass the AI data, and extract the original budget we saved in the model
+                    resultViewController.injectRealData(realAiData);
+                } else {
+                    System.err.println("-> Failed to load results: realAiData or resultViewController is null.");
+                }
+            });
         });
-
-        // Start the timer!
-        apiSimulationTimer.play();
     }
 }

@@ -1,5 +1,6 @@
 package com.example.testp1;
 
+import com.example.testp1.entities.ProjectAnalysisResult;
 import javafx.animation.*;
 import javafx.fxml.FXML;
 import javafx.scene.chart.LineChart;
@@ -183,24 +184,109 @@ public class AnalysisResultController {
     /**
      * Finds the data point where revenue overtakes spend and adds a visual flair.
      */
-    private void highlightInflectionPoint(XYChart.Series<String, Number> series, String month) {
-        // Wait for the chart to render the nodes, then style the specific point
-        javafx.application.Platform.runLater(() -> {
-            for (XYChart.Data<String, Number> data : series.getData()) {
-                if (data.getXValue().equals(month) && data.getNode() != null) {
-                    // Make the inflection point node a glowing green circle
-                    data.getNode().setStyle(
-                            "-fx-background-color: #10B981; " +
-                                    "-fx-background-radius: 10px; " +
-                                    "-fx-padding: 6px; " +
-                                    "-fx-effect: dropshadow(three-pass-box, rgba(16, 185, 129, 0.6), 10, 0, 0, 0);"
-                    );
+    public void injectRealData(ProjectAnalysisResult data) {
+        // 1. Extract the budget directly from your data object!
+        double originalBudget = data.getOriginalBudget();
 
-                    // Optional: Add a tooltip to explain the dot
-                    Tooltip tooltip = new Tooltip("Break-Even Point Reached!\nRevenue exceeds Spend.");
-                    Tooltip.install(data.getNode(), tooltip);
+        // 2. Top Risk Badge Logic
+        if (data.getSuccessProbability() < 40) {
+            riskBadge.setText("CRITICAL RISK");
+            riskBadge.setStyle("-fx-background-color: #FEE2E2; -fx-text-fill: #EF4444; -fx-padding: 6 12 6 12; -fx-background-radius: 20; -fx-font-weight: bold; -fx-font-size: 12px;");
+        } else if (data.getSuccessProbability() < 70) {
+            riskBadge.setText("MODERATE RISK");
+            riskBadge.setStyle("-fx-background-color: #FEF3C7; -fx-text-fill: #D97706; -fx-padding: 6 12 6 12; -fx-background-radius: 20; -fx-font-weight: bold; -fx-font-size: 12px;");
+        } else {
+            riskBadge.setText("LOW RISK");
+            riskBadge.setStyle("-fx-background-color: #D1FAE5; -fx-text-fill: #059669; -fx-padding: 6 12 6 12; -fx-background-radius: 20; -fx-font-weight: bold; -fx-font-size: 12px;");
+        }
+
+        // 3. Main Labels (Variance and Totals)
+        double variance = data.getProjectedFinalCost() - originalBudget;
+
+        // Explicitly set the sign so overruns have a '+' and under budget has a '-'
+        String sign = variance > 0 ? "+" : (variance < 0 ? "-" : "");
+
+        // Using Locale.US forces the comma format (e.g., $50,000) regardless of system language
+        varianceLabel.setText(String.format(java.util.Locale.US, "%s$%,.0f", sign, Math.abs(variance)));
+
+        // Set text and color explicitly based on the variance
+        if (variance > 0) {
+            varianceSubtext.setText("Expected Overrun");
+            varianceLabel.setStyle("-fx-font-size: 42px; -fx-font-weight: bold; -fx-text-fill: #EF4444;"); // Red
+        } else if (variance < 0) {
+            varianceSubtext.setText("Under Budget");
+            varianceLabel.setStyle("-fx-font-size: 42px; -fx-font-weight: bold; -fx-text-fill: #10B981;"); // Green
+        } else {
+            varianceSubtext.setText("Exactly On Budget");
+            varianceLabel.setStyle("-fx-font-size: 42px; -fx-font-weight: bold; -fx-text-fill: #10B981;"); // Green
+        }
+
+        // 4. The Grid Details (Forcing Locale.US here too for clean commas)
+        projectedTotalLabel.setText(String.format(java.util.Locale.US, "$%,.0f", data.getProjectedFinalCost()));
+        allocatedBudgetLabel.setText(String.format(java.util.Locale.US, "$%,.0f", originalBudget));
+        inflectionDateLabel.setText(data.getInflectionDate());
+
+        // 5. Trigger the Probability Animation
+        animateProbability(data.getSuccessProbability());
+
+        // 6. Populate the Chart with AI Timeline Data
+        updateChart(data);
+    }
+
+    private void updateChart(ProjectAnalysisResult data) {
+        projectionChart.getData().clear();
+
+        XYChart.Series<String, Number> spendSeries = new XYChart.Series<>();
+        spendSeries.setName("Projected Spend");
+
+        XYChart.Series<String, Number> revenueSeries = new XYChart.Series<>();
+        revenueSeries.setName("Projected Revenue");
+
+        for (ProjectAnalysisResult.TimelinePoint point : data.getTimelineData()) {
+            spendSeries.getData().add(new XYChart.Data<>(point.getMonth(), point.getSpend()));
+            revenueSeries.getData().add(new XYChart.Data<>(point.getMonth(), point.getRevenue()));
+        }
+
+        projectionChart.getData().addAll(spendSeries, revenueSeries);
+
+        // 6. Highlight the Golden Cross if it exists
+        if (data.getInflectionDate() != null && !data.getInflectionDate().equalsIgnoreCase("N/A")) {
+            highlightInflectionPoint(revenueSeries, data.getInflectionDate());
+        }
+    }
+
+    /**
+     * Finds the data point where revenue overtakes spend and adds a visual flair.
+     * Patched to prevent NullPointerExceptions when rendering.
+     */
+    private void highlightInflectionPoint(XYChart.Series<String, Number> series, String month) {
+        for (XYChart.Data<String, Number> data : series.getData()) {
+            if (data.getXValue().equals(month)) {
+
+                // If the node is already drawn, style it immediately
+                if (data.getNode() != null) {
+                    applyHighlightStyle(data.getNode());
+                } else {
+                    // If JavaFX hasn't drawn it yet, wait for the node property to populate
+                    data.nodeProperty().addListener((obs, oldNode, newNode) -> {
+                        if (newNode != null) {
+                            applyHighlightStyle(newNode);
+                        }
+                    });
                 }
+                break; // Found the month, no need to keep looping
             }
-        });
+        }
+    }
+
+    private void applyHighlightStyle(javafx.scene.Node node) {
+        node.setStyle(
+                "-fx-background-color: #10B981; " +
+                        "-fx-background-radius: 10px; " +
+                        "-fx-padding: 6px; " +
+                        "-fx-effect: dropshadow(three-pass-box, rgba(16, 185, 129, 0.6), 10, 0, 0, 0);"
+        );
+        Tooltip tooltip = new Tooltip("Break-Even Point Reached!\nRevenue exceeds Spend.");
+        Tooltip.install(node, tooltip);
     }
 }

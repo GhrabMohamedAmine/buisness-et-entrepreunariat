@@ -51,9 +51,14 @@ public class PBpageController {
     @FXML
     private AnchorPane analysisContent;
 
+    private int AnaTarget = FinanceController.getCurrentBudgetId();
+
 
     public ProjectBudget getCurrentBudget() {
         return currentBudget;
+    }
+    public int getAnaTarget() {
+        return AnaTarget;
     }
 
     private ProjectBudget currentBudget;
