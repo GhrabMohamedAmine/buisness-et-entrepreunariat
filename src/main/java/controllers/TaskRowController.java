@@ -9,6 +9,7 @@ import javafx.scene.input.Dragboard;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.input.TransferMode;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Region;
 import org.kordamp.ikonli.javafx.FontIcon;
 import entities.Task;
 
@@ -63,6 +64,7 @@ public class TaskRowController {
         }
         updateStatusStyle(normalizedStatus);
         updatePriorityStyle(task.getPriority());
+        enforceBadgePreferredWidth();
         applyMode();
 
     }
@@ -123,6 +125,24 @@ public class TaskRowController {
         } else {
             inProgressIcon.getStyleClass().add("gray-icon");
         }
+    }
+
+    private void enforceBadgePreferredWidth() {
+        if (priorityLabel != null) {
+            priorityLabel.setMinWidth(Region.USE_PREF_SIZE);
+        }
+        if (statusLabel != null) {
+            statusLabel.setMinWidth(Region.USE_PREF_SIZE);
+        }
+    }
+
+    public void setStatusFromBoard(String status) {
+        String normalizedStatus = TaskValueMapper.normalizeStatus(status);
+        currentStatus = normalizedStatus;
+        if (doneCheck != null) {
+            doneCheck.setSelected(TaskValueMapper.STATUS_DONE.equals(normalizedStatus));
+        }
+        updateStatusStyle(normalizedStatus);
     }
 
     public void setOnEdit(Runnable onEdit) {

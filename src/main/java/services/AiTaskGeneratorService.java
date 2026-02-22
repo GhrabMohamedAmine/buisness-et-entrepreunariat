@@ -34,7 +34,7 @@ public class AiTaskGeneratorService {
         }
 
         String userPrompt = """
-                Project name: %s
+                Project name: %s      
                 Project description: %s
                 Start date: %s
                 Due date: %s
@@ -50,7 +50,7 @@ public class AiTaskGeneratorService {
                 nullSafe(projectDescription),
                 startDate == null ? "" : startDate,
                 dueDate == null ? "" : dueDate,
-                Math.max(1, Math.min(10, maxTasks))
+                maxTasks
         );
 
         JsonObject requestPayload = new JsonObject();
@@ -67,7 +67,7 @@ public class AiTaskGeneratorService {
         userMessage.addProperty("content", userPrompt);
         messages.add(userMessage);
         requestPayload.add("messages", messages);
-        requestPayload.addProperty("temperature", 0.3);
+        requestPayload.addProperty("temperature", 0.3); // reduces randomness
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(URI.create(API_URL))

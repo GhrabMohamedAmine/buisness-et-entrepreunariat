@@ -19,7 +19,7 @@
     <HBox alignment="CENTER_LEFT" spacing="12">
         <VBox spacing="4">
             <Label styleClass="title" text="Calendar" />
-            <Label styleClass="subtitle" text="Projects, tasks, and public holidays (Nager.Date)" />
+            <Label styleClass="subtitle" text="Projects, tasks, and public holidays " />
         </VBox>
         <Region HBox.hgrow="ALWAYS" />
         <Button onAction="#onPreviousMonth" styleClass="btn-secondary" text="&#60;" />

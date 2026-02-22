@@ -1,5 +1,9 @@
 package controllers;
 
+import javafx.animation.PauseTransition;
+import javafx.animation.FadeTransition;
+import javafx.animation.ParallelTransition;
+import javafx.animation.TranslateTransition;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -19,8 +23,11 @@ import javafx.geometry.Pos;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
+import javafx.stage.Window;
+import javafx.util.Duration;
 import entities.Project;
 import entities.Task;
 import entities.User;
@@ -41,6 +48,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProjectDetailsController {
     private static final String[] AVATAR_COLOR_CLASSES = {"purple", "blue", "green", "orange"};
@@ -59,6 +67,12 @@ public class ProjectDetailsController {
     @FXML private VBox todoColumn;
     @FXML private VBox inProgressColumn;
     @FXML private VBox doneColumn;
+    @FXML private ScrollPane todoScrollPane;
+    @FXML private ScrollPane inProgressScrollPane;
+    @FXML private ScrollPane doneScrollPane;
+    @FXML private Label todoCountLabel;
+    @FXML private Label inProgressCountLabel;
+    @FXML private Label doneCountLabel;
     @FXML private VBox teamContainer;
     @FXML private VBox recentActivityContainer;
     @FXML private Project currentProject;
@@ -85,6 +99,9 @@ public class ProjectDetailsController {
         setupDropTarget(todoColumn, TaskValueMapper.STATUS_TODO);
         setupDropTarget(inProgressColumn, TaskValueMapper.STATUS_IN_PROGRESS);
         setupDropTarget(doneColumn, TaskValueMapper.STATUS_DONE);
+        setupDropTarget(todoScrollPane, TaskValueMapper.STATUS_TODO);
+        setupDropTarget(inProgressScrollPane, TaskValueMapper.STATUS_IN_PROGRESS);
+        setupDropTarget(doneScrollPane, TaskValueMapper.STATUS_DONE);
     }
 
     public void ProjectDataLoad(Project project) {
@@ -422,6 +439,7 @@ public class ProjectDetailsController {
         kanbanContainer.setManaged(true);
 
         loadKanbanColumns();
+        animateKanbanContainerReveal();
     }
 
     private void loadKanbanColumns() {
@@ -438,6 +456,7 @@ public class ProjectDetailsController {
                 FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/components/TaskRow.fxml"));
                 Parent row = loader.load();
                 TaskRowController controller = loader.getController();
+                row.getProperties().put("taskRowController", controller);
 
                 controller.setTaskData(task);
                 controller.setKanbanMode(true);
@@ -469,14 +488,17 @@ public class ProjectDetailsController {
                     default -> todoColumn;
                 };
 
-                if (row instanceof Region region) {
-                    region.setMaxWidth(Double.MAX_VALUE);
-                }
-                targetColumn.getChildren().add(row);
+                addCardToKanbanColumn(targetColumn, row);
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
+
+        addEmptyColumnPlaceholder(todoColumn, "No tasks in To Do");
+        addEmptyColumnPlaceholder(inProgressColumn, "No tasks in progress");
+        addEmptyColumnPlaceholder(doneColumn, "No completed tasks");
+        updateKanbanCounts();
+        animateKanbanColumnsEntrance();
     }
 
     private void refreshVisibleTaskView() {
@@ -567,7 +589,7 @@ public class ProjectDetailsController {
                     teamMembers,
                     file.toPath()
             );
-            showAlert(Alert.AlertType.INFORMATION, "Export rapport", "Rapport généré avec succès:\n" + file.getAbsolutePath());
+            showExportSuccessToast(file.getAbsolutePath());
         } catch (Exception e) {
             showAlert(Alert.AlertType.ERROR, "Export rapport", "Échec de génération du PDF:\n" + e.getMessage());
         }
@@ -582,10 +604,44 @@ public class ProjectDetailsController {
 
     private void showAlert(Alert.AlertType type, String title, String message) {
         Alert alert = new Alert(type);
+        if (tasksContainer != null && tasksContainer.getScene() != null) {
+            alert.initOwner(tasksContainer.getScene().getWindow());
+        }
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    private void showExportSuccessToast(String savedPath) {
+        if (tasksContainer == null || tasksContainer.getScene() == null) {
+            return;
+        }
+
+        Window owner = tasksContainer.getScene().getWindow();
+        if (owner == null) {
+            return;
+        }
+
+        Label toastLabel = new Label("Rapport PDF généré avec succès.\n" + savedPath);
+        toastLabel.setStyle("-fx-text-fill: white; -fx-font-size: 12;");
+
+        HBox toastRoot = new HBox(toastLabel);
+        toastRoot.setStyle("-fx-background-color: rgba(17,24,39,0.95); -fx-background-radius: 8; -fx-padding: 10 14;");
+
+        Popup popup = new Popup();
+        popup.getContent().add(toastRoot);
+        popup.setAutoHide(true);
+        popup.show(owner);
+
+        double x = owner.getX() + owner.getWidth() - toastRoot.prefWidth(-1) - 24;
+        double y = owner.getY() + owner.getHeight() - toastRoot.prefHeight(-1) - 24;
+        popup.setX(x);
+        popup.setY(y);
+
+        PauseTransition delay = new PauseTransition(Duration.seconds(3));
+        delay.setOnFinished(event -> popup.hide());
+        delay.play();
     }
 
     @FXML
@@ -769,14 +825,28 @@ public class ProjectDetailsController {
         if (column == null) {
             return;
         }
-        column.setOnDragOver(event -> {
-            if (event.getGestureSource() != column && event.getDragboard().hasString()) {
+        setupDropTarget((Node) column, newStatus);
+    }
+
+    private void setupDropTarget(ScrollPane scrollPane, String newStatus) {
+        if (scrollPane == null) {
+            return;
+        }
+        setupDropTarget((Node) scrollPane, newStatus);
+    }
+
+    private void setupDropTarget(Node target, String newStatus) {
+        if (target == null) {
+            return;
+        }
+        target.setOnDragOver(event -> {
+            if (event.getGestureSource() != target && event.getDragboard().hasString()) {
                 event.acceptTransferModes(TransferMode.MOVE);
             }
             event.consume();
         });
 
-        column.setOnDragDropped(event -> {
+        target.setOnDragDropped(event -> {
             Dragboard db = event.getDragboard();
             boolean success = false;
 
@@ -785,9 +855,10 @@ public class ProjectDetailsController {
                     int taskId = Integer.parseInt(db.getString());
                     success = taskService.updateTaskStatus(taskId, newStatus);
                     if (success && currentProject != null) {
+                        moveDraggedTaskToColumn(event.getGestureSource(), newStatus);
                         loadProjectStats(currentProject.getId());
                         loadRecentActivities(currentProject.getId());
-                        loadKanbanColumns();
+                        updateKanbanCounts();
                     }
                 } catch (NumberFormatException ignored) {
                     success = false;
@@ -796,6 +867,162 @@ public class ProjectDetailsController {
             event.setDropCompleted(success);
             event.consume();
         });
+    }
+
+    private void addCardToKanbanColumn(VBox column, Parent row) {
+        if (row instanceof Region region) {
+            region.setMaxWidth(Double.MAX_VALUE);
+        }
+        row.getStyleClass().add("kanban-task-card");
+        column.getChildren().add(row);
+    }
+
+    private void moveDraggedTaskToColumn(Object gestureSource, String newStatus) {
+        if (!(gestureSource instanceof Node draggedNode)) {
+            return;
+        }
+        VBox targetColumn = resolveColumnByStatus(newStatus);
+        if (targetColumn == null) {
+            return;
+        }
+
+        clearEmptyPlaceholder(todoColumn);
+        clearEmptyPlaceholder(inProgressColumn);
+        clearEmptyPlaceholder(doneColumn);
+
+        if (draggedNode.getParent() instanceof Pane currentParent) {
+            currentParent.getChildren().remove(draggedNode);
+        }
+        if (!targetColumn.getChildren().contains(draggedNode)) {
+            targetColumn.getChildren().add(draggedNode);
+        }
+        syncDraggedTaskVisualStatus(draggedNode, newStatus);
+
+        addEmptyColumnPlaceholder(todoColumn, "No tasks in To Do");
+        addEmptyColumnPlaceholder(inProgressColumn, "No tasks in progress");
+        addEmptyColumnPlaceholder(doneColumn, "No completed tasks");
+        animateMovedKanbanCard(draggedNode);
+    }
+
+    private VBox resolveColumnByStatus(String status) {
+        String normalized = TaskValueMapper.normalizeStatus(status);
+        return switch (normalized) {
+            case TaskValueMapper.STATUS_DONE -> doneColumn;
+            case TaskValueMapper.STATUS_IN_PROGRESS -> inProgressColumn;
+            default -> todoColumn;
+        };
+    }
+
+    private void clearEmptyPlaceholder(VBox column) {
+        if (column == null) {
+            return;
+        }
+        column.getChildren().removeIf(node -> node instanceof Label);
+    }
+
+    private void animateMovedKanbanCard(Node card) {
+        card.setOpacity(0.75);
+        card.setTranslateY(-6);
+
+        FadeTransition fade = new FadeTransition(Duration.millis(180), card);
+        fade.setFromValue(0.75);
+        fade.setToValue(1.0);
+
+        TranslateTransition settle = new TranslateTransition(Duration.millis(180), card);
+        settle.setFromY(-6);
+        settle.setToY(0);
+
+        new ParallelTransition(fade, settle).play();
+    }
+
+    private void syncDraggedTaskVisualStatus(Node draggedNode, String newStatus) {
+        Object controllerObj = draggedNode.getProperties().get("taskRowController");
+        if (controllerObj instanceof TaskRowController taskRowController) {
+            taskRowController.setStatusFromBoard(newStatus);
+        }
+    }
+
+    private void addEmptyColumnPlaceholder(VBox column, String text) {
+        if (column == null || !column.getChildren().isEmpty()) {
+            return;
+        }
+        Label emptyLabel = new Label(text);
+        emptyLabel.getStyleClass().add("text-muted");
+        emptyLabel.setWrapText(true);
+        emptyLabel.setStyle("-fx-font-size: 12; -fx-padding: 8 4;");
+        column.getChildren().add(emptyLabel);
+    }
+
+    private void updateKanbanCounts() {
+        if (todoCountLabel != null && todoColumn != null) {
+            todoCountLabel.setText(String.valueOf(countKanbanTasks(todoColumn)));
+        }
+        if (inProgressCountLabel != null && inProgressColumn != null) {
+            inProgressCountLabel.setText(String.valueOf(countKanbanTasks(inProgressColumn)));
+        }
+        if (doneCountLabel != null && doneColumn != null) {
+            doneCountLabel.setText(String.valueOf(countKanbanTasks(doneColumn)));
+        }
+    }
+
+    private int countKanbanTasks(VBox column) {
+        if (column == null) {
+            return 0;
+        }
+        int count = 0;
+        for (Node node : column.getChildren()) {
+            if (!(node instanceof Label)) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    private void animateKanbanContainerReveal() {
+        if (kanbanContainer == null) {
+            return;
+        }
+        kanbanContainer.setOpacity(0);
+        kanbanContainer.setTranslateY(10);
+
+        FadeTransition fade = new FadeTransition(Duration.millis(260), kanbanContainer);
+        fade.setFromValue(0);
+        fade.setToValue(1);
+
+        TranslateTransition slide = new TranslateTransition(Duration.millis(260), kanbanContainer);
+        slide.setFromY(10);
+        slide.setToY(0);
+
+        new ParallelTransition(fade, slide).play();
+    }
+
+    private void animateKanbanColumnsEntrance() {
+        animateKanbanColumn(todoColumn, 0);
+        animateKanbanColumn(inProgressColumn, 1);
+        animateKanbanColumn(doneColumn, 2);
+    }
+
+    private void animateKanbanColumn(VBox column, int columnIndex) {
+        if (column == null || column.getChildren().isEmpty()) {
+            return;
+        }
+        AtomicInteger itemIndex = new AtomicInteger(0);
+        for (Node node : column.getChildren()) {
+            node.setOpacity(0);
+            node.setTranslateY(14);
+
+            FadeTransition fade = new FadeTransition(Duration.millis(220), node);
+            fade.setFromValue(0);
+            fade.setToValue(1);
+
+            TranslateTransition slide = new TranslateTransition(Duration.millis(220), node);
+            slide.setFromY(14);
+            slide.setToY(0);
+
+            ParallelTransition cardTransition = new ParallelTransition(fade, slide);
+            cardTransition.setDelay(Duration.millis(columnIndex * 70L + itemIndex.getAndIncrement() * 40L));
+            cardTransition.play();
+        }
     }
 
 

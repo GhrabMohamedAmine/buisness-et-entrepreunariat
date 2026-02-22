@@ -391,3 +391,66 @@ w-card {
     -fx-max-width: 14;
     -fx-max-height: 14;
 }
+
+/* Kanban board */
+.kanban-board {
+    -fx-padding: 4 0 0 0;
+}
+
+.kanban-column {
+    -fx-background-color: linear-gradient(to bottom, #f8fafc, #f3f4f6);
+    -fx-background-radius: 14;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 14;
+    -fx-border-width: 1;
+    -fx-padding: 10;
+}
+
+.kanban-column-header {
+    -fx-padding: 4 2 8 2;
+}
+
+.kanban-column-title {
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #334155;
+}
+
+.kanban-column-count {
+    -fx-background-color: #e2e8f0;
+    -fx-text-fill: #334155;
+    -fx-font-size: 11px;
+    -fx-font-weight: 700;
+    -fx-padding: 2 8;
+    -fx-background-radius: 999;
+}
+
+.kanban-column-scroll {
+    -fx-background-color: transparent;
+    -fx-background: transparent;
+    -fx-padding: 0;
+    -fx-border-color: transparent;
+}
+
+.kanban-column-scroll > .viewport {
+    -fx-background-color: transparent;
+}
+
+.kanban-column-list {
+    -fx-padding: 2 2 4 2;
+}
+
+.task-row-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #e7ebf2;
+    -fx-border-radius: 12;
+    -fx-border-width: 1;
+    -fx-padding: 10 12;
+    -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.05), 12, 0.1, 0, 2);
+}
+
+.task-row-card:hover {
+    -fx-border-color: #d3dded;
+    -fx-effect: dropshadow(gaussian, rgba(15,23,42,0.11), 16, 0.15, 0, 4);
+}

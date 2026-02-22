@@ -72,7 +72,7 @@ public class ProjectReportService {
                         .setMarginTop(4)
                         .setMarginBottom(14);
                 for (User member : members) {
-                    memberList.add(new ListItem(safe(member.getFullName())));
+                    memberList.add(new ListItem(member.getFullName()));
                 }
                 document.add(memberList);
             }
@@ -123,7 +123,7 @@ public class ProjectReportService {
                         .setBold()
                         .setFontColor(COLOR_TEXT)
                         .setMarginBottom(2))
-                .add(new Paragraph("Projet: " + safe(project.getName()))
+                .add(new Paragraph("Projet: " +project.getName())
                         .setFontSize(12)
                         .setFontColor(COLOR_MUTED));
 
@@ -195,8 +195,8 @@ public class ProjectReportService {
         table.addHeaderCell(headerCell("Statut"));
 
         for (Task task : overdueList) {
-            table.addCell(bodyCell(safe(task.getTitle())));
-            table.addCell(bodyCell(safe(task.getDueDate())));
+            table.addCell(bodyCell(task.getTitle()));
+            table.addCell(bodyCell(task.getDueDate()));
             table.addCell(bodyCell("Overdue").setFontColor(COLOR_RED).setBold());
         }
         return table;
@@ -227,8 +227,8 @@ public class ProjectReportService {
         table.addHeaderCell(headerCell("Statut"));
 
         for (Task task : tasks) {
-            table.addCell(bodyCell(safe(task.getTitle())));
-            table.addCell(bodyCell(safe(task.getDueDate())));
+            table.addCell(bodyCell(task.getTitle()));
+            table.addCell(bodyCell(task.getDueDate()));
             table.addCell(bodyCell(statusLabel));
         }
         return table;
@@ -318,7 +318,5 @@ public class ProjectReportService {
         return filtered;
     }
 
-    private String safe(String value) {
-        return value == null || value.isBlank() ? "N/A" : value;
-    }
+
 }

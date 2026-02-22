@@ -2,9 +2,13 @@ package controllers;
 
 import javafx.fxml.FXML;
 import javafx.application.Platform;
+import javafx.animation.PauseTransition;
 import javafx.scene.control.*;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
+import javafx.stage.Popup;
 import javafx.stage.Stage;
+import javafx.stage.Window;
 import org.controlsfx.control.CheckComboBox;
 import entities.Project;
 import entities.User;
@@ -14,6 +18,7 @@ import javafx.util.StringConverter;
 import javafx.collections.ListChangeListener;
 import entities.Task;
 import services.AiTaskGeneratorService;
+import javafx.util.Duration;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -211,6 +216,7 @@ public class AddProjectController {
         LocalDate startDate = parseDate(project.getStartDate());
         LocalDate dueDate = parseDate(project.getEndDate());
 
+
         Thread taskGeneratorThread = new Thread(() -> {
             try {
                 List<AiTaskGeneratorService.GeneratedTask> generatedTasks =
@@ -239,27 +245,12 @@ public class AddProjectController {
                         if (onProjectCreated != null) {
                             onProjectCreated.run();
                         }
-                        showAiGenerationAlert(
-                                Alert.AlertType.INFORMATION,
-                                "AI Tasks Generated",
-                                "Created " + finalCreatedCount + " tasks for project \"" + project.getName() + "\"."
-                        );
+                        showAiGeneratedToast(project.getName(), finalCreatedCount);
                     });
-                } else {
-                    Platform.runLater(() -> showAiGenerationAlert(
-                            Alert.AlertType.WARNING,
-                            "AI Task Generation",
-                            "No tasks were generated. Check API key, model access, or project description."
-                    ));
                 }
             } catch (Exception e) {
                 System.err.println("AI task generation skipped: " + e.getMessage());
                 e.printStackTrace();
-                Platform.runLater(() -> showAiGenerationAlert(
-                        Alert.AlertType.WARNING,
-                        "AI Task Generation Failed",
-                        e.getMessage()
-                ));
             }
         }, "ai-task-generator-" + projectId);
         taskGeneratorThread.setDaemon(true);
@@ -274,11 +265,35 @@ public class AddProjectController {
         }
     }
 
-    private void showAiGenerationAlert(Alert.AlertType type, String title, String message) {
-        Alert alert = new Alert(type);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
+    private void showAiGeneratedToast(String projectName, int createdCount) {
+        StackPane contentArea = MainController.getStaticContentArea();
+        if (contentArea == null || contentArea.getScene() == null) {
+            return;
+        }
+
+        Window owner = contentArea.getScene().getWindow();
+        if (owner == null) {
+            return;
+        }
+
+        Label messageLabel = new Label("Created " + createdCount + " tasks for \"" + projectName + "\".");
+        messageLabel.setStyle("-fx-text-fill: white; -fx-font-size: 12;");
+
+        HBox toastRoot = new HBox(messageLabel);
+        toastRoot.setStyle("-fx-background-color: rgba(17,24,39,0.95); -fx-background-radius: 8; -fx-padding: 10 14;");
+
+        Popup popup = new Popup();
+        popup.getContent().add(toastRoot);
+        popup.setAutoHide(true);
+        popup.show(owner);
+
+        double x = owner.getX() + owner.getWidth() - toastRoot.prefWidth(-1) - 24;
+        double y = owner.getY() + owner.getHeight() - toastRoot.prefHeight(-1) - 24;
+        popup.setX(x);
+        popup.setY(y);
+
+        PauseTransition delay = new PauseTransition(Duration.seconds(3));
+        delay.setOnFinished(event -> popup.hide());
+        delay.play();
     }
 }

@@ -26,11 +26,7 @@
         <Region HBox.hgrow="ALWAYS" />
 
         <HBox spacing="10" alignment="CENTER_RIGHT">
-            <Button text="Download Report" styleClass="btn-secondary">
-                <graphic>
-                    <FontIcon iconLiteral="mdi2f-file-download-outline" iconSize="16" />
-                </graphic>
-            </Button>
+
 
             <Button text="New Project" styleClass="btn-primary" onAction="#openAddProjectPopup">
                 <graphic>
@@ -107,11 +103,7 @@
                 <Region HBox.hgrow="ALWAYS"/>
             </HBox>
 
-            <ScrollPane fitToWidth="true" prefHeight="300.0" style="-fx-background-color: transparent; -fx-background: transparent;">
-                <content>
-                    <VBox fx:id="recentProjectsContainer" spacing="10.0" styleClass="recent-projects-list" />
-                </content>
-            </ScrollPane>
+            <VBox fx:id="recentProjectsContainer" spacing="10.0" styleClass="recent-projects-list" />
 
         </VBox>
 

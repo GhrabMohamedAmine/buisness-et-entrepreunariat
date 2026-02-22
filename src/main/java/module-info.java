@@ -19,9 +19,7 @@ module tezfx {
     requires layout;
 
     exports Mains;
-    exports tezfx.app;
     opens controllers to javafx.fxml;
     opens Mains to javafx.graphics, javafx.fxml;
-    opens tezfx.app to javafx.graphics, javafx.fxml;
 
 }

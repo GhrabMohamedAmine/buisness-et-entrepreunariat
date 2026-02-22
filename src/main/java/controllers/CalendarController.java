@@ -38,7 +38,7 @@ public class CalendarController {
     private final ProjectService projectService = new ProjectService();
     private final TaskService taskService = new TaskService();
     private final HttpClient httpClient = HttpClient.newBuilder().build();
-    private final Map<Integer, List<HolidayEntry>> holidaysByYear = new HashMap<>();
+    private final Map<Integer, List<HolidayEntry>> holidaysByYear = new HashMap<>(); // to avoid repeated api callsw
 
     private YearMonth currentMonth = YearMonth.now();
     private String countryCode = "TN";
@@ -197,7 +197,7 @@ public class CalendarController {
         }
         List<HolidayEntry> holidays = new ArrayList<>();
         try {
-            String url = "https://date.nager.at/api/v3/PublicHolidays/2026/TN" ;
+            String url = "https://date.nager.at/api/v3/PublicHolidays/" + year + "/" + country + "/" ;
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(url))
                     .GET()
