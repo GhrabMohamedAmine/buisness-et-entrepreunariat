@@ -242,11 +242,14 @@ public class chatController {
     private TilePane gifGrid;
     private ScrollPane gifScroll;
     private boolean gifUiBuilt = false;
+    private final Map<Long, byte[]> dmAvatarCache = new HashMap<>();
+    private final Map<Long, String> dmTitleCache  = new HashMap<>();
+    private final Map<Integer, byte[]> userAvatarCache = new HashMap<>();
 
 
 
     private record GifItem(String title, String previewUrl, String gifUrl) {}
-    private int currentUserId = 2;
+    private int currentUserId = 44;
 
     //==========================
     //HELPER METHODS
@@ -566,15 +569,20 @@ public class chatController {
         if (selectedConversation == null) return;
 
         try {
-            var info = conversationService.getDetails(selectedConversation.getId());
+            var info = conversationService.getDetails(selectedConversation.getId(), currentUserId);
 
+            String type = info.getType();
+
+            // title
             String title;
-            if ("DM".equalsIgnoreCase(info.getType())) {
-                title = conversationService.getDmDisplayName(info.getId(), currentUserId);
+            if ("DM".equalsIgnoreCase(type)) {
+                title = dmDisplayTitle(info.getId());
             } else {
                 title = (info.getTitle() == null || info.getTitle().isBlank()) ? "Discussion" : info.getTitle();
             }
             drawerTitle.setText(title);
+
+            // meta
             conversationIdLabel.setText(String.valueOf(info.getId()));
 
             if (info.getCreatedAt() != null) {
@@ -586,13 +594,18 @@ public class chatController {
                 createdAtLabel.setText("-");
             }
 
-            conversationTypeLabel.setText("GROUP".equalsIgnoreCase(info.getType()) ? "Group" : "DM");
+            conversationTypeLabel.setText("GROUP".equalsIgnoreCase(type) ? "Group" : "DM");
             totalMessagesLabel.setText(String.valueOf(info.getTotalMessages()));
 
-            // avatar
-            applyAvatar(drawerAvatarCircle, info.getAvatar(), info.getType());
+            // avatar:
+            // GROUP => conversation avatar
+            // DM    => other user imagelink
+            byte[] avatarBytes = "DM".equalsIgnoreCase(type) ? dmAvatarBytes(info.getId()) : info.getAvatar();
+            applyAvatar(drawerAvatarCircle, avatarBytes, type);
+
             // permissions
             applyRoleUiForConversation(info);
+
             // participants
             loadMembers(selectedConversation.getId());
 
@@ -603,6 +616,8 @@ public class chatController {
 
     private void applyAvatar(Circle circle, byte[] avatarBytes, String type) {
         try {
+            if (circle == null) return;
+
             // 1) DB avatar
             if (avatarBytes != null && avatarBytes.length > 0) {
                 Image img = new Image(new ByteArrayInputStream(avatarBytes), 0, 0, true, true);
@@ -610,13 +625,13 @@ public class chatController {
                 return;
             }
 
-            // 2) fallback by type (RESOURCE PATH)
+            // 2) fallback by type
             String file = "GROUP".equalsIgnoreCase(type) ? "group-default.png" : "user-default.png";
             String resourcePath = "/assets/" + file;
 
             var url = getClass().getResource(resourcePath);
             if (url == null) {
-                circle.setFill(javafx.scene.paint.Color.LIGHTGRAY);
+                circle.setFill(Color.LIGHTGRAY);
                 System.err.println("Missing resource: " + resourcePath);
                 return;
             }
@@ -625,11 +640,44 @@ public class chatController {
             circle.setFill(new ImagePattern(img));
 
         } catch (Exception ex) {
-            circle.setFill(javafx.scene.paint.Color.LIGHTGRAY);
+            if (circle != null) circle.setFill(Color.LIGHTGRAY);
             ex.printStackTrace();
         }
     }
 
+    private byte[] userAvatarBytes(int userId) {
+        return userAvatarCache.computeIfAbsent(userId, uid -> {
+            try {
+                return conversationService.getUserAvatar(uid);
+            } catch (SQLException e) {
+                return null;
+            }
+        });
+    }
+
+    private void applyUserAvatar(Circle circle, int userId) {
+        applyAvatar(circle, userAvatarBytes(userId), "DM"); // null => user-default.png
+    }
+
+    private byte[] dmAvatarBytes(long conversationId) {
+        return dmAvatarCache.computeIfAbsent(conversationId, cid -> {
+            try {
+                return conversationService.getDmAvatar(cid, currentUserId); // other user's imagelink
+            } catch (SQLException e) {
+                return null;
+            }
+        });
+    }
+
+    private String dmDisplayTitle(long conversationId) {
+        return dmTitleCache.computeIfAbsent(conversationId, cid -> {
+            try {
+                return conversationService.getDmDisplayName(cid, currentUserId);
+            } catch (SQLException e) {
+                return "Discussion";
+            }
+        });
+    }
 
     // =========================
     // LOAD TIME
@@ -754,7 +802,7 @@ public class chatController {
         boolean hasUnread = conv.getUnreadCount() > 0;
 
         VBox wrapper = new VBox();
-        wrapper.getStyleClass().add("chat-item");  // ALWAYS
+        wrapper.getStyleClass().add("chat-item");
         wrapper.setPadding(new Insets(12));
 
         HBox row = new HBox(12);
@@ -762,13 +810,24 @@ public class chatController {
 
         // Avatar
         Circle c = new Circle(21);
-        applyAvatar(c, conv.getAvatar(), conv.getType());
+
+        byte[] listAvatarBytes =
+                "DM".equalsIgnoreCase(conv.getType())
+                        ? dmAvatarBytes(conv.getId())
+                        : conv.getAvatar();
+
+        applyAvatar(c, listAvatarBytes, conv.getType());
         StackPane avatar = new StackPane(c);
 
         // Name + preview
         VBox textBox = new VBox(6);
 
-        Label name = new Label(conv.getTitle() == null ? "Chat" : conv.getTitle());
+        String displayTitle =
+                "DM".equalsIgnoreCase(conv.getType())
+                        ? dmDisplayTitle(conv.getId())
+                        : (conv.getTitle() == null || conv.getTitle().isBlank() ? "Chat" : conv.getTitle());
+
+        Label name = new Label(displayTitle);
         name.getStyleClass().add("chat-name");
 
         String preview = conv.getLastBody();
@@ -794,8 +853,6 @@ public class chatController {
 
         Label badge = new Label(String.valueOf(conv.getUnreadCount()));
         badge.getStyleClass().add("chat-badge");
-
-        // show/hide (IMPORTANT: managed too)
         badge.setVisible(hasUnread);
         badge.setManaged(hasUnread);
 
@@ -803,6 +860,7 @@ public class chatController {
 
         timeLabelByConvId.put(conv.getId(), time);
         unreadBadgeByConvId.put(conv.getId(), badge);
+
         row.getChildren().addAll(avatar, textBox, spacer, rightBox);
         wrapper.getChildren().add(row);
 
@@ -814,9 +872,9 @@ public class chatController {
             }
             clearUnreadUI(conv.getId());
         });
+
         return wrapper;
     }
-
 
     private void highlightSelected(VBox selected) {
         for (var node : conversationContainer.getChildren()) {
@@ -997,7 +1055,6 @@ public class chatController {
         seenRow.getStyleClass().add("seen-row");
 
         try {
-            // returns users (except me) who have last_read_message_id >= messageId
             List<ParticipantView> readers = messageService.listReadersForMessage(convId, messageId, currentUserId);
 
             int max = 6;
@@ -1009,9 +1066,7 @@ public class chatController {
                 if (shown >= max) break;
 
                 Circle mini = new Circle(7);
-                // simplest: default-user.png always (no DB user avatar needed)
-                applyAvatar(mini, null, "DM"); // uses your default-user.png logic
-                // if you later have user avatar bytes, swap to applyUserAvatar(mini, p.getUserId())
+                applyUserAvatar(mini, p.getUserId()); // ✅ real user avatar (imagelink) else default
 
                 seenRow.getChildren().add(mini);
 
@@ -1028,7 +1083,7 @@ public class chatController {
                 seenRow.getChildren().add(more);
             }
 
-            if (readers.size() > 0) {
+            if (!readers.isEmpty()) {
                 Tooltip.install(seenRow, new Tooltip("Vu par: " + names));
             }
 
@@ -1194,11 +1249,6 @@ public class chatController {
 
         NicknamesRowCell() {
             row.setAlignment(Pos.CENTER_LEFT);
-
-            // default avatar
-            Image img = new Image(getClass().getResourceAsStream("/assets/user-default.png"));
-            avatar.setFill(new ImagePattern(img));
-
             title.getStyleClass().add("member-name");
             subtitle.getStyleClass().add("member-sub");
 
@@ -1229,19 +1279,19 @@ public class chatController {
             super.updateItem(item, empty);
 
             if (empty || item == null) {
+                avatar.setFill(null);
                 setGraphic(null);
                 return;
             }
 
             // main line: nickname if exists else username
             title.setText(displayName(item));
-
             // second line like FB: "Set nickname" or current nickname
             String nick = item.getNickname();
             subtitle.setText((nick == null || nick.isBlank()) ? "Set nickname" : nick.trim());
 
             if (editing) exitEdit();
-
+            applyUserAvatar(avatar, item.getUserId());
             setGraphic(row);
         }
 
@@ -1440,9 +1490,10 @@ public class chatController {
     }
 
     private Image getDefaultUserAvatar() {
-        // put user-default.png in resources: /assets/user-default.png
-        InputStream is = getClass().getResourceAsStream("/assets/user-default.png");
-        return (is == null) ? null : new Image(is);
+        try (InputStream in = getClass().getResourceAsStream("/assets/user-default.png")) {
+            if (in != null) return new Image(in);
+        } catch (Exception ignore) {}
+        return null;
     }
     private class MemberCell extends ListCell<ParticipantView> {
 
@@ -1452,7 +1503,8 @@ public class chatController {
         private final Label name = new Label();
         private final Label sub = new Label();
 
-
+        private final MenuItem kick = new MenuItem("Exclure du groupe");
+        private final ContextMenu menu = new ContextMenu(kick);
 
         MemberCell() {
             row.getStyleClass().add("member-cell");
@@ -1463,17 +1515,9 @@ public class chatController {
             row.setAlignment(Pos.CENTER_LEFT);
             row.getChildren().addAll(avatar, texts);
 
-            // default avatar
-            Image img = getDefaultUserAvatar();
-            if (img != null) avatar.setFill(new ImagePattern(img));
-
-            MenuItem kick = new MenuItem("Exclure du groupe");
             kick.getStyleClass().add("danger-item");
-
-            ContextMenu menu = new ContextMenu(kick);
             menu.getStyleClass().add("danger-menu");
 
-            // Right click
             setOnContextMenuRequested(ev -> {
                 ParticipantView item = getItem();
                 if (item == null || selectedConversation == null) return;
@@ -1481,7 +1525,6 @@ public class chatController {
                 boolean isGroup = "GROUP".equalsIgnoreCase(selectedConversation.getType());
                 boolean isSelf  = item.getUserId() == currentUserId;
 
-                // ✅ Only for group, only admins/owners, never self
                 if (!isGroup || isSelf || !canManageMembersInSelectedConversation) {
                     ev.consume();
                     return;
@@ -1515,6 +1558,7 @@ public class chatController {
                 setGraphic(null);
                 return;
             }
+            applyUserAvatar(avatar, item.getUserId());
 
             String display = (item.getNickname() != null && !item.getNickname().isBlank())
                     ? item.getNickname().trim()
@@ -1538,7 +1582,7 @@ public class chatController {
 
     @FXML
     private void openNewMessageModal() {
-        // Load users once per open (or cache)
+        userAvatarCache.clear();
         loadAllUsersForPicker();
 
         newMessageOverlay.setVisible(true);
@@ -1664,35 +1708,39 @@ public class chatController {
         if (conv == null) return;
 
         selectedConversation = conv;
-        selectedConversationProperty.set(conv); //UI binding
+        selectedConversationProperty.set(conv);
 
         setSelectedConversationStyle(conv.getId());
 
-        applyAvatar(chatAvatarCircle, conv.getAvatar(), conv.getType());
+        byte[] headerAvatarBytes = "DM".equalsIgnoreCase(conv.getType())
+                ? dmAvatarBytes(conv.getId())
+                : conv.getAvatar();
+
+        applyAvatar(chatAvatarCircle, headerAvatarBytes, conv.getType());
+
         loadMessages(conv.getId());
         updateAiSummaryAvailability();
 
-
-        try {
-            if ("DM".equalsIgnoreCase(conv.getType())) {
-                chatTitle.setText(conversationService.getDmDisplayName(conv.getId(), currentUserId));
-            } else {
-                chatTitle.setText((conv.getTitle() == null || conv.getTitle().isBlank())
-                        ? "Discussion"
-                        : conv.getTitle());
-            }
-        } catch (SQLException e) {
-            chatTitle.setText("Discussion");
+        // title
+        if ("DM".equalsIgnoreCase(conv.getType())) {
+            chatTitle.setText(dmDisplayTitle(conv.getId()));
+        } else {
+            chatTitle.setText((conv.getTitle() == null || conv.getTitle().isBlank())
+                    ? "Discussion"
+                    : conv.getTitle());
         }
 
         chatSubtitle.setText("Conversation active");
+
         Long lastMsgId = conv.getLastMessageId();
         if (lastMsgId != null && lastMsgId > 0) {
             conversationService.markConversationRead(conv.getId(), currentUserId, lastMsgId);
         }
+
         if (mediaPanel.isVisible()) {
             refreshMediaPanel(conv.getId());
         }
+
         clearUnreadUI(conv.getId());
         refreshDrawer();
     }
@@ -1817,8 +1865,6 @@ public class chatController {
         private final Label sub = new Label();
         private final Region spacer = new Region();
         private final StackPane indicator = new StackPane();
-        private final Image fallback = new Image(getClass().getResourceAsStream("/assets/user-default.png"));
-        // circle/check
 
         UserPickCell() {
             row.setAlignment(Pos.CENTER_LEFT);
@@ -1830,8 +1876,10 @@ public class chatController {
 
             indicator.setMinSize(28, 28);
             indicator.setMaxSize(28, 28);
+
             row.getChildren().addAll(avatar, texts, spacer, indicator);
 
+            // ✅ Only GROUP uses toggle behavior on press
             row.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, ev -> {
                 if (newMsgMode != NewMsgMode.GROUP) return;
 
@@ -1843,7 +1891,6 @@ public class chatController {
 
                 var sm = lv.getSelectionModel();
 
-                // Toggle using the actual object reference (works with filtered lists)
                 if (sm.getSelectedItems().contains(item)) {
                     sm.clearSelection(lv.getItems().indexOf(item));
                 } else {
@@ -1854,8 +1901,6 @@ public class chatController {
                 ev.consume();
                 lv.refresh();
             });
-
-
         }
 
         @Override
@@ -1866,12 +1911,8 @@ public class chatController {
                 return;
             }
 
-            // avatar fallback (you can enhance to use item avatar if you have it)
-            avatar.setFill(new ImagePattern(fallback));
-            /*try {
-                Image img = new Image(getClass().getResourceAsStream("/assets/user-default.png"));
-                avatar.setFill(new ImagePattern(img));
-            } catch (Exception ignore) {}*/
+            // ✅ avatar from user.imagelink (cached) else default
+            applyUserAvatar(avatar, item.getUserId());
 
             name.setText(displayName(item));
             sub.setText(item.getUsername() == null ? "" : item.getUsername());
@@ -1887,17 +1928,18 @@ public class chatController {
                 ring.setStroke(selected ? Color.web("#7c3aed") : Color.web("#d1d5db"));
                 ring.setStrokeWidth(2);
                 indicator.getChildren().add(ring);
+
                 if (selected) {
                     Circle dot = new Circle(6);
                     dot.setFill(Color.web("#7c3aed"));
                     indicator.getChildren().add(dot);
                 }
             } else {
-                Circle bg = new Circle(10);
-                bg.setFill(Color.TRANSPARENT);
-                bg.setStroke(selected ? Color.web("#7c3aed") : Color.web("#d1d5db"));
-                bg.setStrokeWidth(2);
-                indicator.getChildren().add(bg);
+                Circle ring = new Circle(10);
+                ring.setFill(Color.TRANSPARENT);
+                ring.setStroke(selected ? Color.web("#7c3aed") : Color.web("#d1d5db"));
+                ring.setStrokeWidth(2);
+                indicator.getChildren().add(ring);
 
                 if (selected) {
                     Circle dot = new Circle(6);

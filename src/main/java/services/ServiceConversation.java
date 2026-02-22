@@ -96,7 +96,18 @@ public class ServiceConversation {
                         "    ELSE c.title\n" +
                         "  END AS title,\n" +
                         "  c.created_at,\n" +
-                        "  c.avatar,\n" +
+                        "  CASE\n" +
+                        "    WHEN UPPER(c.type) = 'DM' THEN (\n" +
+                        "      SELECT u2.imagelink\n" +
+                        "      FROM conversation_participants cp2\n" +
+                        "      JOIN utilisateurs u2 ON u2.id = cp2.user_id\n" +
+                        "      WHERE cp2.conversation_id = c.id\n" +
+                        "        AND cp2.user_id <> ?\n" +
+                        "        AND cp2.left_at IS NULL\n" +
+                        "      LIMIT 1\n" +
+                        "    )\n" +
+                        "    ELSE c.avatar\n" +
+                        "  END AS avatar,\n" +
                         "  lm.id AS last_message_id,\n" +
                         "  lm.sender_id AS last_sender_id,\n" +
                         "  lm.body AS last_body,\n" +
@@ -117,9 +128,14 @@ public class ServiceConversation {
                         "ORDER BY COALESCE(lm.created_at, c.last_message_at, c.created_at) DESC;\n";
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            // used in DM title subquery
             ps.setInt(1, userId);
+            // used in DM avatar subquery
             ps.setInt(2, userId);
+            // unread_count excludes my own messages
             ps.setInt(3, userId);
+            // WHERE cp.user_id = ?
+            ps.setInt(4, userId);
 
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -131,7 +147,7 @@ public class ServiceConversation {
                             rs.getString("type"),
                             rs.getString("title"),
                             rs.getTimestamp("created_at"),
-                            0,                         // totalMessages not needed here
+                            0, // totalMessages not needed here
                             rs.getBytes("avatar"),
                             lastMsgId,
                             lastSender,
@@ -142,28 +158,61 @@ public class ServiceConversation {
                 }
             }
         }
+
         return out;
     }
-    public Conversation getDetails(long conversationId) throws SQLException {
+    public Conversation getDetails(long conversationId, int currentUserId) throws SQLException {
         String sql =
-                "SELECT c.id, c.type, c.title, c.created_at, c.avatar,\n" +
-                        "       (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) AS total_messages\n" +
+                "SELECT\n" +
+                        "  c.id,\n" +
+                        "  c.type,\n" +
+                        "  CASE\n" +
+                        "    WHEN UPPER(c.type) = 'DM' THEN (\n" +
+                        "      SELECT COALESCE(\n" +
+                        "               NULLIF(TRIM(cp2.nickname), ''),\n" +
+                        "               CONCAT_WS(' ', u2.prenom, u2.nom)\n" +
+                        "             )\n" +
+                        "      FROM conversation_participants cp2\n" +
+                        "      JOIN utilisateurs u2 ON u2.id = cp2.user_id\n" +
+                        "      WHERE cp2.conversation_id = c.id\n" +
+                        "        AND cp2.user_id <> ?\n" +
+                        "        AND cp2.left_at IS NULL\n" +
+                        "      LIMIT 1\n" +
+                        "    )\n" +
+                        "    ELSE c.title\n" +
+                        "  END AS title,\n" +
+                        "  c.created_at,\n" +
+                        "  CASE\n" +
+                        "    WHEN UPPER(c.type) = 'DM' THEN (\n" +
+                        "      SELECT u2.imagelink\n" +
+                        "      FROM conversation_participants cp2\n" +
+                        "      JOIN utilisateurs u2 ON u2.id = cp2.user_id\n" +
+                        "      WHERE cp2.conversation_id = c.id\n" +
+                        "        AND cp2.user_id <> ?\n" +
+                        "        AND cp2.left_at IS NULL\n" +
+                        "      LIMIT 1\n" +
+                        "    )\n" +
+                        "    ELSE c.avatar\n" +
+                        "  END AS avatar,\n" +
+                        "  (SELECT COUNT(*) FROM messages m WHERE m.conversation_id = c.id) AS total_messages\n" +
                         "FROM conversations c\n" +
                         "WHERE c.id = ?";
 
         try (PreparedStatement ps = connection.prepareStatement(sql)) {
-            ps.setLong(1, conversationId);
+            ps.setInt(1, currentUserId);      // DM title subquery
+            ps.setInt(2, currentUserId);      // DM avatar subquery
+            ps.setLong(3, conversationId);
+
             try (ResultSet rs = ps.executeQuery()) {
                 if (!rs.next()) return null;
+
                 return new Conversation(
                         rs.getLong("id"),
                         rs.getString("type"),
                         rs.getString("title"),
-
                         rs.getTimestamp("created_at"),
                         rs.getInt("total_messages"),
                         rs.getBytes("avatar"),
-
                         null, null, null, null, 0
                 );
             }
@@ -511,6 +560,43 @@ public class ServiceConversation {
             ps.setInt(3, userId);
             ps.executeUpdate();
         }
+    }
+
+    public byte[] getUserAvatar(int userId) throws SQLException {
+        String sql = "SELECT imagelink FROM utilisateurs WHERE id = ? LIMIT 1";
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) return null;
+                byte[] b = rs.getBytes(1);
+                return (b != null && b.length > 0) ? b : null;
+            }
+        }
+    }
+
+    public byte[] getDmAvatar(long conversationId, int currentUserId) throws SQLException {
+
+        String sql = """
+        SELECT u.imagelink
+        FROM conversation_participants cp
+        JOIN utilisateurs u ON u.id = cp.user_id
+        WHERE cp.conversation_id = ?
+          AND cp.user_id <> ?
+          AND cp.left_at IS NULL
+        LIMIT 1
+    """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+            ps.setLong(1, conversationId);
+            ps.setInt(2, currentUserId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    byte[] b = rs.getBytes(1); // NULL if imagelink is NULL
+                    return (b != null && b.length > 0) ? b : null;
+                }
+            }
+        }
+        return null;
     }
 
 }
