@@ -14,6 +14,7 @@ module com.example.testp1 {
     requires io.github.cdimascio.dotenv.java;
     requires com.fasterxml.jackson.databind;
     requires java.net.http;
+    requires org.json;
 
     opens com.example.testp1.entities to com.fasterxml.jackson.databind;
 

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.*?>
+
+<VBox fx:id="analysisSetupContainer" spacing="20.0" stylesheets="@../../styles/nexum.css" styleClass="analysis-setup-container" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.AnalysisSetupController">
+
+    <VBox spacing="4.0">
+        <Label styleClass="project-title-large" text="AI Financial Projection" />
+        <Label styleClass="text-sub-info" text="Simulate the future path of this project's budget using Gemini 2.5." />
+    </VBox>
+
+    <VBox spacing="16.0" styleClass="project-header-card, analysis-card">
+
+        <HBox alignment="CENTER_LEFT" spacing="12.0">
+            <FontIcon iconLiteral="mdi2b-brain" iconSize="22" styleClass="icon-purple" />
+            <Label styleClass="section-title" text="Business Context &amp; Variables" />
+        </HBox>
+
+        <Label styleClass="text-data-label" text="Add specific future events below to make the projection more accurate (e.g., 'Expect a $5,000 marketing expense next month'). Leave blank to rely strictly on database history." wrapText="true" />
+
+        <TextArea fx:id="contextTextArea" prefHeight="80.0" promptText="Enter future events, expected hires, or cost reductions here..." styleClass="analysis-text-area" wrapText="true" />
+
+        <HBox alignment="CENTER_RIGHT" spacing="20.0" styleClass="analysis-action-row">
+
+            <HBox fx:id="loadingIndicator" alignment="CENTER" spacing="8.0" visible="false" managed="false">
+                <ProgressIndicator prefHeight="16.0" prefWidth="16.0" />
+                <Label styleClass="text-sub-info, text-purple" text="Gemini is analyzing..." />
+            </HBox>
+
+            <Region HBox.hgrow="ALWAYS" />
+
+            <Button onAction="#handleRunSimulation" styleClass="btn-ai-action" text="Run AI Projection">
+                <graphic>
+                    <FontIcon iconLiteral="mdi2c-chart-line" iconSize="16" styleClass="icon-white" />
+                </graphic>
+            </Button>
+        </HBox>
+
+    </VBox>
+</VBox>

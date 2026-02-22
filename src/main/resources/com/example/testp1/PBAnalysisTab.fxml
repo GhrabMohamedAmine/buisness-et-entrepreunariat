@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+
+<StackPane fx:id="analysisRoot" stylesheets="@../../styles/nexum.css" VBox.vgrow="ALWAYS"
+           xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.AnalysisTabController">
+
+    <fx:include fx:id="setupView" source="AnalysisSetup.fxml" />
+
+    <fx:include fx:id="loadingView" source="AnalysisLoading.fxml" visible="false" managed="false" />
+
+    <fx:include fx:id="resultView" source="AnalysisResult.fxml" visible="false" managed="false"/>
+
+</StackPane>

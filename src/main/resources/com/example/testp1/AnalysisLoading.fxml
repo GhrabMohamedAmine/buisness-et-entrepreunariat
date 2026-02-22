@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+
+<VBox fx:id="loadingContainer" alignment="CENTER"
+      prefHeight="400.0" prefWidth="950.0"
+      maxHeight="Infinity" maxWidth="Infinity"
+      spacing="25.0" style="-fx-background-color: #F5F5F4;"
+      stylesheets="@../../styles/nexum.css"
+      xmlns="http://javafx.com/javafx/17.0.12"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.testp1.AnalysisLoadingController">
+
+    <StackPane fx:id="loaderPane" prefHeight="64.0" prefWidth="64.0" maxHeight="64.0" maxWidth="64.0">
+        <children>
+            <Arc fx:id="halfCircle" centerX="32.0" centerY="32.0" fill="#FF3D00" length="180.0" radiusX="32.0" radiusY="32.0" startAngle="180.0" type="ROUND" StackPane.alignment="BOTTOM_CENTER" />
+
+            <Rectangle fx:id="stick" fill="WHITE" height="64.0" width="8.0" StackPane.alignment="CENTER" />
+        </children>
+    </StackPane>
+
+    <VBox alignment="CENTER" spacing="8.0">
+        <Label styleClass="project-title-large" text="Running AI Analysis..." style="-fx-font-size: 20px; -fx-text-fill: #1C1917;" />
+        <Label styleClass="text-sub-info" text="Gemini 2.5 is calculating project velocity and risk parameters." />
+    </VBox>
+
+</VBox>

@@ -1023,3 +1023,62 @@
     /* Ensure the image fits nicely */
     -fx-background-radius: 8;
 }
+
+/* --- Analysis Tab Styles --- */
+
+.analysis-setup-container {
+    -fx-padding: 20 30 20 30; /* Reduced padding for tab fitting */
+    -fx-background-color: transparent; /* Lets the parent tab background show through */
+}
+
+.analysis-card {
+    -fx-background-color: white;
+    -fx-padding: 24;
+    -fx-background-radius: 12;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 4);
+}
+
+.analysis-text-area {
+    -fx-background-color: #F5F5F4;
+    -fx-control-inner-background: #F5F5F4;
+    -fx-border-color: #E7E5E4;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-font-size: 13px; /* Slightly smaller for compactness */
+    -fx-padding: 4;
+}
+
+.analysis-text-area .content {
+    -fx-background-color: transparent;
+}
+
+.analysis-action-row {
+    -fx-padding: 10 0 0 0;
+}
+
+/* AI Action Button */
+.btn-ai-action {
+    -fx-background-color: #7F22FE;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 10 20 10 20; /* Scaled down slightly */
+    -fx-background-radius: 8;
+    -fx-cursor: hand;
+}
+
+.btn-ai-action:hover {
+    -fx-background-color: #6B1BD8; /* Slightly darker on hover */
+}
+
+/* Utility classes for colors used in icons/text */
+.icon-purple {
+    -fx-icon-color: #7F22FE;
+}
+
+.icon-white {
+    -fx-icon-color: white;
+}
+
+.text-purple {
+    -fx-text-fill: #7F22FE;
+}

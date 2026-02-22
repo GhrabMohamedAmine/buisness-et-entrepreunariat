@@ -75,6 +75,7 @@
                     <AnchorPane fx:id="overviewContent" visible="false" managed="false">
                     </AnchorPane>
                     <AnchorPane fx:id="analysisContent" visible="false" managed="false">
+                        <fx:include source="PBAnalysisTab.fxml" />
                     </AnchorPane>
 
                 </StackPane>

@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.shape.*?>
+<?import org.kordamp.ikonli.javafx.*?>
+
+<?import javafx.scene.Group?>
+<VBox fx:id="resultsContainer" prefHeight="400.0" prefWidth="950.0" maxHeight="Infinity" maxWidth="Infinity" spacing="15.0" style="-fx-padding: 20 40 20 40; -fx-background-color: #F5F5F4;" stylesheets="@../../styles/nexum.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.AnalysisResultController">
+
+    <HBox alignment="CENTER_LEFT">
+        <VBox spacing="2.0">
+            <Label styleClass="project-title-large" text="AI Projection Results" style="-fx-font-size: 22px;" />
+            <Label styleClass="text-sub-info" text="Based on Gemini 2.5 predictive modeling." />
+        </VBox>
+        <Region HBox.hgrow="ALWAYS" />
+        <Label fx:id="riskBadge" text="HIGH RISK" style="-fx-background-color: #FEE2E2; -fx-text-fill: #EF4444; -fx-padding: 6 12 6 12; -fx-background-radius: 20; -fx-font-weight: bold; -fx-font-size: 12px;" />
+    </HBox>
+
+    <StackPane fx:id="carouselPane" VBox.vgrow="ALWAYS" style="-fx-background-color: white; -fx-background-radius: 12; -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 4); -fx-padding: 20 40 20 40;">
+
+        <VBox fx:id="graphView" visible="false" opacity="0.0" spacing="10.0">
+            <Label styleClass="section-title" text="Projected Budget Trajectory" />
+            <LineChart fx:id="projectionChart" VBox.vgrow="ALWAYS" createSymbols="true" legendVisible="true">
+                <xAxis>
+                    <CategoryAxis label="Timeline" />
+                </xAxis>
+                <yAxis>
+                    <NumberAxis label="Budget ($)" />
+                </yAxis>
+            </LineChart>
+        </VBox>
+
+        <HBox fx:id="summaryView" alignment="CENTER" spacing="80.0">
+
+            <VBox alignment="CENTER" spacing="5.0">
+                <Label styleClass="text-sub-info" text="Projected Variance" style="-fx-font-size: 14px;" />
+                <Label fx:id="varianceLabel" text="-$5,000" style="-fx-font-size: 42px; -fx-font-weight: bold; -fx-text-fill: #EF4444;" />
+                <Label fx:id="varianceSubtext" text="Expected Overrun" style="-fx-text-fill: #EF4444; -fx-font-weight: bold;" />
+            </VBox>
+
+            <GridPane hgap="40.0" vgap="25.0" alignment="CENTER">
+                <columnConstraints>
+                    <ColumnConstraints halignment="LEFT" />
+                    <ColumnConstraints halignment="LEFT" />
+                </columnConstraints>
+
+                <VBox GridPane.columnIndex="0" GridPane.rowIndex="0">
+                    <Label styleClass="text-sub-info" text="Projected Total Cost" />
+                    <Label fx:id="projectedTotalLabel" text="45,000" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #1C1917;" />
+                </VBox>
+
+                <VBox GridPane.columnIndex="1" GridPane.rowIndex="0">
+                    <Label styleClass="text-sub-info" text="Allocated Budget" />
+                    <Label fx:id="allocatedBudgetLabel" text="40,000" style="-fx-font-size: 20px; -fx-font-weight: bold; -fx-text-fill: #78716C;" />
+                </VBox>
+
+                <VBox GridPane.columnIndex="0" GridPane.rowIndex="1">
+                    <Label styleClass="text-sub-info" text="Est. Inflection Date" />
+                    <Label fx:id="inflectionDateLabel" text="March 15, 2026" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #1C1917;" />
+                </VBox>
+
+                <VBox GridPane.columnIndex="1" GridPane.rowIndex="1">
+                    <Label styleClass="text-sub-info" text="Confidence Score" />
+                    <Label text="High (Gemini 2.5)" style="-fx-font-size: 16px; -fx-font-weight: bold; -fx-text-fill: #7F22FE;" />
+                </VBox>
+            </GridPane>
+
+            <VBox alignment="CENTER" spacing="10.0">
+                <StackPane>
+                    <Group>
+                        <Circle radius="60" fill="transparent" stroke="#E7E5E4" strokeWidth="10" />
+                        <Arc fx:id="probabilityArc" radiusX="60" radiusY="60" startAngle="90" length="0" fill="transparent" stroke="#10B981" strokeWidth="10" strokeLineCap="ROUND" />
+                    </Group>
+                    <VBox alignment="CENTER">
+                        <Label fx:id="probabilityLabel" text="0%" style="-fx-font-size: 24px; -fx-font-weight: bold;" />
+                        <Label styleClass="text-sub-info" text="Success Prob." style="-fx-font-size: 10px;" />
+                    </VBox>
+                </StackPane>
+            </VBox>
+        </HBox>
+
+    </StackPane>
+
+    <HBox alignment="CENTER" spacing="15.0">
+        <Button onAction="#showSummaryView" style="-fx-background-color: transparent; -fx-cursor: hand;">
+            <graphic><FontIcon iconLiteral="mdi2c-chevron-left" iconSize="24" /></graphic>
+        </Button>
+
+        <Circle fx:id="dot1" radius="5" fill="#7F22FE" />
+        <Circle fx:id="dot2" radius="5" fill="#D6D3D1" />
+
+        <Button onAction="#showGraphView" style="-fx-background-color: transparent; -fx-cursor: hand;">
+            <graphic><FontIcon iconLiteral="mdi2c-chevron-right" iconSize="24" /></graphic>
+        </Button>
+    </HBox>
+
+</VBox>

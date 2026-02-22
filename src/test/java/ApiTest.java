@@ -2,6 +2,7 @@
 import com.example.testp1.entities.Article;
 import com.example.testp1.entities.CurrencyResponse;
 import com.example.testp1.entities.NewsResponse;
+import com.example.testp1.services.ServiceProjectAnalysis;
 import com.example.utils.Config;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -56,6 +57,19 @@ public class ApiTest {
         }
 
         testNewsApi();
+
+        System.out.println("--- Starting AI Path Estimation Test ---");
+
+        ServiceProjectAnalysis analyst = new ServiceProjectAnalysis();
+        double budget = 5000.0;
+        double spent = 1200.0;
+        String mockTransactions = "[{\"date\": \"2026-02-01\", \"amount\": 400}, {\"date\": \"2026-02-10\", \"amount\": 800}]";
+
+        // This will now block and wait until the console prints the exact response
+        analyst.fetchProjectProjection(budget, spent, mockTransactions);
+
+        System.out.println("--- Test Ended ---");
+
     }
 
     private static void testNewsApi() {
