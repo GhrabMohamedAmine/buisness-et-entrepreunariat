@@ -6,6 +6,7 @@
 <?import javafx.scene.control.TableColumn?>
 <?import javafx.scene.control.TableView?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.HBox?>
@@ -17,6 +18,7 @@
 <HBox prefHeight="900.0" prefWidth="1300.0" styleClass="root-pane" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.ReclamationController">
     <children>
 
+        <!-- Sidebar -->
         <VBox prefWidth="250.0" spacing="8" styleClass="sidebar">
             <padding><Insets bottom="20" left="15" right="15" top="30" /></padding>
 
@@ -33,11 +35,9 @@
                 <Button alignment="BASELINE_LEFT" maxWidth="Infinity" styleClass="menu-item" text="Dashboard">
                     <graphic><FontIcon iconLiteral="mdi2v-view-dashboard-outline" iconSize="18" /></graphic>
                 </Button>
-
                 <Button onAction="#handleUserManagementNavigation" alignment="BASELINE_LEFT" maxWidth="Infinity" styleClass="menu-item" text="User Management">
                     <graphic><FontIcon iconLiteral="mdi2a-account-group-outline" iconSize="18" /></graphic>
                 </Button>
-
                 <Button alignment="BASELINE_LEFT" maxWidth="Infinity" styleClass="menu-item, active" text="Reclamations">
                     <graphic><FontIcon iconLiteral="mdi2a-alert-circle-outline" iconSize="18" /></graphic>
                 </Button>
@@ -48,8 +48,10 @@
             </Button>
         </VBox>
 
+        <!-- Main Content -->
         <VBox spacing="0" HBox.hgrow="ALWAYS">
 
+            <!-- Top Bar -->
             <HBox alignment="CENTER_LEFT" prefHeight="70.0" spacing="20" style="-fx-background-color: white; -fx-border-color: #E5E7EB; -fx-border-width: 0 0 1 0;">
                 <padding><Insets left="30" right="30" /></padding>
                 <TextField prefWidth="400.0" promptText="Search..." style="-fx-background-color: #F3F4F6; -fx-background-radius: 8;" />
@@ -61,23 +63,37 @@
                 </HBox>
             </HBox>
 
+            <!-- Content Area -->
             <VBox spacing="25" VBox.vgrow="ALWAYS">
                 <padding><Insets bottom="30" left="40" right="40" top="30" /></padding>
 
+                <!-- Title and Filters Row -->
                 <HBox alignment="CENTER_LEFT" spacing="20">
                     <VBox HBox.hgrow="ALWAYS">
                         <Label style="-fx-font-size: 24; -fx-font-weight: bold;" text="Mes Réclamations" />
                         <Label styleClass="text-muted" text="Suivez et gérez vos demandes d'assistance" />
+                        <!-- Filtres sous le titre -->
+                        <HBox spacing="15" alignment="CENTER_LEFT" style="-fx-padding: 10 0 0 0;">
+                            <!-- Segmented Control (Filtres par statut) -->
+                            <HBox styleClass="segmented-control" spacing="2">
+                                <ToggleButton fx:id="filterAll" selected="true" styleClass="seg-left" text="Tous" />
+                                <ToggleButton fx:id="filterOpen" styleClass="seg-center" text="En attente" />
+                                <ToggleButton fx:id="filterProgress" styleClass="seg-center" text="En cours" />
+                                <ToggleButton fx:id="filterResolved" styleClass="seg-center" text="Résolu" />
+                                <ToggleButton fx:id="filterClosed" styleClass="seg-right" text="Fermé" />
+                            </HBox>
+                            <!-- Barre de recherche -->
+                            <HBox alignment="CENTER_LEFT" styleClass="search-box" spacing="5">
+                                <FontIcon iconLiteral="mdi2m-magnify" iconColor="#9CA3AF" iconSize="18"/>
+                                <TextField fx:id="searchField" promptText="Rechercher..." styleClass="transparent-input" HBox.hgrow="ALWAYS" />
+                            </HBox>
+                        </HBox>
                     </VBox>
-
-                    <HBox alignment="CENTER_RIGHT" spacing="10">
-                        <Button style="-fx-background-color: white; -fx-border-color: #D1D5DB; -fx-border-radius: 6; -fx-padding: 8 16;" text="Filtre">
-                            <graphic><FontIcon iconLiteral="mdi2f-filter-variant" /></graphic>
-                        </Button>
-                        <Button fx:id="popup" onAction="#addreclamation" prefHeight="40.0" styleClass="btn-primary" text="+ Nouvelle Réclamation" />
-                    </HBox>
+                    <!-- Bouton Nouvelle Réclamation (aligné à droite) -->
+                    <Button fx:id="popup" onAction="#addreclamation" prefHeight="40.0" styleClass="btn-primary" text="+ Nouvelle Réclamation" />
                 </HBox>
 
+                <!-- Table Container -->
                 <VBox styleClass="table-container" VBox.vgrow="ALWAYS">
                     <TableView fx:id="reclamationTable" fixedCellSize="65.0" styleClass="table-view" VBox.vgrow="ALWAYS">
                         <columns>

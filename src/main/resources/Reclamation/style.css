@@ -294,3 +294,28 @@
     -fx-text-fill: #111827;                /* Noir quand un fichier est choisi */
     -fx-font-weight: bold;
 }
+.segmented-control {
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 8;
+    -fx-padding: 2;
+}
+.segmented-control .toggle-button {
+    -fx-background-color: transparent;
+    -fx-text-fill: #6B7280;
+    -fx-background-radius: 6;
+    -fx-padding: 6 15;
+}
+.segmented-control .toggle-button:selected {
+    -fx-background-color: white;
+    -fx-text-fill: #111827;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 3, 0, 0, 1);
+}
+.search-box {
+    -fx-background-color: #F3F4F6;
+    -fx-background-radius: 999;
+    -fx-padding: 5 10;
+}
+.transparent-input {
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}

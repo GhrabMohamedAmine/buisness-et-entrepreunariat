@@ -2,6 +2,7 @@ package controllers;
 
 import entities.Reclamation;
 import entities.User;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -32,6 +33,8 @@ import java.io.*;
 import java.net.URL;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class UserReclamationController implements Initializable {
 
@@ -41,9 +44,42 @@ public class UserReclamationController implements Initializable {
     @FXML private Label lblOpen, lblProgress, lblSolved;
     @FXML private TextField searchField;
 
+    // Nouveaux boutons de filtre
+    @FXML private ToggleButton filterAll;
+    @FXML private ToggleButton filterOpen;
+    @FXML private ToggleButton filterProgress;
+    @FXML private ToggleButton filterResolved;
+
     private ReclamationService service;
     private User currentUser;
     private ObservableList<Reclamation> myReclamations;
+    private ToggleGroup filterGroup;
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        service = new ReclamationService();
+        currentUser = UserService.getCurrentUser();
+
+        if (currentUser == null) {
+            System.err.println("Aucun utilisateur connecté !");
+            return;
+        }
+
+        // Initialisation du groupe de filtres
+        filterGroup = new ToggleGroup();
+        filterAll.setToggleGroup(filterGroup);
+        filterOpen.setToggleGroup(filterGroup);
+        filterProgress.setToggleGroup(filterGroup);
+        filterResolved.setToggleGroup(filterGroup);
+        filterAll.setSelected(true);
+
+        loadData();
+        loadCurrentUserProfile();
+
+        // Écouteurs pour la recherche et les filtres
+        searchField.textProperty().addListener((observable, oldValue, newValue) -> applyFilters());
+        filterGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> applyFilters());
+    }
 
     private void loadCurrentUserProfile() {
         User currentUser = UserService.getCurrentUser();
@@ -70,41 +106,53 @@ public class UserReclamationController implements Initializable {
         }
     }
 
-    @Override
-    public void initialize(URL location, ResourceBundle resources) {
-        service = new ReclamationService();
-        currentUser = UserService.getCurrentUser();
-
-        if (currentUser == null) {
-            System.err.println("Aucun utilisateur connecté !");
-            return;
-        }
-
-        loadData();
-        loadCurrentUserProfile();
-
-        searchField.textProperty().addListener((observable, oldValue, newValue) -> {
-            filterReclamations(newValue);
-        });
+    private void loadData() {
+        myReclamations = service.getReclamationsByUserId(currentUser.getId());
+        updateCounts();
+        applyFilters();
     }
 
-    private void loadData() {
-        ticketsContainer.getChildren().clear();
-        myReclamations = service.getReclamationsByUserId(currentUser.getId());
-
+    private void updateCounts() {
         int open = 0, progress = 0, solved = 0;
         for (Reclamation r : myReclamations) {
             if ("En attente".equalsIgnoreCase(r.getStatut())) open++;
             else if ("En cours".equalsIgnoreCase(r.getStatut())) progress++;
             else if ("Résolu".equalsIgnoreCase(r.getStatut())) solved++;
-
-            VBox card = createTicketCard(r);
-            ticketsContainer.getChildren().add(card);
         }
-
         lblOpen.setText(String.valueOf(open));
         lblProgress.setText(String.valueOf(progress));
         lblSolved.setText(String.valueOf(solved));
+    }
+
+    private void applyFilters() {
+        String searchText = searchField.getText().toLowerCase().trim();
+        Toggle selectedFilter = filterGroup.getSelectedToggle();
+
+        Predicate<Reclamation> statusPredicate = r -> {
+            if (selectedFilter == null || selectedFilter == filterAll) return true;
+            if (selectedFilter == filterOpen) return "En attente".equalsIgnoreCase(r.getStatut());
+            if (selectedFilter == filterProgress) return "En cours".equalsIgnoreCase(r.getStatut());
+            if (selectedFilter == filterResolved) return "Résolu".equalsIgnoreCase(r.getStatut());
+            return true;
+        };
+
+        Predicate<Reclamation> searchPredicate = r -> {
+            if (searchText.isEmpty()) return true;
+            return r.getTitre().toLowerCase().contains(searchText)
+                    || r.getProjet().toLowerCase().contains(searchText)
+                    || r.getCategorie().toLowerCase().contains(searchText);
+        };
+
+        // Filtrer la liste
+        ObservableList<Reclamation> filtered = myReclamations.stream()
+                .filter(statusPredicate.and(searchPredicate))
+                .collect(Collectors.toCollection(FXCollections::observableArrayList));
+
+        // Afficher les cartes
+        ticketsContainer.getChildren().clear();
+        for (Reclamation r : filtered) {
+            ticketsContainer.getChildren().add(createTicketCard(r));
+        }
     }
 
     private VBox createTicketCard(Reclamation r) {
@@ -183,11 +231,7 @@ public class UserReclamationController implements Initializable {
         return card;
     }
 
-    /**
-     * Ouvre le fichier attaché à une réclamation.
-     */
     private void openAttachedFile(Reclamation rec) {
-        // Récupérer la réclamation complète (avec le fichier)
         Reclamation fullRec = service.getById(rec.getId());
         if (fullRec == null || fullRec.getFichier() == null || fullRec.getFichier().length == 0) {
             showAlert("Information", "Aucune pièce jointe pour cette réclamation.");
@@ -195,7 +239,6 @@ public class UserReclamationController implements Initializable {
         }
 
         try {
-            // Créer un fichier temporaire
             File tempFile = File.createTempFile("reclamation_" + rec.getId() + "_", ".tmp");
             tempFile.deleteOnExit();
 
@@ -203,7 +246,6 @@ public class UserReclamationController implements Initializable {
                 fos.write(fullRec.getFichier());
             }
 
-            // Ouvrir avec l'application par défaut
             if (Desktop.isDesktopSupported()) {
                 Desktop.getDesktop().open(tempFile);
             } else {
@@ -234,7 +276,6 @@ public class UserReclamationController implements Initializable {
     }
 
     private void openModifyModal(Reclamation r) {
-        // Vérification du statut avant ouverture
         if (!"En attente".equals(r.getStatut())) {
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Modification impossible");
@@ -274,16 +315,6 @@ public class UserReclamationController implements Initializable {
         if (result.isPresent() && result.get() == ButtonType.OK) {
             service.delete(r.getId());
             loadData();
-        }
-    }
-
-    private void filterReclamations(String query) {
-        ticketsContainer.getChildren().clear();
-        for (Reclamation r : myReclamations) {
-            if (r.getTitre().toLowerCase().contains(query.toLowerCase()) ||
-                    r.getProjet().toLowerCase().contains(query.toLowerCase())) {
-                ticketsContainer.getChildren().add(createTicketCard(r));
-            }
         }
     }
 
