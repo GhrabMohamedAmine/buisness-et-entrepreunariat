@@ -51,6 +51,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProjectDetailsController {
+    private static final int CURRENT_USER_ID = 1;
     private static final String[] AVATAR_COLOR_CLASSES = {"purple", "blue", "green", "orange"};
     private static final DateTimeFormatter ACTIVITY_DATE_INPUT = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter ACTIVITY_DATE_OUTPUT = DateTimeFormatter.ofPattern("dd MMM", Locale.ENGLISH);
@@ -83,6 +84,7 @@ public class ProjectDetailsController {
     private final UserService userService = new UserService();
     private final ActivityService activityService = new ActivityService();
     private final ProjectReportService projectReportService = new ProjectReportService();
+    private final Map<Integer, Task> kanbanTaskById = new java.util.HashMap<>();
 
     private static class ActivityItem {
         private final long sortKey;
@@ -351,7 +353,12 @@ public class ProjectDetailsController {
 
                 TaskRowController controller = loader.getController();
                 controller.setTaskData(t);
+                boolean canModifyStatus = canCurrentUserModifyTaskStatus(t);
+                controller.setStatusEditingAllowed(canModifyStatus);
                 controller.setOnStatusToggle(selected -> {
+                    if (!canModifyStatus) {
+                        return false;
+                    }
                     String newStatus = selected ? "DONE" : "TODO";
                     boolean updated = taskService.updateTaskStatus(t.getId(), newStatus);
                     if (updated && currentProject != null) {
@@ -361,6 +368,9 @@ public class ProjectDetailsController {
                     return updated;
                 });
                 controller.setOnStatusChange(newStatus -> {
+                    if (!canModifyStatus) {
+                        return false;
+                    }
                     boolean updated = taskService.updateTaskStatus(t.getId(), newStatus);
                     if (updated && currentProject != null) {
                         loadProjectStats(currentProject.getId());
@@ -449,6 +459,7 @@ public class ProjectDetailsController {
         todoColumn.getChildren().clear();
         inProgressColumn.getChildren().clear();
         doneColumn.getChildren().clear();
+        kanbanTaskById.clear();
 
         List<Task> tasks = taskService.getTasksByProject(currentProject.getId());
         for (Task task : tasks) {
@@ -457,10 +468,16 @@ public class ProjectDetailsController {
                 Parent row = loader.load();
                 TaskRowController controller = loader.getController();
                 row.getProperties().put("taskRowController", controller);
+                kanbanTaskById.put(task.getId(), task);
 
                 controller.setTaskData(task);
                 controller.setKanbanMode(true);
+                boolean canModifyStatus = canCurrentUserModifyTaskStatus(task);
+                controller.setStatusEditingAllowed(canModifyStatus);
                 controller.setOnStatusToggle(selected -> {
+                    if (!canModifyStatus) {
+                        return false;
+                    }
                     String newStatus = selected ? TaskValueMapper.STATUS_DONE : TaskValueMapper.STATUS_TODO;
                     boolean updated = taskService.updateTaskStatus(task.getId(), newStatus);
                     if (updated) {
@@ -471,6 +488,9 @@ public class ProjectDetailsController {
                     return updated;
                 });
                 controller.setOnStatusChange(newStatus -> {
+                    if (!canModifyStatus) {
+                        return false;
+                    }
                     boolean updated = taskService.updateTaskStatus(task.getId(), newStatus);
                     if (updated) {
                         loadProjectStats(currentProject.getId());
@@ -853,6 +873,12 @@ public class ProjectDetailsController {
             if (db.hasString()) {
                 try {
                     int taskId = Integer.parseInt(db.getString());
+                    Task draggedTask = kanbanTaskById.get(taskId);
+                    if (!canCurrentUserModifyTaskStatus(draggedTask)) {
+                        event.setDropCompleted(false);
+                        event.consume();
+                        return;
+                    }
                     success = taskService.updateTaskStatus(taskId, newStatus);
                     if (success && currentProject != null) {
                         moveDraggedTaskToColumn(event.getGestureSource(), newStatus);
@@ -867,6 +893,14 @@ public class ProjectDetailsController {
             event.setDropCompleted(success);
             event.consume();
         });
+    }
+
+    private boolean canCurrentUserModifyTaskStatus(Task task) {
+        if (task == null) {
+            return false;
+        }
+        int assigneeId = task.getAssignedTo();
+        return assigneeId <= 0 || assigneeId == CURRENT_USER_ID;
     }
 
     private void addCardToKanbanColumn(VBox column, Parent row) {

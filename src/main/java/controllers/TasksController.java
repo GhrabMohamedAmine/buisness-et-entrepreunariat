@@ -35,6 +35,7 @@ import java.util.Locale;
 import java.util.List;
 
 public class TasksController {
+    private static final int CURRENT_USER_ID = 1;
     @FXML private VBox tasksGroupsContainer;
     @FXML private TextField searchField;
     @FXML private Button filterButton;
@@ -235,6 +236,10 @@ public class TasksController {
         deleteIcon.setOnMouseClicked(e -> deleteTask(task));
 
         doneCheck.setOnAction(e -> {
+            if (!canCurrentUserModifyTaskStatus(task)) {
+                doneCheck.setSelected(!doneCheck.isSelected());
+                return;
+            }
             String newStatus = doneCheck.isSelected() ? TaskValueMapper.STATUS_DONE : TaskValueMapper.STATUS_TODO;
             boolean updated = taskService.updateTaskStatus(task.getId(), newStatus);
             if (!updated) {
@@ -245,6 +250,9 @@ public class TasksController {
         });
 
         inProgressIcon.setOnMouseClicked(e -> {
+            if (!canCurrentUserModifyTaskStatus(task)) {
+                return;
+            }
             String currentStatus = TaskValueMapper.normalizeStatus(task.getStatus());
             if (TaskValueMapper.STATUS_IN_PROGRESS.equals(currentStatus)) {
                 return;
@@ -254,6 +262,11 @@ public class TasksController {
                 loadTasks(currentSearchQuery());
             }
         });
+        boolean canModifyStatus = canCurrentUserModifyTaskStatus(task);
+        doneCheck.setDisable(!canModifyStatus);
+        inProgressIcon.setDisable(!canModifyStatus);
+        inProgressIcon.setMouseTransparent(!canModifyStatus);
+        inProgressIcon.setOpacity(canModifyStatus ? 1.0 : 0.45);
 
         row.getChildren().addAll(doneCheck, inProgressIcon, title, priority, status, dateBox, assignedTo, editIcon, deleteIcon);
         return row;
@@ -448,5 +461,13 @@ public class TasksController {
 
     private String currentSearchQuery() {
         return searchField == null ? null : searchField.getText();
+    }
+
+    private boolean canCurrentUserModifyTaskStatus(Task task) {
+        if (task == null) {
+            return false;
+        }
+        int assigneeId = task.getAssignedTo();
+        return assigneeId <= 0 || assigneeId == CURRENT_USER_ID;
     }
 }

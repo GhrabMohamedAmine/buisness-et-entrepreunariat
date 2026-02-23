@@ -27,12 +27,17 @@ public class TaskRowController {
     private Function<String, Boolean> onStatusChange;
     private String currentStatus = TaskValueMapper.STATUS_TODO;
     private boolean kanbanMode = false;
+    private boolean statusEditingAllowed = true;
 
     public void setTaskData(Task task) {
         if (task == null) return;
 
         if (taskRowRoot != null) {
             taskRowRoot.setOnDragDetected(event -> {
+                if (!statusEditingAllowed) {
+                    event.consume();
+                    return;
+                }
                 Dragboard db = taskRowRoot.startDragAndDrop(TransferMode.MOVE);
             ClipboardContent content = new ClipboardContent();
                 content.putString(String.valueOf(task.getId()));
@@ -74,6 +79,11 @@ public class TaskRowController {
         applyMode();
     }
 
+    public void setStatusEditingAllowed(boolean allowed) {
+        this.statusEditingAllowed = allowed;
+        applyStatusEditingState();
+    }
+
     private void applyMode() {
         if (taskRowRoot == null) return;
         if (kanbanMode) {
@@ -93,6 +103,7 @@ public class TaskRowController {
             setNodeVisibleManaged(deleteIcon, true);
             setNodeVisibleManaged(inProgressIcon, true);
         }
+        applyStatusEditingState();
     }
 
     private void setNodeVisibleManaged(javafx.scene.Node node, boolean value) {
@@ -124,6 +135,17 @@ public class TaskRowController {
             inProgressIcon.getStyleClass().add("orange-icon");
         } else {
             inProgressIcon.getStyleClass().add("gray-icon");
+        }
+    }
+
+    private void applyStatusEditingState() {
+        if (doneCheck != null) {
+            doneCheck.setDisable(!statusEditingAllowed);
+        }
+        if (inProgressIcon != null) {
+            inProgressIcon.setDisable(!statusEditingAllowed);
+            inProgressIcon.setMouseTransparent(!statusEditingAllowed);
+            inProgressIcon.setOpacity(statusEditingAllowed ? 1.0 : 0.45);
         }
     }
 
