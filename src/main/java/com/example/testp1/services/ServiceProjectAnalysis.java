@@ -32,14 +32,14 @@ public class ServiceProjectAnalysis {
      */
     public ProjectAnalysisResult analyzeProject(int budgetId, String userNotes) {
         try {
-            // 1. FETCH DATA FROM DATABASE VIA DAO
+
             System.out.println("-> Fetching data directly from DAOs for Budget ID: " + budgetId);
             ProjectBudget budget = budgetDAO.getById(budgetId);
             List<Transaction> transactions = transactionDAO.getByBudgetId(budgetId);
 
             if (budget == null) {
                 System.err.println("-> Error: ProjectBudget not found in DB!");
-                return null; // Return null instead of void
+                return null;
             }
 
             // 2. FORMAT THE DATABASE RECORDS INTO A READABLE STRING FOR THE AI
@@ -76,7 +76,7 @@ public class ServiceProjectAnalysis {
                     "{ \"projectedFinalCost\": double, \"projectedFinalRevenue\": double, \"successProbability\": int, \"inflectionDate\": \"MMM\", " +
                     "\"timelineData\": [ { \"month\": \"MMM\", \"spend\": double, \"revenue\": double } ] }";
 
-            // 4. BUILD THE JSON BODY
+
             JSONObject systemInstructionObj = new JSONObject()
                     .put("parts", new JSONArray().put(new JSONObject().put("text", systemInstruction)));
 
@@ -91,7 +91,7 @@ public class ServiceProjectAnalysis {
                     .put("contents", new JSONArray().put(contentsObj))
                     .put("generationConfig", generationConfig);
 
-            // 5. SEND THE REQUEST
+
             HttpClient client = HttpClient.newHttpClient();
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(URL))
@@ -104,7 +104,7 @@ public class ServiceProjectAnalysis {
 
             System.out.println("-> HTTP Status Code: " + response.statusCode());
 
-            // 6. PARSE THE RESPONSE BODY INTO OUR JAVA OBJECT
+
             if (response.statusCode() == 200) {
                 JSONObject root = new JSONObject(response.body());
                 JSONArray candidates = root.getJSONArray("candidates");
@@ -114,10 +114,10 @@ public class ServiceProjectAnalysis {
                         .getJSONObject(0)
                         .getString("text");
 
-                // Clean up any markdown blocks just in case
+
                 aiText = aiText.replaceAll("(?s)```json\\s*", "").replaceAll("(?s)```\\s*", "").trim();
 
-                // CONVERT AI JSON TO OUR JAVA OBJECT
+
                 JSONObject aiJson = new JSONObject(aiText);
                 ProjectAnalysisResult resultData = new ProjectAnalysisResult();
 

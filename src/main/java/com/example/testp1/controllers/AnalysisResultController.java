@@ -242,16 +242,30 @@ public class AnalysisResultController {
         XYChart.Series<String, Number> revenueSeries = new XYChart.Series<>();
         revenueSeries.setName("Projected Revenue");
 
+        // 1. We will track the true inflection month mathematically as we build the chart
+        String actualInflectionMonth = null;
+
         for (ProjectAnalysisResult.TimelinePoint point : data.getTimelineData()) {
             spendSeries.getData().add(new XYChart.Data<>(point.getMonth(), point.getSpend()));
             revenueSeries.getData().add(new XYChart.Data<>(point.getMonth(), point.getRevenue()));
+
+            // 2. THE MATH FIX: Check if Revenue has finally surpassed Spend
+            // We only grab the FIRST time this happens (the Golden Cross)
+            if (actualInflectionMonth == null && point.getRevenue() >= point.getSpend() && point.getRevenue() > 0) {
+                actualInflectionMonth = point.getMonth();
+            }
         }
 
         projectionChart.getData().addAll(spendSeries, revenueSeries);
 
-        // 6. Highlight the Golden Cross if it exists
-        if (data.getInflectionDate() != null && !data.getInflectionDate().equalsIgnoreCase("N/A")) {
-            highlightInflectionPoint(revenueSeries, data.getInflectionDate());
+        // 3. Highlight the true mathematical cross, ignoring the AI's hallucinated date
+        if (actualInflectionMonth != null) {
+            System.out.println("-> True Golden Cross calculated at: " + actualInflectionMonth);
+            highlightInflectionPoint(revenueSeries, actualInflectionMonth);
+
+            // Optional: If you display this date in a UI label, update it here using actualInflectionMonth!
+        } else {
+            System.out.println("-> No Golden Cross found in this projection.");
         }
     }
 
@@ -286,7 +300,7 @@ public class AnalysisResultController {
                         "-fx-padding: 6px; " +
                         "-fx-effect: dropshadow(three-pass-box, rgba(16, 185, 129, 0.6), 10, 0, 0, 0);"
         );
-        Tooltip tooltip = new Tooltip("Break-Even Point Reached!\nRevenue exceeds Spend.");
+        Tooltip tooltip = new Tooltip("First Profitable Month!\nBuisness is Booming!.");
         Tooltip.install(node, tooltip);
     }
 }

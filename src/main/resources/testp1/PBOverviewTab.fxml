@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.BarChart?>
+<?import javafx.scene.chart.CategoryAxis?>
+<?import javafx.scene.chart.NumberAxis?>
+<?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+
+<AnchorPane prefHeight="400.0" prefWidth="1080.0" styleClass="content-card" stylesheets="@../styles/nexum.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.controllers.PBOverviewController">
+    <children>
+        <HBox alignment="CENTER" spacing="20.0" AnchorPane.bottomAnchor="20.0" AnchorPane.leftAnchor="20.0" AnchorPane.rightAnchor="20.0" AnchorPane.topAnchor="20.0">
+            <children>
+                <PieChart fx:id="expensePieChart" title="Expense Distribution ($)" HBox.hgrow="ALWAYS" />
+
+                <BarChart fx:id="transactionBarChart" title="Transaction Volume by Category" HBox.hgrow="ALWAYS" legendVisible="false">
+                    <xAxis>
+                        <CategoryAxis label="Category" side="BOTTOM" />
+                    </xAxis>
+                    <yAxis>
+                        <NumberAxis label="Number of Expenses" side="LEFT" />
+                    </yAxis>
+                </BarChart>
+            </children>
+        </HBox>
+    </children>
+</AnchorPane>

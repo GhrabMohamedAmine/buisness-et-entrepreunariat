@@ -73,6 +73,7 @@
                         <fx:include fx:id="transactionTab" source="PBtransactionTab.fxml" />
                     </AnchorPane>
                     <AnchorPane fx:id="overviewContent" visible="false" managed="false">
+                        <fx:include source="PBOverviewTab.fxml"/>
                     </AnchorPane>
                     <AnchorPane fx:id="analysisContent" visible="false" managed="false">
                         <fx:include source="PBAnalysisTab.fxml" />

@@ -21,7 +21,7 @@ import java.util.List;
 
 public class PBpageController {
 
-    // --- FXML UI Fields ---
+
     @FXML private Label breadcrumbProjectName;
     @FXML private Label projectNameLabel;
     @FXML private Label budgetCodeLabel;
@@ -96,6 +96,7 @@ public class PBpageController {
         }
 
         updateTabStyles(overviewTab);
+        showContent(overviewContent);
         updateCurrentProjectBudget.setOnSaveSuccess( ()-> {
             loadBudgetData(targetId);
         });
@@ -113,7 +114,7 @@ public class PBpageController {
             addTransactionPage.setOnSaveSuccess(() ->{
                 loadBudgetData(currentBudget.getId());
 
-                // Tell the tab to reload the transaction rows
+
                 transactionTabController.refreshList();
             });
 
@@ -123,16 +124,16 @@ public class PBpageController {
     public void triggerDeleteTransactionSequence(Transaction t) {
         if (t != null && currentBudget != null) {
 
-            // 2. Show the delete confirmation (using your generic delete controller)
+
             deleteTransactionPopUp.showTransactionDelete(mainPageWrapper, () -> {
                 try {
-                    // This is the actual DB logic that runs inside the popup's 'handleConfirm'
+
                     serviceTransaction.delete(t);
                     System.out.println("Transaction " + t.getId() + " Deleted Successfully");
 
                     // 2. Refresh everything after deletion
-                    loadBudgetData(currentBudget.getId()); // Updates header totals ($5k/$0)
-                    transactionTabController.refreshList(); // Reloads the 1086px rows
+                    loadBudgetData(currentBudget.getId());
+                    transactionTabController.refreshList();
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -146,7 +147,7 @@ public class PBpageController {
             updateTransactionPage.setOnUpdateSuccess(() ->{
                 loadBudgetData(currentBudget.getId());
 
-                // Tell the tab to reload the transaction rows
+
                 transactionTabController.refreshList();
             });
 
@@ -351,7 +352,7 @@ public class PBpageController {
      */
     private void updateTabStyles(Button selectedBtn) {
         for (Button btn : tabButtons) {
-            // Remove both classes first to ensure a clean slate
+
             btn.getStyleClass().removeAll("tab-active", "tab-inactive");
 
             if (btn == selectedBtn) {
