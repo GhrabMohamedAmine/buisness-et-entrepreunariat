@@ -78,6 +78,11 @@
                                     <Label maxWidth="Infinity" style="-fx-text-fill: #991b1b;" text="Overdue" HBox.hgrow="ALWAYS" />
                                     <Label fx:id="overdueTasksLabel" style="-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #991b1b;" text="3" />
                                 </HBox>
+                                <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: #eff6ff; -fx-padding: 15; -fx-background-radius: 10;">
+                                    <Label maxWidth="Infinity" style="-fx-text-fill: #1e3a8a;" text="Health Score" HBox.hgrow="ALWAYS" />
+                                    <Label fx:id="healthScoreLabel" style="-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #1e3a8a;" text="0/100" />
+                                    <Label fx:id="healthStatusLabel" style="-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #92400e;" text="At Risk" />
+                                </HBox>
                             </VBox>
                         </VBox>
                         <VBox spacing="15" styleClass="nexum-card-sub">

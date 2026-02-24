@@ -32,6 +32,7 @@ import entities.Project;
 import entities.Task;
 import entities.User;
 import services.ActivityService;
+import services.ProjectHealthService;
 import services.ProjectService;
 import services.ProjectReportService;
 import services.TaskService;
@@ -61,6 +62,8 @@ public class ProjectDetailsController {
     @FXML private ProgressBar detailProgress;
     @FXML private Label totalTasksLabel, completedTasksLabel;
     @FXML private Label overdueTasksLabel;
+    @FXML private Label healthScoreLabel;
+    @FXML private Label healthStatusLabel;
     @FXML private VBox tasksContainer;
     @FXML private ScrollPane tasksScrollPane;
     @FXML private HBox overviewContainer;
@@ -83,6 +86,7 @@ public class ProjectDetailsController {
     private final TaskService taskService = new TaskService();
     private final UserService userService = new UserService();
     private final ActivityService activityService = new ActivityService();
+    private final ProjectHealthService projectHealthService = new ProjectHealthService();
     private final ProjectReportService projectReportService = new ProjectReportService();
     private final Map<Integer, Task> kanbanTaskById = new java.util.HashMap<>();
 
@@ -136,8 +140,9 @@ public class ProjectDetailsController {
     }
 
     private void loadProjectStats(int projectId) {
-        int total = taskService.getTaskCount(projectId);
-        int completed = taskService.getTaskCountByStatus(projectId, "DONE");
+        List<Task> tasks = taskService.getTasksByProject(projectId);
+        int total = tasks.size();
+        int completed = countDoneTasks(tasks);
         int overdue = taskService.getOverdueTaskCount(projectId);
 
         totalTasksLabel.setText(String.valueOf(total));
@@ -150,6 +155,36 @@ public class ProjectDetailsController {
         }
 
         overdueTasksLabel.setText(String.valueOf(overdue));
+
+        ProjectHealthService.ProjectHealthResult health = projectHealthService.calculateForProject(tasks);
+        if (healthScoreLabel != null) {
+            healthScoreLabel.setText(health.getScore() + "/100");
+        }
+        if (healthStatusLabel != null) {
+            healthStatusLabel.setText(health.getLevel().getLabel());
+            healthStatusLabel.setStyle(switch (health.getLevel()) {
+                case HEALTHY -> "-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #166534;";
+                case AT_RISK -> "-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #92400e;";
+                case CRITICAL -> "-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #991b1b;";
+            });
+        }
+    }
+
+    private int countDoneTasks(List<Task> tasks) {
+        if (tasks == null || tasks.isEmpty()) {
+            return 0;
+        }
+        int done = 0;
+        for (Task task : tasks) {
+            if (task == null || task.getStatus() == null) {
+                continue;
+            }
+            String normalized = task.getStatus().trim().toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
+            if ("DONE".equals(normalized)) {
+                done++;
+            }
+        }
+        return done;
     }
 
     private void loadTeamMembers(int projectId) {

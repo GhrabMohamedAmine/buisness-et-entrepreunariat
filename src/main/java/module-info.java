@@ -15,8 +15,6 @@ module tezfx {
     requires java.desktop;
     requires java.net.http;
     requires com.google.gson;
-    requires kernel;
-    requires layout;
 
     exports Mains;
     opens controllers to javafx.fxml;

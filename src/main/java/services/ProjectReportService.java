@@ -1,25 +1,14 @@
 package services;
 
-import com.itextpdf.kernel.colors.ColorConstants;
-import com.itextpdf.kernel.colors.DeviceRgb;
-import com.itextpdf.kernel.pdf.PdfDocument;
-import com.itextpdf.kernel.pdf.PdfWriter;
-import com.itextpdf.layout.Document;
-import com.itextpdf.layout.borders.Border;
-import com.itextpdf.layout.borders.SolidBorder;
-import com.itextpdf.layout.element.ListItem;
-import com.itextpdf.layout.element.Paragraph;
-import com.itextpdf.layout.element.Table;
-import com.itextpdf.layout.element.Cell;
-import com.itextpdf.layout.properties.HorizontalAlignment;
-import com.itextpdf.layout.properties.TextAlignment;
-import com.itextpdf.layout.properties.UnitValue;
 import entities.Project;
 import entities.Task;
 import entities.User;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.text.Normalizer;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -30,232 +19,236 @@ import java.util.Locale;
 public class ProjectReportService {
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd", Locale.ENGLISH);
     private static final DateTimeFormatter REPORT_TS_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm", Locale.ENGLISH);
-    private static final DeviceRgb COLOR_PURPLE = new DeviceRgb(124, 58, 237);
-    private static final DeviceRgb COLOR_TEXT = new DeviceRgb(17, 24, 39);
-    private static final DeviceRgb COLOR_MUTED = new DeviceRgb(107, 114, 128);
-    private static final DeviceRgb COLOR_BORDER = new DeviceRgb(229, 231, 235);
-    private static final DeviceRgb COLOR_SOFT_BG = new DeviceRgb(249, 250, 251);
-    private static final DeviceRgb COLOR_GREEN = new DeviceRgb(22, 163, 74);
-    private static final DeviceRgb COLOR_RED = new DeviceRgb(220, 38, 38);
+    private static final int LINES_PER_PAGE = 52;
+    private static final int LEFT_MARGIN = 40;
+    private static final int START_Y = 805;
+    private static final int LINE_STEP = 14;
 
     public void exportProjectPerformanceReport(Project project,
                                                List<Task> tasks,
                                                List<User> members,
                                                Path outputFile) throws IOException {
-        try (PdfWriter writer = new PdfWriter(outputFile.toFile());
-             PdfDocument pdf = new PdfDocument(writer);
-             Document document = new Document(pdf)) {
+        int totalTasks = tasks == null ? 0 : tasks.size();
+        int completedTasks = countCompleted(tasks);
+        int overdueTasks = countOverdue(tasks);
+        double successRate = totalTasks == 0 ? 0.0 : (completedTasks * 100.0) / totalTasks;
 
-            int totalTasks = tasks == null ? 0 : tasks.size();
-            int completedTasks = countCompleted(tasks);
-            int overdueTasks = countOverdue(tasks);
-            double successRate = totalTasks == 0 ? 0.0 : (completedTasks * 100.0) / totalTasks;
+        List<String> lines = new ArrayList<>();
+        addLine(lines, "NEXUM");
+        addLine(lines, "Project Performance Report");
+        addLine(lines, "Project: " + safeProjectName(project));
+        addLine(lines, "Generated: " + LocalDateTime.now().format(REPORT_TS_FORMAT));
+        addLine(lines, repeat('-', 74));
+        addLine(lines, String.format(Locale.ENGLISH, "Success Rate: %.0f%%", successRate));
+        addLine(lines, "Completed Tasks: " + completedTasks + " / " + totalTasks);
+        addLine(lines, "Overdue Tasks: " + overdueTasks);
+        addLine(lines, "");
 
-            document.setMargins(28, 28, 28, 28);
-
-            addHeader(document, project);
-            addKpiRow(document, successRate, completedTasks, totalTasks, overdueTasks);
-
-            addSectionTitle(document, "Membres de l'équipe");
-            if (members == null || members.isEmpty()) {
-                document.add(new Paragraph("Aucun membre assigné")
-                        .setFontSize(11)
-                        .setFontColor(COLOR_MUTED)
-                        .setMarginTop(4)
-                        .setMarginBottom(12));
-            } else {
-                com.itextpdf.layout.element.List memberList = new com.itextpdf.layout.element.List()
-                        .setSymbolIndent(8)
-                        .setListSymbol("\u2022")
-                        .setFontSize(11)
-                        .setFontColor(COLOR_TEXT)
-                        .setMarginTop(4)
-                        .setMarginBottom(14);
-                for (User member : members) {
-                    memberList.add(new ListItem(member.getFullName()));
-                }
-                document.add(memberList);
+        addLine(lines, "Team Members");
+        if (members == null || members.isEmpty()) {
+            addLine(lines, "- None assigned");
+        } else {
+            for (User member : members) {
+                addLine(lines, "- " + safe(member == null ? null : member.getFullName()));
             }
-
-            addSectionTitle(document, "Tâches en retard");
-            List<Task> overdueList = overdueTaskList(tasks);
-            if (overdueList.isEmpty()) {
-                document.add(new Paragraph("Aucune tâche en retard")
-                        .setFontSize(11)
-                        .setFontColor(COLOR_GREEN)
-                        .setMarginTop(4)
-                        .setMarginBottom(12));
-            } else {
-                document.add(buildOverdueTable(overdueList));
-            }
-
-            addSectionTitle(document, "Tâches Done");
-            document.add(buildTaskStatusTable(filterByStatus(tasks, "DONE"), "Done"));
-
-            addSectionTitle(document, "Tâches Undone (To Do)");
-            document.add(buildTaskStatusTable(filterByStatus(tasks, "TODO"), "To Do"));
-
-            addSectionTitle(document, "Tâches In Progress");
-            document.add(buildTaskStatusTable(filterByStatus(tasks, "IN_PROGRESS"), "In Progress"));
-
-            document.add(new Paragraph(" "));
-            document.add(new Paragraph("Fin du rapport")
-                    .setFontSize(9)
-                    .setFontColor(COLOR_MUTED)
-                    .setTextAlignment(TextAlignment.RIGHT));
         }
+        addLine(lines, "");
+
+        addLine(lines, "Overdue Tasks");
+        addTaskSection(lines, overdueTaskList(tasks), "Overdue");
+        addLine(lines, "");
+
+        addLine(lines, "Tasks Done");
+        addTaskSection(lines, filterByStatus(tasks, "DONE"), "Done");
+        addLine(lines, "");
+
+        addLine(lines, "Tasks Undone (To Do)");
+        addTaskSection(lines, filterByStatus(tasks, "TODO"), "To Do");
+        addLine(lines, "");
+
+        addLine(lines, "Tasks In Progress");
+        addTaskSection(lines, filterByStatus(tasks, "IN_PROGRESS"), "In Progress");
+        addLine(lines, "");
+        addLine(lines, "End of report");
+
+        byte[] pdfData = buildPdfFromLines(lines);
+        java.nio.file.Files.write(outputFile, pdfData);
     }
 
-    private void addHeader(Document document, Project project) {
-        Table header = new Table(UnitValue.createPercentArray(new float[]{72, 28}))
-                .useAllAvailableWidth()
-                .setMarginBottom(16);
-
-        Cell left = new Cell()
-                .setBorder(Border.NO_BORDER)
-                .add(new Paragraph("Nexum")
-                        .setFontSize(11)
-                        .setBold()
-                        .setFontColor(COLOR_PURPLE)
-                        .setMarginBottom(4))
-                .add(new Paragraph("Rapport de Performance Projet")
-                        .setFontSize(20)
-                        .setBold()
-                        .setFontColor(COLOR_TEXT)
-                        .setMarginBottom(2))
-                .add(new Paragraph("Projet: " +project.getName())
-                        .setFontSize(12)
-                        .setFontColor(COLOR_MUTED));
-
-        Cell right = new Cell()
-                .setBorder(Border.NO_BORDER)
-                .setTextAlignment(TextAlignment.RIGHT)
-                .add(new Paragraph("Généré le")
-                        .setFontSize(9)
-                        .setFontColor(COLOR_MUTED)
-                        .setMarginBottom(2))
-                .add(new Paragraph(LocalDateTime.now().format(REPORT_TS_FORMAT))
-                        .setFontSize(10)
-                        .setBold()
-                        .setFontColor(COLOR_TEXT));
-
-        header.addCell(left);
-        header.addCell(right);
-        document.add(header);
-        document.add(new Paragraph("")
-                .setBorderBottom(new SolidBorder(COLOR_BORDER, 1))
-                .setMarginBottom(14));
-    }
-
-    private void addKpiRow(Document document, double successRate, int completedTasks, int totalTasks, int overdueTasks) {
-        Table kpiTable = new Table(UnitValue.createPercentArray(new float[]{33, 33, 34}))
-                .useAllAvailableWidth()
-                .setMarginBottom(16);
-
-        kpiTable.addCell(buildKpiCell("Taux de réussite", String.format(Locale.ENGLISH, "%.0f%%", successRate), COLOR_PURPLE));
-        kpiTable.addCell(buildKpiCell("Tâches complétées", completedTasks + " / " + totalTasks, COLOR_GREEN));
-        kpiTable.addCell(buildKpiCell("Tâches en retard", String.valueOf(overdueTasks), overdueTasks > 0 ? COLOR_RED : COLOR_GREEN));
-
-        document.add(kpiTable);
-    }
-
-    private Cell buildKpiCell(String title, String value, DeviceRgb valueColor) {
-        return new Cell()
-                .setBackgroundColor(COLOR_SOFT_BG)
-                .setBorder(new SolidBorder(COLOR_BORDER, 1))
-                .setPadding(10)
-                .add(new Paragraph(title)
-                        .setFontSize(10)
-                        .setFontColor(COLOR_MUTED)
-                        .setMarginBottom(4))
-                .add(new Paragraph(value)
-                        .setFontSize(18)
-                        .setBold()
-                        .setFontColor(valueColor)
-                        .setMarginTop(0));
-    }
-
-    private void addSectionTitle(Document document, String title) {
-        document.add(new Paragraph(title)
-                .setFontSize(13)
-                .setBold()
-                .setFontColor(COLOR_TEXT)
-                .setMarginTop(4)
-                .setMarginBottom(6));
-    }
-
-    private Table buildOverdueTable(List<Task> overdueList) {
-        Table table = new Table(UnitValue.createPercentArray(new float[]{58, 22, 20}))
-                .useAllAvailableWidth()
-                .setMarginTop(4)
-                .setMarginBottom(10);
-
-        table.addHeaderCell(headerCell("Tâche"));
-        table.addHeaderCell(headerCell("Date d'échéance"));
-        table.addHeaderCell(headerCell("Statut"));
-
-        for (Task task : overdueList) {
-            table.addCell(bodyCell(task.getTitle()));
-            table.addCell(bodyCell(task.getDueDate()));
-            table.addCell(bodyCell("Overdue").setFontColor(COLOR_RED).setBold());
-        }
-        return table;
-    }
-
-    private Table buildTaskStatusTable(List<Task> tasks, String statusLabel) {
+    private void addTaskSection(List<String> lines, List<Task> tasks, String statusLabel) {
         if (tasks == null || tasks.isEmpty()) {
-            Table emptyTable = new Table(UnitValue.createPercentArray(new float[]{100}))
-                    .useAllAvailableWidth()
-                    .setMarginTop(4)
-                    .setMarginBottom(10);
-            emptyTable.addCell(new Cell()
-                    .setBorder(new SolidBorder(COLOR_BORDER, 1))
-                    .setPadding(8)
-                    .add(new Paragraph("Aucune tâche")
-                            .setFontSize(10)
-                            .setFontColor(COLOR_MUTED)));
-            return emptyTable;
+            addLine(lines, "No tasks");
+            return;
         }
-
-        Table table = new Table(UnitValue.createPercentArray(new float[]{55, 25, 20}))
-                .useAllAvailableWidth()
-                .setMarginTop(4)
-                .setMarginBottom(10);
-
-        table.addHeaderCell(headerCell("Tâche"));
-        table.addHeaderCell(headerCell("Date d'échéance"));
-        table.addHeaderCell(headerCell("Statut"));
-
+        addLine(lines, "Title | Due Date | Status");
+        addLine(lines, repeat('-', 74));
         for (Task task : tasks) {
-            table.addCell(bodyCell(task.getTitle()));
-            table.addCell(bodyCell(task.getDueDate()));
-            table.addCell(bodyCell(statusLabel));
+            String title = clip(safe(task == null ? null : task.getTitle()), 36);
+            String dueDate = clip(safe(task == null ? null : task.getDueDate()), 12);
+            addLine(lines, title + " | " + dueDate + " | " + statusLabel);
         }
-        return table;
     }
 
-    private Cell headerCell(String text) {
-        return new Cell()
-                .setBackgroundColor(COLOR_PURPLE)
-                .setBorder(new SolidBorder(COLOR_PURPLE, 1))
-                .setPadding(8)
-                .add(new Paragraph(text)
-                        .setFontSize(10)
-                        .setBold()
-                        .setFontColor(ColorConstants.WHITE))
-                .setTextAlignment(TextAlignment.LEFT)
-                .setVerticalAlignment(com.itextpdf.layout.properties.VerticalAlignment.MIDDLE);
+    private byte[] buildPdfFromLines(List<String> lines) {
+        List<List<String>> pages = paginate(lines, LINES_PER_PAGE);
+        List<byte[]> objects = new ArrayList<>();
+
+        objects.add(ascii("<< /Type /Catalog /Pages 2 0 R >>\n"));
+
+        int pageCount = pages.size();
+        int firstPageObject = 3;
+        int pagesKidsStart = firstPageObject;
+        int pagesContentStart = firstPageObject + pageCount;
+        StringBuilder pagesNode = new StringBuilder("<< /Type /Pages /Count ")
+                .append(pageCount)
+                .append(" /Kids [");
+        for (int i = 0; i < pageCount; i++) {
+            pagesNode.append(' ').append(pagesKidsStart + i).append(" 0 R");
+        }
+        pagesNode.append(" ] >>\n");
+        objects.add(ascii(pagesNode.toString()));
+
+        for (int i = 0; i < pageCount; i++) {
+            int contentObject = pagesContentStart + i;
+            String pageObject = "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] "
+                    + "/Resources << /Font << /F1 " + (pagesContentStart + pageCount) + " 0 R >> >> "
+                    + "/Contents " + contentObject + " 0 R >>\n";
+            objects.add(ascii(pageObject));
+        }
+
+        for (List<String> pageLines : pages) {
+            String stream = buildPageContentStream(pageLines);
+            byte[] streamBytes = ascii(stream);
+            String header = "<< /Length " + streamBytes.length + " >>\nstream\n";
+            String footer = "\nendstream\n";
+            ByteArrayOutputStream obj = new ByteArrayOutputStream();
+            writeAscii(obj, header);
+            writeBytes(obj, streamBytes);
+            writeAscii(obj, footer);
+            objects.add(obj.toByteArray());
+        }
+
+        objects.add(ascii("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>\n"));
+
+        return assemblePdf(objects);
     }
 
-    private Cell bodyCell(String text) {
-        return new Cell()
-                .setBorder(new SolidBorder(COLOR_BORDER, 1))
-                .setPadding(8)
-                .add(new Paragraph(text)
-                        .setFontSize(10)
-                        .setFontColor(COLOR_TEXT))
-                .setTextAlignment(TextAlignment.LEFT)
-                .setVerticalAlignment(com.itextpdf.layout.properties.VerticalAlignment.MIDDLE);
+    private String buildPageContentStream(List<String> lines) {
+        StringBuilder stream = new StringBuilder();
+        stream.append("BT\n/F1 11 Tf\n");
+        int y = START_Y;
+        for (String line : lines) {
+            stream.append("1 0 0 1 ")
+                    .append(LEFT_MARGIN)
+                    .append(' ')
+                    .append(y)
+                    .append(" Tm\n(")
+                    .append(escapePdfText(sanitizeAscii(line)))
+                    .append(") Tj\n");
+            y -= LINE_STEP;
+        }
+        stream.append("ET\n");
+        return stream.toString();
+    }
+
+    private byte[] assemblePdf(List<byte[]> objects) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        writeAscii(out, "%PDF-1.4\n%\u00e2\u00e3\u00cf\u00d3\n");
+
+        List<Integer> xrefOffsets = new ArrayList<>();
+        xrefOffsets.add(0);
+
+        for (int i = 0; i < objects.size(); i++) {
+            xrefOffsets.add(out.size());
+            writeAscii(out, (i + 1) + " 0 obj\n");
+            writeBytes(out, objects.get(i));
+            writeAscii(out, "endobj\n");
+        }
+
+        int xrefStart = out.size();
+        writeAscii(out, "xref\n0 " + (objects.size() + 1) + "\n");
+        writeAscii(out, "0000000000 65535 f \n");
+        for (int i = 1; i < xrefOffsets.size(); i++) {
+            writeAscii(out, String.format(Locale.ENGLISH, "%010d 00000 n %n", xrefOffsets.get(i)));
+        }
+
+        writeAscii(out, "trailer\n<< /Size " + (objects.size() + 1) + " /Root 1 0 R >>\n");
+        writeAscii(out, "startxref\n" + xrefStart + "\n%%EOF\n");
+        return out.toByteArray();
+    }
+
+    private List<List<String>> paginate(List<String> lines, int linesPerPage) {
+        List<List<String>> pages = new ArrayList<>();
+        if (lines == null || lines.isEmpty()) {
+            List<String> single = new ArrayList<>();
+            single.add("Empty report");
+            pages.add(single);
+            return pages;
+        }
+        int index = 0;
+        while (index < lines.size()) {
+            int end = Math.min(index + linesPerPage, lines.size());
+            pages.add(new ArrayList<>(lines.subList(index, end)));
+            index = end;
+        }
+        return pages;
+    }
+
+    private void addLine(List<String> lines, String line) {
+        lines.add(safe(line));
+    }
+
+    private String safeProjectName(Project project) {
+        if (project == null) return "Unknown";
+        return safe(project.getName());
+    }
+
+    private String safe(String value) {
+        if (value == null || value.isBlank()) return "-";
+        return value.trim();
+    }
+
+    private String clip(String value, int maxLen) {
+        if (value == null) return "-";
+        if (value.length() <= maxLen) return value;
+        if (maxLen < 4) return value.substring(0, maxLen);
+        return value.substring(0, maxLen - 3) + "...";
+    }
+
+    private String repeat(char c, int count) {
+        if (count <= 0) return "";
+        StringBuilder sb = new StringBuilder(count);
+        for (int i = 0; i < count; i++) sb.append(c);
+        return sb.toString();
+    }
+
+    private String sanitizeAscii(String value) {
+        String normalized = Normalizer.normalize(value == null ? "" : value, Normalizer.Form.NFD);
+        String withoutDiacritics = normalized.replaceAll("\\p{M}+", "");
+        return withoutDiacritics.replaceAll("[^\\x20-\\x7E]", "?");
+    }
+
+    private String escapePdfText(String value) {
+        return value
+                .replace("\\", "\\\\")
+                .replace("(", "\\(")
+                .replace(")", "\\)");
+    }
+
+    private byte[] ascii(String text) {
+        return text.getBytes(StandardCharsets.ISO_8859_1);
+    }
+
+    private void writeAscii(ByteArrayOutputStream out, String text) {
+        writeBytes(out, ascii(text));
+    }
+
+    private void writeBytes(ByteArrayOutputStream out, byte[] data) {
+        try {
+            out.write(data);
+        } catch (IOException e) {
+            throw new RuntimeException("Unexpected in-memory stream write error", e);
+        }
     }
 
     private int countCompleted(List<Task> tasks) {

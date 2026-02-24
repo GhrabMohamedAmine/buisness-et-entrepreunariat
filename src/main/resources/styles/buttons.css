@@ -1,4 +1,4 @@
-/* Base style for all buttons to ensure consistent padding and font */
+ /* Base style for all buttons to ensure consistent padding and font */
 .button {
     -fx-font-family: "Inter", "Segoe UI", sans-serif;
     -fx-font-size: 14px;
