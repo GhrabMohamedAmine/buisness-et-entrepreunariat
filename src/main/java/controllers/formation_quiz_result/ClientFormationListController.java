@@ -3,9 +3,7 @@ package controllers.formation_quiz_result;
 import entities.Formation;
 import entities.Participer;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.ProgressBar;
+import javafx.scene.control.*;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.VBox;
 import services.FormationService;
@@ -13,27 +11,86 @@ import services.ParticiperService;
 import services.UserService;
 import utils.Router;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 public class ClientFormationListController {
 
     @FXML private FlowPane cardsFlow;
+    @FXML private TextField searchField;
+    @FXML private ComboBox<String> filterCombo;
 
     private final FormationService formationService = new FormationService();
     private final ParticiperService participerService = new ParticiperService();
     private final int userId = UserService.getCurrentUser().getId();
 
+    private List<Formation> formations;
+
     @FXML
     public void initialize() {
-        refresh();
+
+        // charger toutes les formations
+        formations = formationService.getAll();
+
+        // remplir filtre
+        filterCombo.getItems().addAll(
+                "Toutes",
+                "Nouveau",
+                "En cours",
+                "Réussi",
+                "Échoué"
+        );
+        filterCombo.setValue("Toutes");
+
+        // listeners LIVE (le plus important)
+        searchField.textProperty().addListener((obs, oldVal, newVal) -> applyFilter());
+        filterCombo.valueProperty().addListener((obs, oldVal, newVal) -> applyFilter());
+
+        applyFilter();
     }
 
-    private void refresh() {
+    private void applyFilter() {
+
+        String search = searchField.getText().toLowerCase();
+        String filter = filterCombo.getValue();
+
+        List<Formation> filtered = formations.stream()
+
+                // 🔎 recherche texte
+                .filter(f ->
+                        f.getTitre().toLowerCase().contains(search)
+                                || f.getDescription().toLowerCase().contains(search)
+                )
+
+                // 🎯 filtre statut
+                .filter(f -> {
+
+                    Participer p = participerService.getParticipation(userId, f.getId());
+
+                    if(filter.equals("Toutes")) return true;
+
+                    if(filter.equals("Nouveau")) return p == null;
+
+                    if(p == null) return false;
+
+                    switch(filter){
+                        case "En cours": return p.getStatut().equals("EN_COURS");
+                        case "Réussi": return p.getStatut().equals("REUSSI");
+                        case "Échoué": return p.getStatut().equals("ECHOUE");
+                    }
+
+                    return true;
+                })
+
+                .collect(Collectors.toList());
+
+        refreshCards(filtered);
+    }
+
+    private void refreshCards(List<Formation> list){
         cardsFlow.getChildren().clear();
-
-        for (Formation f : formationService.getAll()) {
-            cardsFlow.getChildren().add(createCard(f));
-        }
+        list.forEach(f -> cardsFlow.getChildren().add(createCard(f)));
     }
-
     private VBox createCard(Formation f) {
 
         Participer p = participerService.getParticipation(userId, f.getId());

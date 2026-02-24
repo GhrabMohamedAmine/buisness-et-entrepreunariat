@@ -6,6 +6,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.FileChooser;
 import services.FormationService;
+import utils.BadWordFilter;
 import utils.DialogUtil;
 import utils.Router;
 
@@ -176,14 +177,16 @@ public class FormationAddController {
             String video2Name = copyVideoToStorage(v2);
             String video3Name = copyVideoToStorage(v3);
 
+            String cleanTitre = BadWordFilter.cleanText( titreField.getText().trim());
+            String cleanDesc  = BadWordFilter.cleanText( descField.getText().trim());
+
             formationService.add(new Formation(
-                    titreField.getText().trim(),
-                    descField.getText().trim(),
+                    cleanTitre,
+                    cleanDesc,
                     video1Name,
                     video2Name,
                     video3Name
             ));
-
             DialogUtil.success("Succès", "Formation ajoutée !");
             Router.goTo("formation_list.fxml");
 

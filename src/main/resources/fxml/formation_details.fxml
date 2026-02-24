@@ -33,10 +33,21 @@
 
 
                 <VBox spacing="10">
-                    <Button fx:id="btnAjouterQuiz" text="➕ Ajouter Quiz"
-                            onAction="#onAjouterQuiz" styleClass="btn-primary"/>
-                    <Button fx:id="btnBack" text="Retour"
-                            onAction="#goBack" styleClass="btn-black"/>
+
+                    <Button fx:id="btnAjouterQuiz"
+                            text="➕ Ajouter Quiz Manuellement"
+                            onAction="#onAjouterQuiz"
+                            styleClass="btn-primary"/>
+
+                    <Button fx:id="btnGenerateAI"
+                            text="🤖 Générer Quiz avec IA"
+                            onAction="#onGenerateAIQuiz"
+                            styleClass="btn-success"/>
+
+                    <Button fx:id="btnBack"
+                            text="Retour"
+                            onAction="#goBack"
+                            styleClass="btn-black"/>
                 </VBox>
             </HBox>
 

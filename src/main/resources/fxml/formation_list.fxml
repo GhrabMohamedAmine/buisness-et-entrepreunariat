@@ -3,21 +3,35 @@
 <?import javafx.scene.layout.*?>
 <?import javafx.scene.control.*?>
 <?import javafx.geometry.Insets?>
-
 <VBox xmlns="http://javafx.com/javafx"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="controllers.formation_quiz_result.FormationListController"
-      spacing="14"
- >
+      spacing="14">
 
     <padding>
         <Insets top="22" right="22" bottom="22" left="22"/>
     </padding>
 
-    <Label text="Formations" styleClass="page-title"/>
-    <Label text="Consultez, modifiez et gérez les quiz liés à chaque formation." styleClass="page-subtitle"/>
+    <!-- HEADER -->
+    <HBox alignment="CENTER_LEFT" spacing="10">
+        <VBox HBox.hgrow="ALWAYS">
+            <Label text="Formations" styleClass="page-title"/>
+            <Label text="Consultez, modifiez et gérez les quiz liés à chaque formation."
+                   styleClass="page-subtitle"/>
+        </VBox>
 
-    <ScrollPane fitToWidth="true" style="-fx-background-color:transparent;" VBox.vgrow="ALWAYS">
+        <!-- ADD BUTTON -->
+        <Button fx:id="addFormationBtn"
+                text="+ Ajouter formation"
+                onAction="#openAddFormation"
+                styleClass="btn-success"/>
+    </HBox>
+
+    <!-- LIST -->
+    <ScrollPane fitToWidth="true"
+                style="-fx-background-color:transparent;"
+                VBox.vgrow="ALWAYS">
+
         <content>
             <FlowPane fx:id="cardsFlow"
                       hgap="14" vgap="14"

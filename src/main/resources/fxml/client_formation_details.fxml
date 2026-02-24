@@ -19,8 +19,13 @@
 
             <!-- HEADER -->
             <VBox spacing="6">
+                <HBox spacing="10" alignment="CENTER_RIGHT">
+                    <Label text="Langue :" style="-fx-font-weight:bold;"/>
+                    <ComboBox fx:id="langCombo" prefWidth="140"/>
+                </HBox>
                 <Label fx:id="titreLabel" styleClass="page-title"/>
                 <Label fx:id="descLabel" styleClass="page-subtitle" wrapText="true"/>
+
             </VBox>
 
             <!-- VIDEO SECTION -->

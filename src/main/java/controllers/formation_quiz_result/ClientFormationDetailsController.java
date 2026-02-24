@@ -9,8 +9,10 @@ import javafx.scene.media.Media;
 import javafx.scene.media.MediaPlayer;
 import javafx.scene.media.MediaView;
 import services.*;
+import utils.CertificateGenerator;
 import utils.DialogUtil;
-
+import javafx.application.Platform;
+import utils.FreeTranslator;
 import java.io.File;
 import java.util.*;
 
@@ -28,7 +30,7 @@ public class ClientFormationDetailsController {
     @FXML private Button video1Btn;
     @FXML private Button video2Btn;
     @FXML private Button video3Btn;
-
+    @FXML private ComboBox<String> langCombo;
     private final FormationService formationService = new FormationService();
     private final QuizService quizService = new QuizService();
     private final ResultatService resultatService = new ResultatService();
@@ -71,7 +73,7 @@ public class ClientFormationDetailsController {
         // 4️⃣ Now we can safely use participation
         titreLabel.setText(formation.getTitre());
         descLabel.setText(formation.getDescription());
-
+        initLanguageSelector();
         // Playlist buttons
         video1Btn.setOnAction(e->loadVideo(formation.getVideo1(),33));
         video2Btn.setOnAction(e->loadVideo(formation.getVideo2(),66));
@@ -194,11 +196,30 @@ public class ClientFormationDetailsController {
         double percent = (score*100.0)/total;
 
         if(percent >= 60){
+
+            try {
+
+                // 1️⃣ Générer certificat
+                File certif = CertificateGenerator.generate(
+                        new Resultat(formation.getId(), score, total)
+                );
+
+                // 2️⃣ Envoyer email
+                MailServiceCertificat mailService = new MailServiceCertificat();
+                mailService.sendCertificateEmail(
+                        UserService.getCurrentUser(),
+                        formation,
+                        certif
+                );
+
+            } catch (Exception e){
+                e.printStackTrace();
+            }
+
             DialogUtil.success(
                     "Félicitations 🎓",
-                    "Vous avez validé la formation !\nScore : "
-                            + score + "/" + total +
-                            "\nRéussite : " + (int)percent + "%"
+                    "Vous avez validé la formation !\n" +
+                            "Votre certificat vous a été envoyé par email 📧"
             );
         }else{
             DialogUtil.error(
@@ -236,5 +257,54 @@ public class ClientFormationDetailsController {
 
         return true;
     }
+    private void initLanguageSelector(){
 
-}
+        langCombo.getItems().addAll(
+                "Français",
+                "English",
+                "العربية"
+        );
+
+        langCombo.setValue("Français");
+
+        langCombo.setOnAction(e -> translateFormation());
+    }
+    private void translateFormation(){
+
+        String selected = langCombo.getValue();
+
+        final String source = "fr";
+        final String target;
+
+        switch(selected){
+            case "English": target = "en"; break;
+            case "العربية": target = "ar"; break;
+            default: target = "fr";
+        }
+
+        // si français → remettre original
+        if(target.equals("fr")){
+            titreLabel.setText(formation.getTitre());
+            descLabel.setText(formation.getDescription());
+            return;
+        }
+
+        titreLabel.setText("Traduction...");
+        descLabel.setText("Veuillez patienter...");
+
+        // THREAD pour éviter freeze UI
+        new Thread(() -> {
+
+            String translatedTitle =
+                    FreeTranslator.translate(formation.getTitre(), source, target);
+
+            String translatedDesc =
+                    FreeTranslator.translate(formation.getDescription(), source, target);
+
+            Platform.runLater(() -> {
+                titreLabel.setText(translatedTitle);
+                descLabel.setText(translatedDesc);
+            });
+
+        }).start();
+    }}

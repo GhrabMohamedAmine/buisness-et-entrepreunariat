@@ -12,11 +12,13 @@ module NEXUM {
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.ikonli.materialdesign2;
     requires org.kordamp.ikonli.feather;
-    requires java.desktop;
     requires java.sql;
     requires javafx.media;
     requires kernel;
     requires layout;
+    requires jakarta.mail;
+    requires java.desktop;
+    requires org.json;
 
 
     opens controllers to javafx.fxml;

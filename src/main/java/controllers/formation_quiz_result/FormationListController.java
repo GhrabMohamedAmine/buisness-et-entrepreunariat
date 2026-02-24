@@ -18,7 +18,8 @@ public class FormationListController {
     @FXML private FlowPane cardsFlow;
 
     private final FormationService formationService = new FormationService();
-
+    @FXML
+    private Button addFormationBtn;
     @FXML
     public void initialize() {
         refresh();
@@ -81,7 +82,15 @@ public class FormationListController {
         utils.Router.goTo("formation_details.fxml");
     }
 
-
+    @FXML
+    private void openAddFormation() {
+        try {
+            utils.Router.goTo("formation_add.fxml");
+        } catch (Exception e) {
+            DialogUtil.error("Erreur", "Impossible d'ouvrir la page d'ajout.");
+            e.printStackTrace();
+        }
+    }
     private void openEdit(int formationId) {
         FormationEditController.open(formationId);
     }

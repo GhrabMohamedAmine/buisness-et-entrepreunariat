@@ -37,7 +37,7 @@ public class FormationDetailsController {
     @FXML private MediaView mv3;
     @FXML
     private FlowPane quizCards;
-
+    @FXML private Button btnGenerateAI;
     @FXML private Button btnAjouterQuiz;
     @FXML private Button btnBack;
 
@@ -394,5 +394,63 @@ public class FormationDetailsController {
             refreshQuizList();
         }
     }
+    @FXML
+    void onGenerateAIQuiz() {
 
+        Formation formation = formationService.getById(formationId);
+
+        if(formation == null){
+            DialogUtil.error("Erreur","Formation introuvable");
+            return;
+        }
+
+        btnGenerateAI.setDisable(true);
+        btnGenerateAI.setText("IA en cours...");
+
+        new Thread(() -> {
+
+            try {
+
+                var quizzes = utils.AiQuizGenerator.generateQuiz(formation.getDescription());
+
+                if(quizzes == null){
+                    javafx.application.Platform.runLater(() ->
+                            DialogUtil.error("IA","Impossible de générer le quiz"));
+                    return;
+                }
+
+                for(int i=0;i<quizzes.length();i++){
+
+                    var q = quizzes.getJSONObject(i);
+
+                    Quiz quiz = new Quiz(
+                            q.getString("question"),
+                            q.getString("r1"),
+                            q.getString("r2"),
+                            q.getString("r3"),
+                            null,
+                            formationId,
+                            q.getInt("correct")
+                    );
+
+                    quizService.add(quiz);
+                }
+
+                javafx.application.Platform.runLater(() -> {
+                    DialogUtil.success("IA","Quiz généré automatiquement ✔");
+                    refreshQuizList();
+                    btnGenerateAI.setDisable(false);
+                    btnGenerateAI.setText("🤖 Générer Quiz avec IA");
+                });
+
+            } catch (Exception e){
+                javafx.application.Platform.runLater(() -> {
+                    DialogUtil.error("IA","Erreur IA : " + e.getMessage());
+                    btnGenerateAI.setDisable(false);
+                    btnGenerateAI.setText("🤖 Générer Quiz avec IA");
+                });
+            }
+
+        }).start();
+    }
 }

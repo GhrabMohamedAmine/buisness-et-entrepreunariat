@@ -24,7 +24,9 @@ public class MainFX extends Application {
 
         FXMLLoader loader = new FXMLLoader(fxmlLocation);
         Scene scene = new Scene(loader.load());
-
+        scene.getStylesheets().add(
+                getClass().getResource("/styles.css").toExternalForm()
+        );
         stage.setTitle("Gestion des Utilisateurs");
         stage.setScene(scene);
         stage.show();

@@ -70,11 +70,31 @@
         <artifactId>ikonli-javafx</artifactId>
         <version>12.3.1</version>
     </dependency>
+
     <dependency>
         <groupId>org.kordamp.ikonli</groupId>
         <artifactId>ikonli-materialdesign2-pack</artifactId>
         <version>12.3.1</version>
     </dependency>
+
+
+        <!-- mailing-->
+        <dependency>
+            <groupId>com.sun.mail</groupId>
+            <artifactId>jakarta.mail</artifactId>
+            <version>2.0.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.json</groupId>
+            <artifactId>json</artifactId>
+            <version>20231013</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.activation</groupId>
+            <artifactId>jakarta.activation-api</artifactId>
+            <version>2.1.2</version>
+        </dependency>
+
 
     </dependencies>
 
