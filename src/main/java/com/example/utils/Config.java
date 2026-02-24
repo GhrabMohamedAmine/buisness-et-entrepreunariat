@@ -4,7 +4,7 @@ import io.github.cdimascio.dotenv.Dotenv;
 
 public class Config {
     // Load the .env file once when the class is initialized
-    private static final Dotenv dotenv = Dotenv.load();
+    public static final Dotenv dotenv = Dotenv.load();
 
     /**
      * Retrieves a value from the .env file.

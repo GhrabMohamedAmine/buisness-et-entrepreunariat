@@ -93,7 +93,7 @@ public class OverviewController {
     @FXML
     public void handleAddClick(){
         List<String> names = projectDAO.getAvailableProjectNames();
-        addProjectBudget.show(names,ovContent);
+        addProjectBudget.showV2(names,ovContent);
 
     }
     @FXML

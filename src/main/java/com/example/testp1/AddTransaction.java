@@ -82,8 +82,63 @@ public class AddTransaction extends StackPane {
         categoryField.clear();
         transactionDatePicker.setValue(LocalDate.now());
 
-        triggerOpenSequence(background);
+        triggerOpenSequenceV2(background);
     }
+
+
+
+    private void triggerOpenSequenceV2(javafx.scene.Node backgroundToBlur) {
+        javafx.scene.Scene scene = backgroundToBlur.getScene();
+        javafx.scene.Parent currentRoot = scene.getRoot();
+
+        javafx.scene.layout.StackPane overlayRoot;
+        javafx.scene.Node appContent;
+
+        if (currentRoot.getProperties().containsKey("isOverlayRoot")) {
+            overlayRoot = (javafx.scene.layout.StackPane) currentRoot;
+            appContent = overlayRoot.getChildren().get(0);
+        } else {
+            overlayRoot = new javafx.scene.layout.StackPane();
+            overlayRoot.getProperties().put("isOverlayRoot", true);
+            appContent = currentRoot;
+            scene.setRoot(overlayRoot);
+            overlayRoot.getChildren().add(appContent);
+        }
+
+        if (this.getParent() != null && this.getParent() instanceof javafx.scene.layout.Pane) {
+            ((javafx.scene.layout.Pane) this.getParent()).getChildren().remove(this);
+        }
+
+        javafx.scene.effect.BoxBlur blur = new javafx.scene.effect.BoxBlur(8, 8, 3);
+        javafx.scene.effect.ColorAdjust dim = new javafx.scene.effect.ColorAdjust();
+        dim.setBrightness(-0.3);
+        dim.setInput(blur);
+        appContent.setEffect(dim);
+
+        if (!overlayRoot.getChildren().contains(this)) {
+            overlayRoot.getChildren().add(this);
+        }
+
+        this.setVisible(true);
+        this.setMouseTransparent(false);
+        this.toFront();
+
+        javafx.animation.ScaleTransition scale = new javafx.animation.ScaleTransition(javafx.util.Duration.millis(300), popupCard);
+        scale.setFromX(0.7);
+        scale.setFromY(0.7);
+        scale.setToX(1.0);
+        scale.setToY(1.0);
+
+        javafx.animation.FadeTransition fade = new javafx.animation.FadeTransition(javafx.util.Duration.millis(300), dimOverlay);
+        fade.setFromValue(0);
+        fade.setToValue(1);
+
+        new javafx.animation.ParallelTransition(scale, fade).play();
+    }
+
+
+
+
 
     /**
      * Premium Open Sequence: Applies Blur, Dimming, and Scale Animations.

@@ -1,0 +1,147 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<AnchorPane prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml" fx:controller="controllers.ProjectDetailsController">
+    <VBox spacing="15" style="-fx-background-color: #f9fafb;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+        <padding>
+            <Insets bottom="30" left="40" right="40" top="30" />
+        </padding>
+
+
+
+        <VBox spacing="25" styleClass="nexum-card" VBox.vgrow="ALWAYS">
+
+            <VBox spacing="20">
+                <HBox alignment="TOP_LEFT">
+                    <VBox spacing="8" HBox.hgrow="ALWAYS">
+                        <Label fx:id="detailName" style="-fx-font-size: 28; -fx-font-weight: bold;" text="Website Redesign" />
+                        <HBox alignment="CENTER_LEFT" spacing="15">
+                            <Label fx:id="detailDate" styleClass="text-muted" text="Due Oct 24, 2026" />
+                        </HBox>
+                    </VBox>
+
+                    <HBox alignment="TOP_RIGHT" spacing="10">
+                        <Button onAction="#handleExportReport" styleClass="btn-secondary" text="Exporter le rapport" />
+                        <FontIcon styleClass="btn-icon-outline" iconLiteral="mdi2p-pencil-outline" iconSize="18" onMouseClicked="#handleEditProject" />
+                        <FontIcon styleClass="btn-icon-danger" iconLiteral="mdi2d-delete-empty-outline" iconSize="18" onMouseClicked="#handleDeleteProject" />
+                    </HBox>
+                </HBox>
+
+                <HBox alignment="CENTER_LEFT">
+                    <HBox spacing="25" HBox.hgrow="ALWAYS">
+                        <Button fx:id="overviewTab" onAction="#onOverviewTabClicked" styleClass="tab-active" text="Overview" />
+                        <Button fx:id="tasksBtn" onAction="#onTasksTabClicked" styleClass="tab-inactive" text="Tasks" />
+                        <Button fx:id="kanbanTab" onAction="#onKanbanTabClicked" styleClass="tab-inactive" text="Kanban" />
+                        <Button styleClass="tab-inactive" text="Discussion" />
+                    </HBox>
+                    <VBox alignment="CENTER_RIGHT" spacing="5">
+                        <HBox alignment="BOTTOM_RIGHT" spacing="10">
+                            <Label styleClass="text-muted" text="Progress" />
+                            <Label fx:id="detailPercent" style="-fx-text-fill: #7c4dff; -fx-font-weight: bold;" text="75%" />
+                        </HBox>
+                        <ProgressBar fx:id="detailProgress" prefWidth="250" progress="0.75" styleClass="nexum-progress" />
+                    </VBox>
+                </HBox>
+            </VBox>
+
+            <StackPane VBox.vgrow="ALWAYS">
+                <HBox fx:id="overviewContainer" spacing="25">
+                    <VBox spacing="25" HBox.hgrow="ALWAYS">
+                        <VBox spacing="15" styleClass="nexum-card-sub">
+                            <Label style="-fx-font-size: 18; -fx-font-weight: bold;"  text="Description" />
+                            <Label fx:id="detailDesc" style="-fx-text-fill: #4b5563; -fx-font-size: 14;" text="Your project description goes here..." wrapText="true" />
+                            <VBox fx:id="deliverablesContainer" spacing="8" />
+                        </VBox>
+                        <VBox spacing="15" styleClass="nexum-card-sub" VBox.vgrow="ALWAYS">
+                            <Label style="-fx-font-size: 18; -fx-font-weight: bold;"  text="Recent Activity" />
+                            <VBox fx:id="recentActivityContainer" spacing="10" />
+                        </VBox>
+                    </VBox>
+
+                    <VBox minWidth="320" prefWidth="320" spacing="25">
+                        <VBox spacing="15" styleClass="nexum-card-sub">
+                            <Label style="-fx-font-size: 18; -fx-font-weight: bold;" styleClass="section-title" text="Project Stats" />
+                            <VBox spacing="10">
+                                <HBox alignment="CENTER_LEFT" style="-fx-background-color: #f9fafb; -fx-padding: 15; -fx-background-radius: 10;">
+                                    <Label maxWidth="Infinity" style="-fx-text-fill: #6b7280;" text="Total Tasks" HBox.hgrow="ALWAYS" />
+                                    <Label fx:id="totalTasksLabel" style="-fx-font-weight: bold; -fx-font-size: 16;" text="48" />
+                                </HBox>
+                                <HBox alignment="CENTER_LEFT" style="-fx-background-color: #f0fdf4; -fx-padding: 15; -fx-background-radius: 10;">
+                                    <Label maxWidth="Infinity" style="-fx-text-fill: #166534;" text="Completed" HBox.hgrow="ALWAYS" />
+                                    <Label fx:id="completedTasksLabel" style="-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #166534;" text="36" />
+                                </HBox>
+                                <HBox alignment="CENTER_LEFT" style="-fx-background-color: #fef2f2; -fx-padding: 15; -fx-background-radius: 10;">
+                                    <Label maxWidth="Infinity" style="-fx-text-fill: #991b1b;" text="Overdue" HBox.hgrow="ALWAYS" />
+                                    <Label fx:id="overdueTasksLabel" style="-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #991b1b;" text="3" />
+                                </HBox>
+                                <HBox alignment="CENTER_LEFT" spacing="10" style="-fx-background-color: #eff6ff; -fx-padding: 15; -fx-background-radius: 10;">
+                                    <Label maxWidth="Infinity" style="-fx-text-fill: #1e3a8a;" text="Health Score" HBox.hgrow="ALWAYS" />
+                                    <Label fx:id="healthScoreLabel" style="-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #1e3a8a;" text="0/100" />
+                                    <Label fx:id="healthStatusLabel" style="-fx-font-weight: bold; -fx-font-size: 16; -fx-text-fill: #92400e;" text="At Risk" />
+                                </HBox>
+                            </VBox>
+                        </VBox>
+                        <VBox spacing="15" styleClass="nexum-card-sub">
+                            <Label style="-fx-font-size: 18; -fx-font-weight: bold;" styleClass="section-title" text="Team Members" />
+                            <VBox fx:id="teamContainer" spacing="10" />
+                        </VBox>
+                    </VBox>
+                </HBox>
+
+                <ScrollPane fx:id="tasksScrollPane" fitToWidth="true" managed="false" style="-fx-background-color: transparent; -fx-background: transparent;" visible="false">
+                    <VBox fx:id="tasksContainer" spacing="20" >
+                        <HBox alignment="CENTER_LEFT">
+                            <Label maxWidth="Infinity" styleClass="header-title" text="Project Tasks" HBox.hgrow="ALWAYS" />
+                            <Button onAction="#handleAddTask" styleClass="btn-primary" text="+ Add New Task" />
+                        </HBox>
+                        <VBox fx:id="taskListContainer" fillWidth="true" spacing="20" />
+                    </VBox>
+                </ScrollPane>
+
+                <VBox fx:id="kanbanContainer" managed="false" spacing="16" styleClass="kanban-board" visible="false">
+                    <HBox alignment="CENTER_LEFT">
+                        <VBox spacing="2" HBox.hgrow="ALWAYS">
+                            <Label styleClass="header-title" text="Project Kanban" />
+                            <Label styleClass="text-muted" text="Drag tasks between columns to update status." />
+                        </VBox>
+                        <Button onAction="#handleAddTask" styleClass="btn-primary" text="+ Add Task" />
+                    </HBox>
+                    <HBox spacing="14" VBox.vgrow="ALWAYS">
+                        <VBox maxWidth="Infinity" minWidth="260" prefWidth="0.0" spacing="10" styleClass="kanban-column" HBox.hgrow="ALWAYS">
+                            <HBox alignment="CENTER_LEFT" styleClass="kanban-column-header">
+                                <Label maxWidth="Infinity" styleClass="kanban-column-title" text="To Do" HBox.hgrow="ALWAYS" />
+                                <Label fx:id="todoCountLabel" styleClass="kanban-column-count" text="0" />
+                            </HBox>
+                            <ScrollPane fx:id="todoScrollPane" fitToWidth="true" hbarPolicy="NEVER" styleClass="kanban-column-scroll" VBox.vgrow="ALWAYS">
+                                <VBox fx:id="todoColumn" fillWidth="true" maxWidth="Infinity" spacing="10" styleClass="kanban-column-list" VBox.vgrow="ALWAYS" />
+                            </ScrollPane>
+                        </VBox>
+                        <VBox maxWidth="Infinity" minWidth="260" prefWidth="0.0" spacing="10" styleClass="kanban-column" HBox.hgrow="ALWAYS">
+                            <HBox alignment="CENTER_LEFT" styleClass="kanban-column-header">
+                                <Label maxWidth="Infinity" styleClass="kanban-column-title" text="In Progress" HBox.hgrow="ALWAYS" />
+                                <Label fx:id="inProgressCountLabel" styleClass="kanban-column-count" text="0" />
+                            </HBox>
+                            <ScrollPane fx:id="inProgressScrollPane" fitToWidth="true" hbarPolicy="NEVER" styleClass="kanban-column-scroll" VBox.vgrow="ALWAYS">
+                                <VBox fx:id="inProgressColumn" fillWidth="true" maxWidth="Infinity" spacing="10" styleClass="kanban-column-list" VBox.vgrow="ALWAYS" />
+                            </ScrollPane>
+                        </VBox>
+                        <VBox maxWidth="Infinity" minWidth="260" prefWidth="0.0" spacing="10" styleClass="kanban-column" HBox.hgrow="ALWAYS">
+                            <HBox alignment="CENTER_LEFT" styleClass="kanban-column-header">
+                                <Label maxWidth="Infinity" styleClass="kanban-column-title" text="Done" HBox.hgrow="ALWAYS" />
+                                <Label fx:id="doneCountLabel" styleClass="kanban-column-count" text="0" />
+                            </HBox>
+                            <ScrollPane fx:id="doneScrollPane" fitToWidth="true" hbarPolicy="NEVER" styleClass="kanban-column-scroll" VBox.vgrow="ALWAYS">
+                                <VBox fx:id="doneColumn" fillWidth="true" maxWidth="Infinity" spacing="10" styleClass="kanban-column-list" VBox.vgrow="ALWAYS" />
+                            </ScrollPane>
+                        </VBox>
+                    </HBox>
+                </VBox>
+
+            </StackPane>
+        </VBox>
+    </VBox>
+</AnchorPane>
