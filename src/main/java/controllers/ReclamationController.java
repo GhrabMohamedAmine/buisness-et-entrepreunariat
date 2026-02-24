@@ -4,7 +4,9 @@ import java.awt.*;
 import java.time.LocalDate;
 import entities.Reclamation;
 import entities.User;
+import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -34,6 +36,7 @@ import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
 import java.util.ResourceBundle;
+import java.util.function.Predicate;
 
 public class ReclamationController implements Initializable {
 
@@ -55,8 +58,18 @@ public class ReclamationController implements Initializable {
     @FXML private Label categorieError;
     @FXML private Label projetError;
 
+    // Nouveaux éléments pour la recherche et le filtrage
+    @FXML private ToggleButton filterAll;
+    @FXML private ToggleButton filterOpen;
+    @FXML private ToggleButton filterProgress;
+    @FXML private ToggleButton filterResolved;
+    @FXML private ToggleButton filterClosed;
+    @FXML private TextField searchField;
+
     private ReclamationService reclamationService;
     private ObservableList<Reclamation> reclamationList;
+    private FilteredList<Reclamation> filteredData;
+    private ToggleGroup filterGroup;
 
     // Pour la modification
     private int idAModifier = 0;
@@ -75,8 +88,20 @@ public class ReclamationController implements Initializable {
         if (reclamationTable != null) {
             setupTable();
             loadData();
-            // Ajout du double-clic pour ouvrir le fichier
             setupDoubleClick();
+
+            // Initialisation du groupe de filtres
+            filterGroup = new ToggleGroup();
+            filterAll.setToggleGroup(filterGroup);
+            filterOpen.setToggleGroup(filterGroup);
+            filterProgress.setToggleGroup(filterGroup);
+            filterResolved.setToggleGroup(filterGroup);
+            filterClosed.setToggleGroup(filterGroup);
+            filterAll.setSelected(true);
+
+            // Écouteurs
+            searchField.textProperty().addListener((obs, oldVal, newVal) -> applyFilters());
+            filterGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> applyFilters());
         }
     }
 
@@ -106,7 +131,31 @@ public class ReclamationController implements Initializable {
 
     private void loadData() {
         reclamationList = reclamationService.getAll();
-        reclamationTable.setItems(reclamationList);
+        filteredData = new FilteredList<>(reclamationList, p -> true);
+        reclamationTable.setItems(filteredData);
+    }
+
+    private void applyFilters() {
+        String searchText = searchField.getText().toLowerCase().trim();
+        Toggle selected = filterGroup.getSelectedToggle();
+
+        Predicate<Reclamation> statusPredicate = r -> {
+            if (selected == null || selected == filterAll) return true;
+            if (selected == filterOpen) return "En attente".equalsIgnoreCase(r.getStatut());
+            if (selected == filterProgress) return "En cours".equalsIgnoreCase(r.getStatut());
+            if (selected == filterResolved) return "Rèsolu".equalsIgnoreCase(r.getStatut()); // Attention à l'accent
+            if (selected == filterClosed) return "Fermer".equalsIgnoreCase(r.getStatut());
+            return true;
+        };
+
+        Predicate<Reclamation> searchPredicate = r -> {
+            if (searchText.isEmpty()) return true;
+            return r.getTitre().toLowerCase().contains(searchText)
+                    || r.getProjet().toLowerCase().contains(searchText)
+                    || r.getCategorie().toLowerCase().contains(searchText);
+        };
+
+        filteredData.setPredicate(statusPredicate.and(searchPredicate));
     }
 
     private void setupTable() {
@@ -182,7 +231,7 @@ public class ReclamationController implements Initializable {
                     alert.setContentText("Voulez-vous vraiment supprimer : " + rec.getTitre() + " ?");
                     if (alert.showAndWait().get() == ButtonType.OK) {
                         reclamationService.delete(rec.getId());
-                        getTableView().getItems().remove(rec);
+                        reclamationList.remove(rec); // filteredData se met à jour automatiquement
                     }
                 });
             }
@@ -213,10 +262,8 @@ public class ReclamationController implements Initializable {
                     openAttachedFile(rec);
                 }
             });
-            // Option : ajouter un tooltip pour indiquer la fonctionnalité
             row.hoverProperty().addListener((obs, oldVal, newVal) -> {
                 if (newVal && !row.isEmpty()) {
-                    // On ne peut pas savoir s'il y a un fichier sans requête, on met un message générique
                     row.setTooltip(new Tooltip("Double-cliquer pour ouvrir la pièce jointe (si existante)"));
                 }
             });
@@ -228,20 +275,14 @@ public class ReclamationController implements Initializable {
      * Ouvre le fichier attaché à une réclamation.
      */
     private void openAttachedFile(Reclamation rec) {
-        // Récupérer la réclamation complète (avec le fichier)
         Reclamation fullRec = reclamationService.getById(rec.getId());
         if (fullRec == null || fullRec.getFichier() == null || fullRec.getFichier().length == 0) {
             showAlert("Information", "Aucune pièce jointe pour cette réclamation.");
             return;
         }
 
-        // Créer un fichier temporaire
         try {
-            // Déterminer une extension approximative (on ne connaît pas le type original)
-            // On peut essayer de deviner ou simplement mettre .tmp
             String suffix = ".tmp";
-            // Option : on pourrait stocker le nom original du fichier dans une autre colonne.
-            // Ici on utilise un nom générique.
             File tempFile = File.createTempFile("reclamation_" + rec.getId() + "_", suffix);
             tempFile.deleteOnExit();
 
@@ -249,7 +290,6 @@ public class ReclamationController implements Initializable {
                 fos.write(fullRec.getFichier());
             }
 
-            // Ouvrir avec l'application par défaut
             if (Desktop.isDesktopSupported()) {
                 Desktop.getDesktop().open(tempFile);
             } else {
@@ -336,9 +376,7 @@ public class ReclamationController implements Initializable {
             projetField.setText(currentReclamation.getProjet());
             statutCombo.setValue(currentReclamation.getStatut());
 
-            // Affichage du fichier existant
             if (currentReclamation.getFichier() != null && currentReclamation.getFichier().length > 0) {
-                // Le nom original n'étant pas stocké, on utilise un affichage générique
                 lblNomFichier.setText("Fichier existant");
                 FontIcon icon = new FontIcon("mdi2f-file");
                 icon.setIconSize(18);
@@ -401,22 +439,16 @@ public class ReclamationController implements Initializable {
                 showAlert("Erreur", "Impossible de lire le fichier : " + e.getMessage());
                 return;
             }
-        } else {
-            // Conserver l'ancien fichier
-            if (currentReclamation != null) {
-                r.setFichier(currentReclamation.getFichier());
-            }
+        } else if (currentReclamation != null) {
+            r.setFichier(currentReclamation.getFichier());
         }
 
-        // Vérifier si le statut a changé vers "Rèsolu" ou "Fermer"
         String oldStatus = currentReclamation != null ? currentReclamation.getStatut() : "";
         boolean statusChanged = !oldStatus.equals(statut);
         boolean shouldNotify = statusChanged && (statut.equals("Rèsolu") || statut.equals("Fermer"));
 
-        // Mettre à jour en base
         reclamationService.update(r);
 
-        // Envoyer un email si nécessaire
         if (shouldNotify) {
             User currentUser = UserService.getCurrentUser();
             if (currentUser != null && currentUser.getEmail() != null) {
@@ -515,10 +547,7 @@ public class ReclamationController implements Initializable {
         alert.setContentText(message);
         alert.showAndWait();
     }
-    /**
-     * Met à jour l'affichage du label avec le nom du fichier et une icône adaptée.
-     * @param file le fichier sélectionné (ou null pour réinitialiser)
-     */
+
     private void updateFileDisplay(File file) {
         if (file != null) {
             String fileName = file.getName();
@@ -530,11 +559,6 @@ public class ReclamationController implements Initializable {
         }
     }
 
-    /**
-     * Retourne une icône FontIcon basée sur l'extension du fichier.
-     * @param fileName nom du fichier
-     * @return FontIcon correspondant
-     */
     private FontIcon getFileIcon(String fileName) {
         String ext = "";
         int i = fileName.lastIndexOf('.');
@@ -543,35 +567,15 @@ public class ReclamationController implements Initializable {
         }
         String iconLiteral;
         switch (ext) {
-            case "pdf":
-                iconLiteral = "mdi2f-file-pdf";
-                break;
-            case "jpg":
-            case "jpeg":
-            case "png":
-            case "gif":
-            case "bmp":
-                iconLiteral = "mdi2f-file-image";
-                break;
-            case "doc":
-            case "docx":
-                iconLiteral = "mdi2f-file-word";
-                break;
-            case "xls":
-            case "xlsx":
-                iconLiteral = "mdi2f-file-excel";
-                break;
-            case "txt":
-                iconLiteral = "mdi2f-file-document";
-                break;
-            default:
-                iconLiteral = "mdi2f-file";
-                break;
+            case "pdf": iconLiteral = "mdi2f-file-pdf"; break;
+            case "jpg": case "jpeg": case "png": case "gif": case "bmp": iconLiteral = "mdi2f-file-image"; break;
+            case "doc": case "docx": iconLiteral = "mdi2f-file-word"; break;
+            case "xls": case "xlsx": iconLiteral = "mdi2f-file-excel"; break;
+            case "txt": iconLiteral = "mdi2f-file-document"; break;
+            default: iconLiteral = "mdi2f-file"; break;
         }
         FontIcon icon = new FontIcon(iconLiteral);
         icon.setIconSize(18);
-        // Option : définir une couleur personnalisée si besoin
-        // icon.setIconColor(javafx.scene.paint.Color.web("#6B7280"));
         return icon;
     }
 }

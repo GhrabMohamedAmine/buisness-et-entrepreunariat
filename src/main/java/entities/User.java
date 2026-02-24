@@ -16,6 +16,11 @@ public class User {
     // Nouveau champ pour l'identifiant de visage CompreFace
     private final StringProperty faceId = new SimpleStringProperty();
 
+    public User(int id, String name, String firstName) {
+        this.id.set(id);
+        this.name.set(name);
+        this.firstName.set(firstName);
+    }
     // Constructeur complet avec faceId
     public User(int id, String name, String firstName, String email, String phone,
                 String role, String department, String status, String joinedDate,
@@ -71,4 +76,8 @@ public class User {
     public void setJoinedDate(String joinedDate) { this.joinedDate.set(joinedDate); }
     public void setImageData(byte[] imageData) { this.imageData.set(imageData); }
     public void setFaceId(String faceId) { this.faceId.set(faceId); }
+    public String getFullName() {
+
+        return this.name.get() + " " + this.firstName.get();
+    }
 }
