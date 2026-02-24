@@ -317,21 +317,7 @@ public class ProfileController implements Initializable {
         }
     }
 
-    // --- NAVIGATION SIDEBAR ---
-    @FXML
-    public void showProfile(ActionEvent event) {
-        chargerVue("/Profile/Profile2.fxml");
-    }
 
-    @FXML
-    public void showNotifications(ActionEvent event) {
-        System.out.println("Notifications clicked");
-    }
-
-    @FXML
-    public void showSecurity(ActionEvent event) {
-        System.out.println("Security clicked");
-    }
 
     @FXML
     public void logout(ActionEvent event) {

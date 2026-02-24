@@ -17,7 +17,6 @@ public class MainFX extends Application {
         // 2. CORRECTION DU CHEMIN : Vérifiez bien le nom du dossier dans src/main/resources
         // Si votre fichier est dans src/main/resources/UserManagement/manage-resources.fxml :
         URL fxmlLocation = getClass().getResource("/Start/1ere.fxml");
-
         if (fxmlLocation == null) {
             throw new RuntimeException("Erreur : Fichier FXML non trouvé. Vérifiez le nom du dossier dans resources !");
         }

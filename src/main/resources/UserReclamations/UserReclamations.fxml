@@ -5,6 +5,7 @@
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.Region?>
@@ -19,6 +20,7 @@
     <children>
         <VBox spacing="0" HBox.hgrow="ALWAYS" styleClass="main-content">
 
+            <!-- Top Bar -->
             <HBox alignment="CENTER_LEFT" prefHeight="80.0" styleClass="top-bar">
                 <padding><Insets left="30" right="30" /></padding>
 
@@ -49,11 +51,13 @@
                 </HBox>
             </HBox>
 
+            <!-- Scrollable Content -->
             <ScrollPane fitToWidth="true" styleClass="custom-scroll" VBox.vgrow="ALWAYS">
                 <content>
                     <VBox spacing="30">
                         <padding><Insets bottom="40" left="40" right="40" top="30" /></padding>
 
+                        <!-- KPI Cards -->
                         <HBox spacing="20">
                             <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS">
                                 <HBox alignment="CENTER_LEFT" spacing="10">
@@ -80,64 +84,36 @@
                             </VBox>
                         </HBox>
 
+                        <!-- Filtres et Recherche -->
                         <HBox alignment="CENTER_LEFT" spacing="15">
+
+                            <!-- Filtres par statut -->
+                            <HBox styleClass="segmented-control" spacing="2">
+                                <ToggleButton fx:id="filterAll" selected="true" styleClass="seg-left" text="Tous" />
+                                <ToggleButton fx:id="filterOpen" styleClass="seg-center" text="Ouvert" />
+                                <ToggleButton fx:id="filterProgress" styleClass="seg-center" text="En cours" />
+                                <ToggleButton fx:id="filterResolved" styleClass="seg-right" text="Résolu" />
+                            </HBox>
+
+                            <Region HBox.hgrow="ALWAYS" />
+
+                            <!-- Barre de recherche -->
                             <HBox alignment="CENTER_LEFT" styleClass="search-box">
                                 <FontIcon iconLiteral="mdi2m-magnify" iconColor="#9CA3AF" iconSize="18"/>
                                 <TextField fx:id="searchField" promptText="Rechercher un ticket..." styleClass="transparent-input" />
                             </HBox>
 
-                            <Region HBox.hgrow="ALWAYS" />
-
+                            <!-- Trier par (optionnel) -->
                             <Label style="-fx-text-fill: #6B7280; -fx-font-size: 13px;" text="Trier par :" />
                             <Button styleClass="btn-filter" text="Date Récente" graphicTextGap="8">
                                 <graphic><FontIcon iconLiteral="mdi2s-sort" iconColor="#6B7280"/></graphic>
                             </Button>
                         </HBox>
 
+                        <!-- Grille de tickets -->
                         <FlowPane fx:id="ticketsContainer" hgap="25" vgap="25" styleClass="ticket-grid">
 
-                            <VBox styleClass="ticket-card">
-                                <HBox alignment="CENTER_LEFT" spacing="10">
-                                    <Label styleClass="ticket-title" text="Bug Connexion VPN" wrapText="true" maxWidth="190" />
-                                    <Region HBox.hgrow="ALWAYS" />
-                                    <Label styleClass="status-pill, status-progress" text="En cours" />
-                                </HBox>
-
-                                <Label styleClass="ticket-category" text="Technique • Réseau" />
-                                <Label styleClass="ticket-desc" text="Impossible d'accéder au serveur via le VPN depuis la mise à jour..." wrapText="true" VBox.vgrow="ALWAYS" />
-
-                                <Region VBox.vgrow="ALWAYS" minHeight="15"/>
-
-                                <HBox alignment="CENTER_LEFT" styleClass="ticket-footer">
-                                    <Label styleClass="ticket-date" text="15 Fév, 14:30" />
-                                    <Region HBox.hgrow="ALWAYS" />
-                                    <Button styleClass="icon-btn">
-                                        <graphic><FontIcon iconLiteral="mdi2p-pencil-outline" iconSize="18" iconColor="#6B7280" /></graphic>
-                                    </Button>
-                                </HBox>
-                            </VBox>
-
-                            <VBox styleClass="ticket-card">
-                                <HBox alignment="CENTER_LEFT" spacing="10">
-                                    <Label styleClass="ticket-title" text="Erreur Facturation" wrapText="true" maxWidth="190" />
-                                    <Region HBox.hgrow="ALWAYS" />
-                                    <Label styleClass="status-pill, status-resolved" text="Résolu" />
-                                </HBox>
-
-                                <Label styleClass="ticket-category" text="Comptabilité" />
-                                <Label styleClass="ticket-desc" text="Le montant de la facture #402 ne correspond pas au devis signé." wrapText="true" VBox.vgrow="ALWAYS" />
-
-                                <Region VBox.vgrow="ALWAYS" minHeight="15"/>
-
-                                <HBox alignment="CENTER_LEFT" styleClass="ticket-footer">
-                                    <Label styleClass="ticket-date" text="10 Jan, 09:15" />
-                                    <Region HBox.hgrow="ALWAYS" />
-                                    <Button styleClass="icon-btn">
-                                        <graphic><FontIcon iconLiteral="mdi2e-eye-outline" iconSize="18" iconColor="#6B7280" /></graphic>
-                                    </Button>
-                                </HBox>
-                            </VBox>
-
+                            <!-- Les cartes seront générées dynamiquement par le contrôleur -->
                         </FlowPane>
                     </VBox>
                 </content>
