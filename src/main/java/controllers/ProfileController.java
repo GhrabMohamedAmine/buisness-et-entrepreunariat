@@ -49,7 +49,6 @@ public class ProfileController implements Initializable {
     @FXML private TextField tfRole;
     @FXML private TextField tfDateInscription;
 
-    // --- Gestion de l'image ---
     @FXML private Circle profileCircle;
     private byte[] selectedImageData; // Stocke les nouvelles données binaires si changées
 
@@ -73,10 +72,6 @@ public class ProfileController implements Initializable {
         setupTopProfile();
     }
 
-    /**
-     * Charge l'image par défaut depuis les ressources.
-     * @return Image par défaut, ou null si non trouvée.
-     */
     private Image getDefaultImage() {
         try (InputStream is = getClass().getResourceAsStream("/images/default-avatar.png")) {
             if (is != null) {
@@ -88,9 +83,6 @@ public class ProfileController implements Initializable {
         return null;
     }
 
-    /**
-     * Met à jour l'avatar du bandeau supérieur.
-     */
     private void setupTopProfile() {
         User currentUser = UserService.getCurrentUser();
 

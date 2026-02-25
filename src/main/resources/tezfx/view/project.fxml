@@ -5,9 +5,16 @@
 <?import javafx.scene.layout.*?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
+<?import java.net.URL?>
 <VBox spacing="20"
       xmlns:fx="http://javafx.com/fxml"
       fx:controller="controllers.ProjectsController">
+    <stylesheets>
+        <URL value="@../../styles/project-css.css"/>
+        <URL value="@../../styles/buttons.css"/>
+        <URL value="@../../styles/stylesheet.css"/>
+
+    </stylesheets>
     <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
 
     <HBox spacing="15" alignment="CENTER_LEFT">

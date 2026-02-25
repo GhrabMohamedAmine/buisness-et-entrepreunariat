@@ -80,4 +80,9 @@ public class User {
 
         return this.name.get() + " " + this.firstName.get();
     }
+
+    @Override
+    public String toString() {
+        return this.getFullName()+"\nid:"+this.getId();
+    }
 }

@@ -22,9 +22,11 @@ import javafx.stage.Modality;
 import javafx.event.ActionEvent;
 import javafx.application.Platform;
 
+
 import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
+import java.util.Objects;
 import java.util.Random;
 import java.util.ResourceBundle;
 
@@ -36,7 +38,7 @@ public class SignInController implements Initializable {
     @FXML private TextField captchaField;
     @FXML private Label captchaError;
     @FXML private Button refreshCaptchaBtn;
-
+    private MainController  test ;
     private final UserService userService = new UserService();
     private final CompreFaceService compreFaceService = new CompreFaceService();
     private String currentCaptchaCode;
@@ -46,6 +48,10 @@ public class SignInController implements Initializable {
         generateCaptcha();
     }
 
+    @FXML
+    private void ghrabclicked() {
+        MainController.setView("/tezfx/view/hello-view.fxml");
+    }
     @FXML
     void handleSignIn(ActionEvent event) {
         String userCaptcha = captchaField.getText().trim();
@@ -79,7 +85,7 @@ public class SignInController implements Initializable {
                 if ("Admin".equals(currentUser.getRole())) {
                     switchScene(event, "/User/UserTable.fxml");
                 } else {
-                    switchScene(event, "/Profile/Profile1.fxml");
+                    switchScene(event, "/tezfx/view/hello-view.fxml");
                 }
             } else {
                 showAlert("Échec", "Email ou mot de passe incorrect.");
@@ -117,7 +123,7 @@ public class SignInController implements Initializable {
                                     if ("Admin".equals(user.getRole())) {
                                         switchScene(event, "/User/UserTable.fxml");
                                     } else {
-                                        switchScene(event, "/Profile/Profile1.fxml");
+                                        switchScene(event, "/tezfx/view/hello-view.fxml");
                                     }
                                 });
                             } else {
@@ -195,8 +201,8 @@ public class SignInController implements Initializable {
         try {
             Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            stage.setScene(new Scene(root));
-            stage.show();
+            stage.getScene().setRoot(root); // Just replace the root of the existing scene
+            //stage.setFullScreen(true); // Maintain fullscreen mode
         } catch (IOException e) {
             System.err.println("Erreur de navigation vers : " + fxmlPath);
             e.printStackTrace();

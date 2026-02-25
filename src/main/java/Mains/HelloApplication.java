@@ -18,11 +18,7 @@ public class HelloApplication extends Application {
         );
 
         Scene scene = new Scene(loader.load(), 1200, 800);
-        scene.getStylesheets().addAll(
-                getClass().getResource("/styles/stylesheet.css").toExternalForm(),
-                getClass().getResource("/styles/buttons.css").toExternalForm(),
-                getClass().getResource("/styles/project-css.css").toExternalForm()
-        );
+
 
 
         stage.setScene(scene);

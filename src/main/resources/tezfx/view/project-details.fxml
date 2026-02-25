@@ -5,11 +5,18 @@
 <?import javafx.scene.layout.*?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
+<?import java.net.URL?>
 <AnchorPane prefHeight="800.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml" fx:controller="controllers.ProjectDetailsController">
     <VBox spacing="15" style="-fx-background-color: #f9fafb;" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
         <padding>
             <Insets bottom="30" left="40" right="40" top="30" />
         </padding>
+        <stylesheets>
+            <URL value="@../../styles/project-css.css"/>
+            <URL value="@../../styles/buttons.css"/>
+            <URL value="@../../styles/stylesheet.css"/>
+
+        </stylesheets>
 
 
 
