@@ -42,42 +42,42 @@
             <text>Dashboard</text>
         </ToggleButton>
 
-        <ToggleButton styleClass="nav-item" onAction="#onProjectsClicked" toggleGroup="$navGroup">
+        <ToggleButton fx:id="PJbutton" styleClass="nav-item" onAction="#onProjectsClicked" toggleGroup="$navGroup">
             <graphic>
                 <FontIcon iconLiteral="mdi2f-folder-outline"/>
             </graphic>
             <text>Projects</text>
         </ToggleButton>
 
-        <ToggleButton styleClass="nav-item" toggleGroup="$navGroup" onAction="#onTasksClicked">
+        <ToggleButton fx:id="TKbutton" styleClass="nav-item" toggleGroup="$navGroup" onAction="#onTasksClicked">
             <graphic>
                 <FontIcon iconLiteral="mdi2c-checkbox-marked-outline"/>
             </graphic>
             <text>Tasks</text>
         </ToggleButton>
 
-        <ToggleButton styleClass="nav-item" toggleGroup="$navGroup">
+        <ToggleButton fx:id="TRbutton" styleClass="nav-item" toggleGroup="$navGroup">
             <graphic>
                 <FontIcon iconLiteral="mdi2s-school-outline"/>
             </graphic>
             <text>Trainings</text>
         </ToggleButton>
 
-        <ToggleButton styleClass="nav-item" toggleGroup="$navGroup">
+        <ToggleButton  styleClass="nav-item" toggleGroup="$navGroup">
             <graphic>
                 <FontIcon iconLiteral="mdi2c-chat-outline"/>
             </graphic>
             <text>Communication</text>
         </ToggleButton>
 
-        <ToggleButton styleClass="nav-item" toggleGroup="$navGroup">
+        <ToggleButton fx:id="RSbutton" styleClass="nav-item" toggleGroup="$navGroup">
             <graphic>
                 <FontIcon iconLiteral="mdi2c-cube-outline"/>
             </graphic>
             <text>Resources</text>
         </ToggleButton>
 
-        <ToggleButton styleClass="nav-item" toggleGroup="$navGroup" onAction="#onFinancialClicked">
+        <ToggleButton fx:id="FPbutton" styleClass="nav-item" toggleGroup="$navGroup" onAction="#onFinancialClicked">
             <graphic>
                 <FontIcon iconLiteral="mdi2c-currency-usd"/>
             </graphic>
@@ -89,7 +89,8 @@
     <!-- PUSH LOGOUT TO BOTTOM -->
     <Region VBox.vgrow="ALWAYS"/>
 
-    <Button styleClass="logout-item">
+
+    <Button fx:id="LOGOUT" styleClass="logout-item">
         <graphic>
             <FontIcon iconLiteral="mdi2l-logout"/>
         </graphic>

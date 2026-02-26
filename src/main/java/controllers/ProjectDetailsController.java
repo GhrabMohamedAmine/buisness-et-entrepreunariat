@@ -31,6 +31,7 @@ import javafx.util.Duration;
 import entities.Project;
 import entities.Task;
 import entities.User;
+import org.kordamp.ikonli.javafx.FontIcon;
 import services.ActivityService;
 import services.ProjectHealthService;
 import services.ProjectService;
@@ -56,6 +57,8 @@ public class ProjectDetailsController {
     private static final String[] AVATAR_COLOR_CLASSES = {"purple", "blue", "green", "orange"};
     private static final DateTimeFormatter ACTIVITY_DATE_INPUT = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter ACTIVITY_DATE_OUTPUT = DateTimeFormatter.ofPattern("dd MMM", Locale.ENGLISH);
+    private ProjectsController projectC = new ProjectsController();
+
 
     @FXML
     private Label detailName, detailDesc, detailDate, detailPercent;
@@ -81,6 +84,8 @@ public class ProjectDetailsController {
     @FXML private VBox recentActivityContainer;
     @FXML private Project currentProject;
     @FXML private Button tasksBtn, overviewTab, kanbanTab;
+    @FXML
+    FontIcon updateButton,deleteButton;
 
     private final ProjectService projectService = new ProjectService();
     private final TaskService taskService = new TaskService();
@@ -108,6 +113,9 @@ public class ProjectDetailsController {
         setupDropTarget(todoScrollPane, TaskValueMapper.STATUS_TODO);
         setupDropTarget(inProgressScrollPane, TaskValueMapper.STATUS_IN_PROGRESS);
         setupDropTarget(doneScrollPane, TaskValueMapper.STATUS_DONE);
+
+        updateButton.setVisible(projectC.isUserManager());
+        deleteButton.setVisible(projectC.isUserManager());
     }
 
     public void ProjectDataLoad(Project project) {

@@ -2,6 +2,8 @@ package controllers;
 
 import java.awt.*;
 import java.time.LocalDate;
+
+import entities.Project;
 import entities.Reclamation;
 import entities.User;
 import javafx.collections.FXCollections;
@@ -29,12 +31,15 @@ import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
 import services.EmailService;
+import services.ProjectService;
 import services.ReclamationService;
 import services.UserService;
 
 import java.io.*;
 import java.net.URL;
 import java.nio.file.Files;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.function.Predicate;
 
@@ -65,11 +70,14 @@ public class ReclamationController implements Initializable {
     @FXML private ToggleButton filterResolved;
     @FXML private ToggleButton filterClosed;
     @FXML private TextField searchField;
+    @FXML private ComboBox<String> projectCombo;
 
     private ReclamationService reclamationService;
     private ObservableList<Reclamation> reclamationList;
     private FilteredList<Reclamation> filteredData;
     private ToggleGroup filterGroup;
+    private ProjectService prpr= new ProjectService();
+
 
     // Pour la modification
     private int idAModifier = 0;
@@ -81,6 +89,13 @@ public class ReclamationController implements Initializable {
     // =========================================================================
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
+        List<Project> projects = prpr.getAllProjects();
+        List<String> projectNames = new ArrayList<>();
+        for (Project p : projects) {
+            projectNames.add(p.getName());
+        }
+
+        projectCombo.getItems().setAll(projectNames);
         reclamationService = new ReclamationService();
         if (topName != null) {
             loadCurrentUserProfile();
@@ -373,8 +388,9 @@ public class ReclamationController implements Initializable {
             this.currentReclamation = reclamationService.getById(r.getId());
             titreField.setText(currentReclamation.getTitre());
             categorieField.setText(currentReclamation.getCategorie());
-            projetField.setText(currentReclamation.getProjet());
+
             statutCombo.setValue(currentReclamation.getStatut());
+            projectCombo.setValue(currentReclamation.getProjet());
 
             if (currentReclamation.getFichier() != null && currentReclamation.getFichier().length > 0) {
                 lblNomFichier.setText("Fichier existant");
@@ -398,7 +414,7 @@ public class ReclamationController implements Initializable {
 
         String titre = titreField.getText().trim();
         String cat = categorieField.getText().trim();
-        String proj = projetField.getText().trim();
+        String proj = projectCombo.getValue();
         String statut = statutCombo.getValue();
         String date = LocalDate.now().toString();
 
@@ -424,7 +440,7 @@ public class ReclamationController implements Initializable {
 
         String titre = titreField.getText().trim();
         String cat = categorieField.getText().trim();
-        String proj = projetField.getText().trim();
+        String proj = projectCombo.getValue();
         String statut = statutCombo.getValue();
         String date = LocalDate.now().toString();
 
@@ -511,7 +527,7 @@ public class ReclamationController implements Initializable {
 
         String titre = titreField.getText();
         String cat = categorieField.getText();
-        String projet = projetField.getText();
+        String projet = projectCombo.getValue();
 
         if (titre == null || titre.trim().isEmpty()) {
             showInlineError(titreError, "Le titre est obligatoire.");

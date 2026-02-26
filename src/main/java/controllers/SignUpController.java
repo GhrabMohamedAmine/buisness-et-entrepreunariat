@@ -55,8 +55,8 @@ public class SignUpController implements Initializable {
     public void initialize(URL url, ResourceBundle rb) {
         if (roleComboBox != null) {
             roleComboBox.setItems(FXCollections.observableArrayList(
-                    "Manager", "Ressource Manager", "Employer",
-                    "Formateur", "Chef Projet", "Expert Financier"
+                    "Manager", "Ressource Manager", "Employee",
+                    "Formateur", "Chef Projet", "Consultant"
             ));
         }
     }

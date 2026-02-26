@@ -1,24 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.ScrollPane?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.control.ToggleButton?>
-<?import javafx.scene.layout.FlowPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.VBox?>
-<?import javafx.scene.shape.Circle?>
-<?import org.kordamp.ikonli.javafx.FontIcon?>
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.*?>
 
-<HBox prefHeight="900.0" prefWidth="1300.0" styleClass="root-pane" stylesheets="@styles.css"
-      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
-      fx:controller="controllers.UserReclamationController">
+<HBox prefHeight="900.0" prefWidth="1300.0" styleClass="root-pane" stylesheets="@styles.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.UserReclamationController">
 
     <children>
-        <VBox spacing="0" HBox.hgrow="ALWAYS" styleClass="main-content">
+        <VBox spacing="0" styleClass="main-content" HBox.hgrow="ALWAYS">
 
             <!-- Top Bar -->
             <HBox alignment="CENTER_LEFT" prefHeight="80.0" styleClass="top-bar">
@@ -32,23 +22,10 @@
                 <Region HBox.hgrow="ALWAYS" />
 
                 <Button onAction="#openNewReclamationModal" styleClass="btn-primary" text="Nouveau Ticket">
-                    <graphic><FontIcon iconLiteral="mdi2p-plus" iconSize="18" iconColor="white"/></graphic>
+                    <graphic><FontIcon iconColor="white" iconLiteral="mdi2p-plus" iconSize="18" /></graphic>
                 </Button>
 
                 <Region prefWidth="20" />
-
-                <HBox alignment="CENTER" spacing="12" styleClass="user-badge">
-                    <VBox alignment="CENTER_RIGHT">
-                        <Label fx:id="topName" styleClass="user-name" text="Utilisateur" />
-                    </VBox>
-                    <Circle fx:id="btnProfil"
-                            fill="#E5E7EB"
-                            radius="20"
-                            stroke="WHITE"
-                            strokeWidth="2"
-                            onMouseClicked="#versProfil"
-                            style="-fx-cursor: hand;" />
-                </HBox>
             </HBox>
 
             <!-- Scrollable Content -->
@@ -61,7 +38,7 @@
                         <HBox spacing="20">
                             <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS">
                                 <HBox alignment="CENTER_LEFT" spacing="10">
-                                    <VBox styleClass="icon-box-purple"><FontIcon iconLiteral="mdi2t-ticket-outline" iconSize="20" iconColor="#7C3AED"/></VBox>
+                                    <VBox styleClass="icon-box-purple"><FontIcon iconColor="#7C3AED" iconLiteral="mdi2t-ticket-outline" iconSize="20" /></VBox>
                                     <Label styleClass="kpi-label" text="Tickets Ouverts" />
                                 </HBox>
                                 <Label fx:id="lblOpen" styleClass="kpi-value" text="3" />
@@ -69,7 +46,7 @@
 
                             <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS">
                                 <HBox alignment="CENTER_LEFT" spacing="10">
-                                    <VBox styleClass="icon-box-orange"><FontIcon iconLiteral="mdi2t-timer-sand" iconSize="20" iconColor="#D97706"/></VBox>
+                                    <VBox styleClass="icon-box-orange"><FontIcon iconColor="#D97706" iconLiteral="mdi2t-timer-sand" iconSize="20" /></VBox>
                                     <Label styleClass="kpi-label" text="En Cours" />
                                 </HBox>
                                 <Label fx:id="lblProgress" styleClass="kpi-value" text="1" />
@@ -77,7 +54,7 @@
 
                             <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS">
                                 <HBox alignment="CENTER_LEFT" spacing="10">
-                                    <VBox styleClass="icon-box-green"><FontIcon iconLiteral="mdi2c-check-circle-outline" iconSize="20" iconColor="#059669"/></VBox>
+                                    <VBox styleClass="icon-box-green"><FontIcon iconColor="#059669" iconLiteral="mdi2c-check-circle-outline" iconSize="20" /></VBox>
                                     <Label styleClass="kpi-label" text="Résolus" />
                                 </HBox>
                                 <Label fx:id="lblSolved" styleClass="kpi-value" text="5" />
@@ -88,7 +65,7 @@
                         <HBox alignment="CENTER_LEFT" spacing="15">
 
                             <!-- Filtres par statut -->
-                            <HBox styleClass="segmented-control" spacing="2">
+                            <HBox spacing="2" styleClass="segmented-control">
                                 <ToggleButton fx:id="filterAll" selected="true" styleClass="seg-left" text="Tous" />
                                 <ToggleButton fx:id="filterOpen" styleClass="seg-center" text="Ouvert" />
                                 <ToggleButton fx:id="filterProgress" styleClass="seg-center" text="En cours" />
@@ -99,19 +76,19 @@
 
                             <!-- Barre de recherche -->
                             <HBox alignment="CENTER_LEFT" styleClass="search-box">
-                                <FontIcon iconLiteral="mdi2m-magnify" iconColor="#9CA3AF" iconSize="18"/>
+                                <FontIcon iconColor="#9CA3AF" iconLiteral="mdi2m-magnify" iconSize="18" />
                                 <TextField fx:id="searchField" promptText="Rechercher un ticket..." styleClass="transparent-input" />
                             </HBox>
 
                             <!-- Trier par (optionnel) -->
                             <Label style="-fx-text-fill: #6B7280; -fx-font-size: 13px;" text="Trier par :" />
-                            <Button styleClass="btn-filter" text="Date Récente" graphicTextGap="8">
-                                <graphic><FontIcon iconLiteral="mdi2s-sort" iconColor="#6B7280"/></graphic>
+                            <Button graphicTextGap="8" styleClass="btn-filter" text="Date Récente">
+                                <graphic><FontIcon iconColor="#6B7280" iconLiteral="mdi2s-sort" /></graphic>
                             </Button>
                         </HBox>
 
                         <!-- Grille de tickets -->
-                        <FlowPane fx:id="ticketsContainer" hgap="25" vgap="25" styleClass="ticket-grid">
+                        <FlowPane fx:id="ticketsContainer" hgap="25" styleClass="ticket-grid" vgap="25">
 
                             <!-- Les cartes seront générées dynamiquement par le contrôleur -->
                         </FlowPane>

@@ -40,6 +40,9 @@ public class HelloController {
     private static final int MAX_VISIBLE_ASSIGNEE_AVATARS = 4;
     private static final DateTimeFormatter DATE_INPUT = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter DATE_OUTPUT = DateTimeFormatter.ofPattern("dd MMM yyyy");
+    @FXML
+    private Button addButton;
+    private ProjectsController projectsC = new ProjectsController();
 
     @FXML private VBox recentProjectsContainer;
     @FXML private Label tasksInProgressKpiLabel;
@@ -48,6 +51,7 @@ public class HelloController {
     @FXML private Label upcomingDeadlinesKpiLabel;
     @FXML private Label overdueUndoneKpiLabel;
     @FXML private VBox tasksListContainer;
+
 
     private final ProjectService projectService = new ProjectService();
     private final TaskService taskService = new TaskService();
@@ -58,7 +62,10 @@ public class HelloController {
 
     @FXML
     public void initialize() {
+
         loadData();
+        addButton.setVisible(projectsC.isUserManager());
+        addButton.setManaged(projectsC.isUserManager());
     }
     @FXML
     private void openAddProjectPopup() {

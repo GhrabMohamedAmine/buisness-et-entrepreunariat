@@ -5,6 +5,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.effect.BoxBlur;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.control.ScrollPane;
@@ -24,8 +25,12 @@ import java.util.Map;
 
 public class ProjectsController {
 
+    private MainController mainC = new MainController();
+    private User loggedUser = mainC.getCurrentuser();
     @FXML
     private FlowPane projectsGrid;
+    @FXML
+    private Button Addbutton;
 
     @FXML
     private ScrollPane scrollPane;
@@ -39,10 +44,20 @@ public class ProjectsController {
     public void initialize() {
         projectsGrid.setHgap(20);
         projectsGrid.setVgap(20);
+
+        System.out.println(isUserManager());
+
+        Addbutton.setVisible(isUserManager());
+        Addbutton.setManaged(isUserManager());
+
         loadData();
         if (searchField != null) {
             searchField.textProperty().addListener((obs, oldValue, newValue) -> loadData(newValue));
         }
+    }
+
+    public boolean isUserManager(){
+        return loggedUser.getRole().toUpperCase().equals("MANAGER");
     }
 
     public void loadData() {

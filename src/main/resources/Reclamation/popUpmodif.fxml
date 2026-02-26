@@ -48,7 +48,7 @@
             </VBox>
             <VBox spacing="5" HBox.hgrow="ALWAYS">
                 <Label text="Projet lié" styleClass="form-label" />
-                <TextField fx:id="projetField" promptText="Ex: Projet A" styleClass="form-input" />
+                <ComboBox fx:id="projectCombo" />
                 <Label fx:id="projetError" text="Invalide" textFill="red" visible="false" managed="false" style="-fx-font-size: 10px;"/>
             </VBox>
         </HBox>

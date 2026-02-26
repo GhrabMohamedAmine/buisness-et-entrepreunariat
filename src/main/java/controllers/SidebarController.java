@@ -2,6 +2,7 @@ package controllers;
 
 import entities.User;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 
@@ -10,20 +11,79 @@ public class SidebarController {
     private ToggleButton btnHome, btnSettings, btnProfile;
     @FXML private ToggleGroup navGroup;
 
-    private MainController mainCon =new MainController();
+    @FXML
+    private ToggleButton TRbutton;
+    @FXML
+    private ToggleButton TKbutton;
+    @FXML
+    private ToggleButton PJbutton;
+    @FXML
+    private ToggleButton FPbutton;
+    @FXML
+    private ToggleButton RSbutton;
 
+
+    private MainController mainCon =new MainController();
+    //private User userConnected = mainCon.getCurrentuser();;
     @FXML
     public void initialize() {
+         User userConnected = mainCon.getCurrentuser();
+        if (userConnected == null) {
+            System.out.println("couldn't fetch user loading default views");
+        }
+        else {
+            userViewControl(userConnected);
+        }
+    }
 
-        User userConnected = mainCon.getCurrentuser();
+    private void userViewControl(User userConnected) {
+
+        switch(userConnected.getRole().toUpperCase()){
+            case "EMPLOYEE"->{
+                hideBTN(FPbutton);
+            }
+            case "CONSULTANT"->{
+                hideBTN(RSbutton);
+                hideBTN(TRbutton);
+                showBTN(FPbutton);
+                showBTN(PJbutton);
+            }
+            default ->{
+                showBTN(RSbutton);
+                showBTN(TKbutton);
+                showBTN(FPbutton);
+                showBTN(PJbutton);
+                showBTN(TRbutton);
+                showBTN(FPbutton);
+            }
+        }
 
     }
+
+        private void resetViewSB(){
+            showBTN(RSbutton);
+            showBTN(TKbutton);
+            showBTN(FPbutton);
+            showBTN(PJbutton);
+            showBTN(TRbutton);
+            showBTN(FPbutton);
+        }
 
 
         @FXML
         private void onDashboardClicked() {
             // This tells the HelloController to swap the middle view
             MainController.setView("dashboard.fxml");
+        }
+
+        private void hideBTN(Node node) {
+            node.setVisible(false);
+            node.setManaged(false);
+        }
+
+        private void showBTN(Node node) {
+            node.setVisible(true);
+            node.setManaged(true);
         }
 
         @FXML

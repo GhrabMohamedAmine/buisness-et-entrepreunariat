@@ -74,7 +74,7 @@ public class UserReclamationController implements Initializable {
         filterAll.setSelected(true);
 
         loadData();
-        loadCurrentUserProfile();
+        //loadCurrentUserProfile();
 
         // Écouteurs pour la recherche et les filtres
         searchField.textProperty().addListener((observable, oldValue, newValue) -> applyFilters());

@@ -54,9 +54,10 @@ public class ProfileController implements Initializable {
 
     private UserService userService;
     private User userConnecte;
+    private MainController mainController = new MainController();
 
     // Couleur de secours si l'image par défaut est introuvable
-    private static final Color DEFAULT_COLOR = Color.web("#E0E7FF");
+    public static final Color DEFAULT_COLOR = Color.web("#E0E7FF");
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -271,6 +272,8 @@ public class ProfileController implements Initializable {
 
             showAlert(Alert.AlertType.INFORMATION, "Succès", "Profil mis à jour avec succès.");
             setupTopProfile();
+            System.out.println(mainController.getCurrentuser().toString());
+            MainController.getInstance().setUserinfo();
 
         } catch (SQLException e) {
             showAlert(Alert.AlertType.ERROR, "Erreur BDD", "Impossible de modifier le profil : " + e.getMessage());
