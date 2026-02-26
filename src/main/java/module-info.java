@@ -18,6 +18,14 @@ module org.example.yedikpromax {
     requires uk.co.caprica.vlcj;
     requires javafx.swing;
     requires com.google.gson;
+    requires jxbrowser;
+    requires jxbrowser.javafx;
+    requires jcefmaven;
+    requires jcef;
+    requires com.auth0.jwt;
+    requires com.fasterxml.jackson.databind;
+    requires spring.messaging;
+    requires spring.websocket;
 
     opens org.example.yedikpromax to javafx.fxml;
     opens services to com.google.gson;

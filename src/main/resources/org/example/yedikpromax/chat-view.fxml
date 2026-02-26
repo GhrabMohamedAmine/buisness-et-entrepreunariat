@@ -24,7 +24,8 @@
 
 <StackPane xmlns="http://javafx.com/javafx/17"
            xmlns:fx="http://javafx.com/fxml/1"
-           fx:controller="controller.chatController">
+           fx:controller="controller.chatController"
+           fx:id="root">
 
     <BorderPane fx:id="contentRoot" styleClass="chat-root" stylesheets="@chat-view.css">
 

@@ -1,20 +1,29 @@
 package controller;
 
-import controller.CallController;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import javafx.animation.*;
 import javafx.beans.binding.Bindings;
 import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
-import javafx.geometry.Bounds;
+import javafx.fxml.FXMLLoader;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
+import javafx.stage.Stage;
 import model.Conversation;
 import model.Message;
 import services.EmojiRepo;
@@ -27,10 +36,8 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.net.http.*;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
-import javafx.animation.FadeTransition;
+
 import javafx.scene.control.TextField;
-import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.util.Duration;
 import javafx.scene.control.Button;
@@ -48,14 +55,18 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import java.io.*;
 import model.ParticipantView;
+import utils.StompClientHandler;
+
 import java.util.*;
 import java.sql.SQLException;
 import java.nio.file.Files;
 import java.awt.Desktop;
-import java.net.URI;
 import java.nio.file.Path;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import javax.sound.sampled.*;
-import javax.swing.*;
 
 
 public class chatController {
@@ -180,6 +191,13 @@ public class chatController {
     private final ObjectProperty<Conversation> selectedConversationProperty = new SimpleObjectProperty<>(null);
     private final Map<Long, Label> unreadBadgeByConvId = new HashMap<>();
     private final Map<Long, Label> timeLabelByConvId  = new HashMap<>();
+    private final Map<Long, Label> previewLabelByConvId = new HashMap<>();
+    private final Map<Long, Long> lastMsgIdByConvId = new HashMap<>();
+
+    // Rendered message tracking for live edit/delete diffing
+    private final Map<Long, HBox> msgRowById = new HashMap<>();
+    private final Map<Long, java.sql.Timestamp> msgEditedAtById = new HashMap<>();
+    private final Map<Long, String> msgBodyById = new HashMap<>();
     private final Map<Integer, String> senderNameCache = new HashMap<>();
     private static final java.util.concurrent.atomic.AtomicBoolean VLC_INIT = new java.util.concurrent.atomic.AtomicBoolean(false);
     private static uk.co.caprica.vlcj.factory.MediaPlayerFactory VLC_FACTORY;
@@ -242,11 +260,45 @@ public class chatController {
     private TilePane gifGrid;
     private ScrollPane gifScroll;
     private boolean gifUiBuilt = false;
+    private final Map<Long, byte[]> dmAvatarCache = new HashMap<>();
+    private final Map<Long, String> dmTitleCache  = new HashMap<>();
+    private final Map<Integer, byte[]> userAvatarCache = new HashMap<>();
+    private final java.util.concurrent.ScheduledExecutorService poller =
+            java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
+    private volatile long lastSeenMsgId = 0;
+    private java.util.concurrent.ScheduledFuture<?> pollTask;
+    private final java.util.concurrent.ScheduledExecutorService msgPoller =
+            java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
+    private java.util.concurrent.ScheduledFuture<?> msgPollTask;
+    private volatile long lastRenderedMsgId = 0;
+    private volatile long lastIncomingCallMsgId = 0;
+    private final Map<Long, FontIcon> dmTickByMsgId = new HashMap<>();   // msgId -> ticks icon
+    private final Map<Long, HBox> groupSeenRowByMsgId = new HashMap<>(); // msgId -> seen row box
+    private final java.util.concurrent.ScheduledExecutorService seenPoller =
+            java.util.concurrent.Executors.newSingleThreadScheduledExecutor();
+    private java.util.concurrent.ScheduledFuture<?> seenTask;
+    private volatile long lastOtherLastRead = -1;
+    private volatile long seenConvId = -1;
+    private final ScheduledExecutorService callPoller =
+            Executors.newSingleThreadScheduledExecutor();
+
+    private ScheduledFuture<?> callTask;
+    private volatile long lastGlobalCallMsgId = 0;
+    private final Map<Long, Long> pendingCallInviteMsgIdByConv = new HashMap<>();
+    private final java.util.concurrent.atomic.AtomicLong renderEpoch = new java.util.concurrent.atomic.AtomicLong(0);
+    private StompClientHandler stomp;
+    private org.springframework.messaging.simp.stomp.StompSession.Subscription callSub;
+    private javafx.stage.Stage activeIncomingPopup;
+    private long activeIncomingConvId = -1;
+    private static final String CALL_PAGE_ENDPOINT = "http://127.0.0.1:8090/livekit/call";
+    private static final String LIVEKIT_URL = "ws://127.0.0.1:7880";
+    private static final String TOKEN_ENDPOINT = "http://127.0.0.1:8090/livekit/token";
+    private final com.fasterxml.jackson.databind.ObjectMapper om = new com.fasterxml.jackson.databind.ObjectMapper();
 
 
 
     private record GifItem(String title, String previewUrl, String gifUrl) {}
-    private int currentUserId = 2;
+    private int currentUserId = 44;
 
     //==========================
     //HELPER METHODS
@@ -360,7 +412,6 @@ public class chatController {
             } else {
                 conversationService.leaveConversation(convId, currentUserId);
             }
-            // ✅ hide drawer immediately (fix)
             closeDrawer();
 
             // remove sidebar item without full reload
@@ -395,6 +446,7 @@ public class chatController {
         }
 
         selectedConversationId = newId;
+        subscribeCallTopic(selectedConversationId);
     }
 
 
@@ -405,6 +457,14 @@ public class chatController {
 
     @FXML
     public void initialize() {
+        stomp = new StompClientHandler("ws://localhost:8090/ws", currentUserId);
+
+        stomp.connect(session -> {
+            System.out.println("STOMP Connected");
+            // Server broadcasts to /topic/calls
+            stomp.subscribeRaw("/topic/calls", this::onIncomingSignal);
+        }, this::onIncomingSignal);
+
         emojiRepo = EmojiRepo.load();
         emojiBtn.setOnAction(e -> toggleEmojiPopup());
         initVlcOnce();
@@ -429,6 +489,57 @@ public class chatController {
             }
         });
         loadConversations();
+
+        // Lightweight conversation list sync (no full reload)
+        if (pollTask != null) pollTask.cancel(false);
+        pollTask = poller.scheduleAtFixedRate(() -> {
+            try {
+                List<Conversation> fresh = conversationService.listForUser(currentUserId);
+                if (fresh == null) return;
+
+                Platform.runLater(() -> {
+                    for (Conversation c : fresh) {
+                        long id = c.getId();
+
+                        Label badge = unreadBadgeByConvId.get(id);
+                        Label time  = timeLabelByConvId.get(id);
+                        Label prev  = previewLabelByConvId.get(id);
+
+                        int unread = c.getUnreadCount();
+                        boolean isSelected = selectedConversation != null && selectedConversation.getId() == id;
+                        boolean show = unread > 0 && !isSelected;
+
+                        if (badge != null) {
+                            badge.setText(String.valueOf(unread));
+                            badge.setVisible(show);
+                            badge.setManaged(show);
+                        }
+
+                        if (time != null) {
+                            String t = formatConversationTime(c.getLastAt());
+                            time.setText(t == null ? "" : t);
+                            time.getStyleClass().removeAll("chat-time", "chat-time-unread");
+                            time.getStyleClass().add(show ? "chat-time-unread" : "chat-time");
+                        }
+
+                        if (prev != null) {
+                            String p = c.getLastBody();
+                            if (p == null || p.isBlank()) p = "Open conversation...";
+                            prev.setText(p);
+                        }
+
+                        long lastId = c.getLastMessageId() == null ? 0L : c.getLastMessageId();
+                        long oldLast = lastMsgIdByConvId.getOrDefault(id, 0L);
+                        if (lastId > oldLast) {
+                            lastMsgIdByConvId.put(id, lastId);
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }, 0, 800, java.util.concurrent.TimeUnit.MILLISECONDS);
+
         membersList.getStyleClass().add("members-list");
         membersList.setCellFactory(lv -> new MemberCell());
         membersList.setItems(members);
@@ -500,6 +611,7 @@ public class chatController {
         if (recPreviewPlayBtn != null) recPreviewPlayBtn.setOnAction(e -> handlePreviewPlayPause());
 
         setComposerModeNormalUI();
+        Platform.runLater(this::startGlobalCallPolling);
     }
 
     private void updateSaveState() {
@@ -566,15 +678,20 @@ public class chatController {
         if (selectedConversation == null) return;
 
         try {
-            var info = conversationService.getDetails(selectedConversation.getId());
+            var info = conversationService.getDetails(selectedConversation.getId(), currentUserId);
 
+            String type = info.getType();
+
+            // title
             String title;
-            if ("DM".equalsIgnoreCase(info.getType())) {
-                title = conversationService.getDmDisplayName(info.getId(), currentUserId);
+            if ("DM".equalsIgnoreCase(type)) {
+                title = dmDisplayTitle(info.getId());
             } else {
                 title = (info.getTitle() == null || info.getTitle().isBlank()) ? "Discussion" : info.getTitle();
             }
             drawerTitle.setText(title);
+
+            // meta
             conversationIdLabel.setText(String.valueOf(info.getId()));
 
             if (info.getCreatedAt() != null) {
@@ -586,13 +703,18 @@ public class chatController {
                 createdAtLabel.setText("-");
             }
 
-            conversationTypeLabel.setText("GROUP".equalsIgnoreCase(info.getType()) ? "Group" : "DM");
+            conversationTypeLabel.setText("GROUP".equalsIgnoreCase(type) ? "Group" : "DM");
             totalMessagesLabel.setText(String.valueOf(info.getTotalMessages()));
 
-            // avatar
-            applyAvatar(drawerAvatarCircle, info.getAvatar(), info.getType());
+            // avatar:
+            // GROUP => conversation avatar
+            // DM    => other user imagelink
+            byte[] avatarBytes = "DM".equalsIgnoreCase(type) ? dmAvatarBytes(info.getId()) : info.getAvatar();
+            applyAvatar(drawerAvatarCircle, avatarBytes, type);
+
             // permissions
             applyRoleUiForConversation(info);
+
             // participants
             loadMembers(selectedConversation.getId());
 
@@ -603,6 +725,8 @@ public class chatController {
 
     private void applyAvatar(Circle circle, byte[] avatarBytes, String type) {
         try {
+            if (circle == null) return;
+
             // 1) DB avatar
             if (avatarBytes != null && avatarBytes.length > 0) {
                 Image img = new Image(new ByteArrayInputStream(avatarBytes), 0, 0, true, true);
@@ -610,13 +734,13 @@ public class chatController {
                 return;
             }
 
-            // 2) fallback by type (RESOURCE PATH)
+            // 2) fallback by type
             String file = "GROUP".equalsIgnoreCase(type) ? "group-default.png" : "user-default.png";
             String resourcePath = "/assets/" + file;
 
             var url = getClass().getResource(resourcePath);
             if (url == null) {
-                circle.setFill(javafx.scene.paint.Color.LIGHTGRAY);
+                circle.setFill(Color.LIGHTGRAY);
                 System.err.println("Missing resource: " + resourcePath);
                 return;
             }
@@ -625,11 +749,44 @@ public class chatController {
             circle.setFill(new ImagePattern(img));
 
         } catch (Exception ex) {
-            circle.setFill(javafx.scene.paint.Color.LIGHTGRAY);
+            if (circle != null) circle.setFill(Color.LIGHTGRAY);
             ex.printStackTrace();
         }
     }
 
+    private byte[] userAvatarBytes(int userId) {
+        return userAvatarCache.computeIfAbsent(userId, uid -> {
+            try {
+                return conversationService.getUserAvatar(uid);
+            } catch (SQLException e) {
+                return null;
+            }
+        });
+    }
+
+    private void applyUserAvatar(Circle circle, int userId) {
+        applyAvatar(circle, userAvatarBytes(userId), "DM"); // null => user-default.png
+    }
+
+    private byte[] dmAvatarBytes(long conversationId) {
+        return dmAvatarCache.computeIfAbsent(conversationId, cid -> {
+            try {
+                return conversationService.getDmAvatar(cid, currentUserId); // other user's imagelink
+            } catch (SQLException e) {
+                return null;
+            }
+        });
+    }
+
+    private String dmDisplayTitle(long conversationId) {
+        return dmTitleCache.computeIfAbsent(conversationId, cid -> {
+            try {
+                return conversationService.getDmDisplayName(cid, currentUserId);
+            } catch (SQLException e) {
+                return "Discussion";
+            }
+        });
+    }
 
     // =========================
     // LOAD TIME
@@ -754,7 +911,7 @@ public class chatController {
         boolean hasUnread = conv.getUnreadCount() > 0;
 
         VBox wrapper = new VBox();
-        wrapper.getStyleClass().add("chat-item");  // ALWAYS
+        wrapper.getStyleClass().add("chat-item");
         wrapper.setPadding(new Insets(12));
 
         HBox row = new HBox(12);
@@ -762,13 +919,24 @@ public class chatController {
 
         // Avatar
         Circle c = new Circle(21);
-        applyAvatar(c, conv.getAvatar(), conv.getType());
+
+        byte[] listAvatarBytes =
+                "DM".equalsIgnoreCase(conv.getType())
+                        ? dmAvatarBytes(conv.getId())
+                        : conv.getAvatar();
+
+        applyAvatar(c, listAvatarBytes, conv.getType());
         StackPane avatar = new StackPane(c);
 
         // Name + preview
         VBox textBox = new VBox(6);
 
-        Label name = new Label(conv.getTitle() == null ? "Chat" : conv.getTitle());
+        String displayTitle =
+                "DM".equalsIgnoreCase(conv.getType())
+                        ? dmDisplayTitle(conv.getId())
+                        : (conv.getTitle() == null || conv.getTitle().isBlank() ? "Chat" : conv.getTitle());
+
+        Label name = new Label(displayTitle);
         name.getStyleClass().add("chat-name");
 
         String preview = conv.getLastBody();
@@ -779,6 +947,10 @@ public class chatController {
         previewLbl.setWrapText(true);
 
         textBox.getChildren().addAll(name, previewLbl);
+
+        // keep refs for incremental UI updates (no full reload)
+        previewLabelByConvId.put(conv.getId(), previewLbl);
+        lastMsgIdByConvId.put(conv.getId(), conv.getLastMessageId() == null ? 0L : conv.getLastMessageId());
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -794,8 +966,6 @@ public class chatController {
 
         Label badge = new Label(String.valueOf(conv.getUnreadCount()));
         badge.getStyleClass().add("chat-badge");
-
-        // show/hide (IMPORTANT: managed too)
         badge.setVisible(hasUnread);
         badge.setManaged(hasUnread);
 
@@ -803,6 +973,7 @@ public class chatController {
 
         timeLabelByConvId.put(conv.getId(), time);
         unreadBadgeByConvId.put(conv.getId(), badge);
+
         row.getChildren().addAll(avatar, textBox, spacer, rightBox);
         wrapper.getChildren().add(row);
 
@@ -814,9 +985,9 @@ public class chatController {
             }
             clearUnreadUI(conv.getId());
         });
+
         return wrapper;
     }
-
 
     private void highlightSelected(VBox selected) {
         for (var node : conversationContainer.getChildren()) {
@@ -864,7 +1035,17 @@ public class chatController {
     }
 
     private void loadMessages(long conversationId) {
+        renderEpoch.incrementAndGet();
         messagesContainer.getChildren().clear();
+        dmTickByMsgId.clear();
+        groupSeenRowByMsgId.clear();
+        lastOtherLastRead = -1;
+        seenConvId = conversationId;
+
+        // reset per-conversation rendered message tracking
+        msgRowById.clear();
+        msgEditedAtById.clear();
+        msgBodyById.clear();
 
         try {
             List<Message> messages = messageService.listByConversation(conversationId, 100);
@@ -915,7 +1096,6 @@ public class chatController {
                 bubbleBox.getChildren().add(bubbleNode);
 
                 if (outgoing) {
-                    attachBubbleMenu(bubbleNode, msg);
                     showBubbleMenu(bubbleNode, msg);
                 }
 
@@ -930,6 +1110,7 @@ public class chatController {
 
                 if (isGroup && outgoing) {
                     HBox seenRow = buildSeenRow(conversationId, msg.getId(), currentUserId);
+                    groupSeenRowByMsgId.put(msg.getId(), seenRow);
                     footer.getChildren().add(seenRow);
                 }
 
@@ -940,17 +1121,23 @@ public class chatController {
                 if (!isGroup && outgoing) {
                     FontIcon ticks = new FontIcon("mdi2c-check-all");
                     ticks.setIconSize(14);
+
                     if (msg.getId() <= otherLastRead) {
                         ticks.setStyle("-fx-icon-color: #7c3aed; -fx-font-family: 'Material Design Icons';");
                     } else {
                         ticks.setStyle("-fx-icon-color: #9aa0a6; -fx-font-family: 'Material Design Icons';");
                     }
+                    dmTickByMsgId.put(msg.getId(), ticks);
                     footer.getChildren().add(ticks);
                 }
 
                 bubbleBox.getChildren().add(footer);
                 row.getChildren().add(bubbleBox);
                 messagesContainer.getChildren().add(row);
+
+                msgRowById.put(msg.getId(), row);
+                msgEditedAtById.put(msg.getId(), msg.getEditedAt());
+                msgBodyById.put(msg.getId(), msg.getBody());
             }
 
             // ===== Add ONE AI chip at the VERY BOTTOM (only if showAi) =====
@@ -973,12 +1160,249 @@ public class chatController {
             // ===== Mark as read once (after rendering) =====
             long lastId = messages.get(messages.size() - 1).getId();
             messageService.markRead(conversationId, currentUserId, lastId);
+            lastRenderedMsgId = lastId;
 
             Platform.runLater(() -> messagesScroll.setVvalue(1.0));
 
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    private void startSeenPolling(long convId) {
+        stopSeenPolling();
+
+        seenConvId = convId;
+        lastOtherLastRead = -1;
+
+        seenTask = seenPoller.scheduleAtFixedRate(() -> {
+            try {
+                if (selectedConversation == null) return;
+                if (selectedConversation.getId() != convId) return;
+
+                boolean isGroup = "GROUP".equalsIgnoreCase(selectedConversation.getType());
+
+                // ======================
+                // DM CASE
+                // ======================
+                if (!isGroup) {
+                    long otherLastRead = messageService.getMaxReadByOthers(convId, currentUserId);
+
+                    if (otherLastRead == lastOtherLastRead) return;
+
+                    lastOtherLastRead = otherLastRead;
+
+                    Platform.runLater(() -> updateDmTicks(otherLastRead));
+                    return;
+                }
+
+                // ======================
+                // GROUP CASE
+                // ======================
+
+                // Only refresh last 12 outgoing messages (performance safe)
+                List<Long> ids = new ArrayList<>(groupSeenRowByMsgId.keySet());
+                if (ids.isEmpty()) return;
+
+                ids.sort(Long::compareTo);
+
+                int from = Math.max(0, ids.size() - 12);
+                List<Long> tail = ids.subList(from, ids.size());
+
+                Platform.runLater(() -> {
+                    for (Long msgId : tail) {
+                        HBox existingRow = groupSeenRowByMsgId.get(msgId);
+                        if (existingRow == null) continue;
+
+                        try {
+                            HBox fresh = buildSeenRow(convId, msgId, currentUserId);
+                            existingRow.getChildren().setAll(fresh.getChildren());
+                        } catch (Exception ignored) {
+                        }
+                    }
+                });
+
+            } catch (Exception ignored) {
+            }
+        }, 0, 900, java.util.concurrent.TimeUnit.MILLISECONDS);
+    }
+
+    private void stopSeenPolling() {
+        if (seenTask != null) {
+            seenTask.cancel(false);
+            seenTask = null;
+        }
+    }
+
+    private void updateDmTicks(long otherLastRead) {
+        for (var e : dmTickByMsgId.entrySet()) {
+            long msgId = e.getKey();
+            FontIcon ticks = e.getValue();
+            if (ticks == null) continue;
+
+            if (msgId <= otherLastRead) {
+                ticks.setStyle("-fx-icon-color: #7c3aed; -fx-font-family: 'Material Design Icons';");
+            } else {
+                ticks.setStyle("-fx-icon-color: #9aa0a6; -fx-font-family: 'Material Design Icons';");
+            }
+        }
+    }
+
+    private void renderOneMessageRow(Message msg) throws SQLException {
+        boolean outgoing = msg.getSenderId() == currentUserId;
+
+        boolean isGroup = selectedConversation != null
+                && "GROUP".equalsIgnoreCase(selectedConversation.getType());
+
+        long convId = msg.getConversationId();
+        long otherLastRead = messageService.getMaxReadByOthers(convId, currentUserId);
+
+        HBox row = new HBox();
+        row.setAlignment(outgoing ? Pos.TOP_RIGHT : Pos.TOP_LEFT);
+
+        VBox bubbleBox = new VBox(6);
+        bubbleBox.setAlignment(outgoing ? Pos.TOP_RIGHT : Pos.TOP_LEFT);
+
+        if (isGroup && !outgoing) {
+            Label sender = new Label(senderName(msg.getSenderId()));
+            sender.getStyleClass().add("sender-name");
+            bubbleBox.getChildren().add(sender);
+        }
+
+        Node bubbleNode = buildMessageNode(msg, outgoing);
+        bubbleBox.getChildren().add(bubbleNode);
+
+        if (outgoing) {
+            attachBubbleMenu(bubbleNode, msg);
+            showBubbleMenu(bubbleNode, msg);
+        }
+
+        HBox footer = new HBox(6);
+        footer.setAlignment(outgoing ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
+
+        if (msg.getEditedAt() != null) {
+            Label edited = new Label("édité");
+            edited.getStyleClass().add(outgoing ? "edited-out" : "edited-in");
+            footer.getChildren().add(edited);
+        }
+
+        if (isGroup && outgoing) {
+            HBox seenRow = buildSeenRow(convId, msg.getId(), currentUserId);
+            footer.getChildren().add(seenRow);
+        }
+
+        Label time = new Label(formatBubbleTime(msg.getCreatedAt()));
+        time.getStyleClass().add(outgoing ? "timestamp-out" : "timestamp");
+        footer.getChildren().add(time);
+
+        if (!isGroup && outgoing) {
+            FontIcon ticks = new FontIcon("mdi2c-check-all");
+            ticks.setIconSize(14);
+            if (msg.getId() <= otherLastRead) {
+                ticks.setStyle("-fx-icon-color: #7c3aed; -fx-font-family: 'Material Design Icons';");
+            } else {
+                ticks.setStyle("-fx-icon-color: #9aa0a6; -fx-font-family: 'Material Design Icons';");
+            }
+            footer.getChildren().add(ticks);
+        }
+
+        bubbleBox.getChildren().add(footer);
+        row.getChildren().add(bubbleBox);
+
+        msgRowById.put(msg.getId(), row);
+        msgEditedAtById.put(msg.getId(), msg.getEditedAt());
+        msgBodyById.put(msg.getId(), msg.getBody());
+
+        messagesContainer.getChildren().add(row);
+    }
+
+
+    private void startMessagePolling() {
+        stopMessagePolling();
+
+        msgPollTask = msgPoller.scheduleAtFixedRate(() -> {
+            try {
+                if (selectedConversation == null) return;
+
+                final long convId = selectedConversation.getId();
+
+                // Fetch ONLY new messages since lastRenderedMsgId (uses idx_messages_conv_id)
+                List<Message> newMessages = messageService.listAfterId(convId, lastRenderedMsgId, 200);
+                if (newMessages == null || newMessages.isEmpty()) return;
+
+                Platform.runLater(() -> {
+                    try {
+                        // conversation might have changed while we were fetching
+                        if (selectedConversation == null || selectedConversation.getId() != convId) return;
+
+                        long maxId = lastRenderedMsgId;
+
+                        for (Message m : newMessages) {
+
+                            // ✅ de-dupe guard (prevents double render if anything races)
+                            if (!msgRowById.containsKey(m.getId())) {
+                                renderOneMessageRow(m);
+                            }
+
+                            if (m.getId() > maxId) maxId = m.getId();
+
+                            // CALL invite detection (incoming)
+                            if (m.getSenderId() != currentUserId
+                                    && "CALL".equalsIgnoreCase(m.getKind())
+                                    && m.getId() > lastIncomingCallMsgId) {
+
+                                lastIncomingCallMsgId = m.getId();
+
+                                String body = m.getBody() == null ? "" : m.getBody();
+                                String[] parts = body.split("\\|", 2);
+
+                                boolean video = parts.length > 0 && "VIDEO".equalsIgnoreCase(parts[0]);
+                                String room = (parts.length > 1 && parts[1] != null && !parts[1].isBlank())
+                                        ? parts[1]
+                                        : "conv_" + convId;
+
+                                Conversation det = conversationService.getDetails(convId, currentUserId);
+
+                                String type = (det != null && det.getType() != null) ? det.getType() : "";
+                                String display;
+                                if ("DM".equalsIgnoreCase(type)) {
+                                    display = conversationService.getDmDisplayName(convId, currentUserId);
+                                } else {
+                                    display = (det != null && det.getTitle() != null && !det.getTitle().isBlank())
+                                            ? det.getTitle()
+                                            : ("Conversation #" + convId);
+                                }
+
+                                byte[] avatar = (det != null) ? det.getAvatar() : null;
+                                showIncomingCallPopup(convId, video, room, m.getId(), display, avatar);
+                            }
+                        }
+
+                        // CRITICAL: advance cursor so these messages won't be fetched again
+                        lastRenderedMsgId = maxId;
+
+                        // mark read ONCE per batch
+                        try {
+                            messageService.markRead(convId, currentUserId, lastRenderedMsgId);
+                        } catch (Exception ignored) {}
+
+                        messagesScroll.setVvalue(1.0);
+
+                    } catch (Exception ex) {
+                        ex.printStackTrace();
+                    }
+                });
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }, 0, 800, java.util.concurrent.TimeUnit.MILLISECONDS);
+    }
+
+
+    private void stopMessagePolling() {
+        if (msgPollTask != null) msgPollTask.cancel(false);
+        msgPollTask = null;
     }
 
     private String senderName(int id) {
@@ -997,7 +1421,6 @@ public class chatController {
         seenRow.getStyleClass().add("seen-row");
 
         try {
-            // returns users (except me) who have last_read_message_id >= messageId
             List<ParticipantView> readers = messageService.listReadersForMessage(convId, messageId, currentUserId);
 
             int max = 6;
@@ -1009,9 +1432,7 @@ public class chatController {
                 if (shown >= max) break;
 
                 Circle mini = new Circle(7);
-                // simplest: default-user.png always (no DB user avatar needed)
-                applyAvatar(mini, null, "DM"); // uses your default-user.png logic
-                // if you later have user avatar bytes, swap to applyUserAvatar(mini, p.getUserId())
+                applyUserAvatar(mini, p.getUserId());
 
                 seenRow.getChildren().add(mini);
 
@@ -1028,7 +1449,7 @@ public class chatController {
                 seenRow.getChildren().add(more);
             }
 
-            if (readers.size() > 0) {
+            if (!readers.isEmpty()) {
                 Tooltip.install(seenRow, new Tooltip("Vu par: " + names));
             }
 
@@ -1091,13 +1512,12 @@ public class chatController {
         if (micState == MicState.PREVIEW && editingMessage == null
                 && lastRecordedFile != null && lastRecordedFile.exists()) {
             try {
-                sendAttachment(lastRecordedFile);
+                sendAttachment(lastRecordedFile); // will render itself now
                 aiSummarySuppressed.add(selectedConversation.getId());
                 cleanupPreviewPlayer();
                 lastRecordedFile = null;
                 setComposerModeNormalUI();
-
-                loadMessages(selectedConversation.getId());
+                // loadMessages(selectedConversation.getId());
                 loadConversations();
             } catch (Exception ex) {
                 ex.printStackTrace();
@@ -1109,11 +1529,9 @@ public class chatController {
         if (body.isBlank()) return;
 
         try {
-            // ✅ EDIT MODE
             if (editingMessage != null) {
                 String oldBody = editingMessage.getBody() == null ? "" : editingMessage.getBody().trim();
 
-                // unchanged => cancel (no edited_at)
                 if (body.equals(oldBody)) {
                     cancelEdit();
                     return;
@@ -1123,22 +1541,37 @@ public class chatController {
                 editingMessage.setSenderId(currentUserId);
                 messageService.modifier(editingMessage);
                 aiSummarySuppressed.add(editingMessage.getConversationId());
+
+                // keep reload for edits (safe for now)
                 loadMessages(editingMessage.getConversationId());
                 loadConversations();
                 cancelEdit();
                 return;
             }
 
-            // ✅ NORMAL SEND MODE
             Message msg = new Message();
             msg.setConversationId(selectedConversation.getId());
             msg.setSenderId(currentUserId);
             msg.setBody(body);
+            msg.setKind("TEXT");
 
-            messageService.ajouter(msg);
+            long newId = messageService.ajouter(msg);
+            msg.setId(newId);
+
             aiSummarySuppressed.add(selectedConversation.getId());
             messageInput.clear();
-            loadMessages(selectedConversation.getId());
+
+            //render once, no reload
+            renderOneMessageRow(msg);
+            lastRenderedMsgId = Math.max(lastRenderedMsgId, newId);
+
+            try {
+                messageService.markRead(selectedConversation.getId(), currentUserId, lastRenderedMsgId);
+            } catch (Exception ignored) {}
+
+            messagesScroll.setVvalue(1.0);
+
+            // keep this (you can optimize later)
             loadConversations();
 
         } catch (Exception e) {
@@ -1194,11 +1627,6 @@ public class chatController {
 
         NicknamesRowCell() {
             row.setAlignment(Pos.CENTER_LEFT);
-
-            // default avatar
-            Image img = new Image(getClass().getResourceAsStream("/assets/user-default.png"));
-            avatar.setFill(new ImagePattern(img));
-
             title.getStyleClass().add("member-name");
             subtitle.getStyleClass().add("member-sub");
 
@@ -1229,19 +1657,19 @@ public class chatController {
             super.updateItem(item, empty);
 
             if (empty || item == null) {
+                avatar.setFill(null);
                 setGraphic(null);
                 return;
             }
 
             // main line: nickname if exists else username
             title.setText(displayName(item));
-
             // second line like FB: "Set nickname" or current nickname
             String nick = item.getNickname();
             subtitle.setText((nick == null || nick.isBlank()) ? "Set nickname" : nick.trim());
 
             if (editing) exitEdit();
-
+            applyUserAvatar(avatar, item.getUserId());
             setGraphic(row);
         }
 
@@ -1268,7 +1696,7 @@ public class chatController {
             ParticipantView item = getItem();
             if (item == null) return;
 
-            if (nicknamesConvId == null) {   // safety: modal not initialized correctly
+            if (nicknamesConvId == null) {
                 exitEdit();
                 return;
             }
@@ -1440,9 +1868,10 @@ public class chatController {
     }
 
     private Image getDefaultUserAvatar() {
-        // put user-default.png in resources: /assets/user-default.png
-        InputStream is = getClass().getResourceAsStream("/assets/user-default.png");
-        return (is == null) ? null : new Image(is);
+        try (InputStream in = getClass().getResourceAsStream("/assets/user-default.png")) {
+            if (in != null) return new Image(in);
+        } catch (Exception ignore) {}
+        return null;
     }
     private class MemberCell extends ListCell<ParticipantView> {
 
@@ -1452,7 +1881,8 @@ public class chatController {
         private final Label name = new Label();
         private final Label sub = new Label();
 
-
+        private final MenuItem kick = new MenuItem("Exclure du groupe");
+        private final ContextMenu menu = new ContextMenu(kick);
 
         MemberCell() {
             row.getStyleClass().add("member-cell");
@@ -1463,17 +1893,9 @@ public class chatController {
             row.setAlignment(Pos.CENTER_LEFT);
             row.getChildren().addAll(avatar, texts);
 
-            // default avatar
-            Image img = getDefaultUserAvatar();
-            if (img != null) avatar.setFill(new ImagePattern(img));
-
-            MenuItem kick = new MenuItem("Exclure du groupe");
             kick.getStyleClass().add("danger-item");
-
-            ContextMenu menu = new ContextMenu(kick);
             menu.getStyleClass().add("danger-menu");
 
-            // Right click
             setOnContextMenuRequested(ev -> {
                 ParticipantView item = getItem();
                 if (item == null || selectedConversation == null) return;
@@ -1481,7 +1903,6 @@ public class chatController {
                 boolean isGroup = "GROUP".equalsIgnoreCase(selectedConversation.getType());
                 boolean isSelf  = item.getUserId() == currentUserId;
 
-                // ✅ Only for group, only admins/owners, never self
                 if (!isGroup || isSelf || !canManageMembersInSelectedConversation) {
                     ev.consume();
                     return;
@@ -1515,6 +1936,7 @@ public class chatController {
                 setGraphic(null);
                 return;
             }
+            applyUserAvatar(avatar, item.getUserId());
 
             String display = (item.getNickname() != null && !item.getNickname().isBlank())
                     ? item.getNickname().trim()
@@ -1538,7 +1960,7 @@ public class chatController {
 
     @FXML
     private void openNewMessageModal() {
-        // Load users once per open (or cache)
+        userAvatarCache.clear();
         loadAllUsersForPicker();
 
         newMessageOverlay.setVisible(true);
@@ -1663,38 +2085,50 @@ public class chatController {
     private void selectConversation(Conversation conv) throws SQLException {
         if (conv == null) return;
 
+        // stop pollers for previous conversation first
+        stopMessagePolling();
+        stopSeenPolling();
+
         selectedConversation = conv;
-        selectedConversationProperty.set(conv); //UI binding
+        selectedConversationProperty.set(conv);
 
         setSelectedConversationStyle(conv.getId());
 
-        applyAvatar(chatAvatarCircle, conv.getAvatar(), conv.getType());
+        byte[] headerAvatarBytes = "DM".equalsIgnoreCase(conv.getType())
+                ? dmAvatarBytes(conv.getId())
+                : conv.getAvatar();
+
+        applyAvatar(chatAvatarCircle, headerAvatarBytes, conv.getType());
+
+        // full load ONLY on selection
         loadMessages(conv.getId());
         updateAiSummaryAvailability();
 
-
-        try {
-            if ("DM".equalsIgnoreCase(conv.getType())) {
-                chatTitle.setText(conversationService.getDmDisplayName(conv.getId(), currentUserId));
-            } else {
-                chatTitle.setText((conv.getTitle() == null || conv.getTitle().isBlank())
-                        ? "Discussion"
-                        : conv.getTitle());
-            }
-        } catch (SQLException e) {
-            chatTitle.setText("Discussion");
+        if ("DM".equalsIgnoreCase(conv.getType())) {
+            chatTitle.setText(dmDisplayTitle(conv.getId()));
+        } else {
+            chatTitle.setText((conv.getTitle() == null || conv.getTitle().isBlank())
+                    ? "Discussion"
+                    : conv.getTitle());
         }
 
         chatSubtitle.setText("Conversation active");
+
         Long lastMsgId = conv.getLastMessageId();
         if (lastMsgId != null && lastMsgId > 0) {
             conversationService.markConversationRead(conv.getId(), currentUserId, lastMsgId);
         }
+
         if (mediaPanel.isVisible()) {
             refreshMediaPanel(conv.getId());
         }
+
         clearUnreadUI(conv.getId());
         refreshDrawer();
+
+        // start pollers AFTER UI is stable
+        startMessagePolling();
+        startSeenPolling(conv.getId());
     }
 
     private void clearUnreadUI(long convId) {
@@ -1719,12 +2153,10 @@ public class chatController {
     private void clearSelectionAndGoEmpty() {
         selectedConversation = null;
         selectedConversationProperty.set(null);
-
-        // remove sidebar highlight safely
         setSelectedConversationStyle(-1);
-
-        // clear message view (use your real container)
         messagesContainer.getChildren().clear();
+        stopMessagePolling();
+        stopSeenPolling();
     }
 
 
@@ -1817,8 +2249,6 @@ public class chatController {
         private final Label sub = new Label();
         private final Region spacer = new Region();
         private final StackPane indicator = new StackPane();
-        private final Image fallback = new Image(getClass().getResourceAsStream("/assets/user-default.png"));
-        // circle/check
 
         UserPickCell() {
             row.setAlignment(Pos.CENTER_LEFT);
@@ -1830,8 +2260,10 @@ public class chatController {
 
             indicator.setMinSize(28, 28);
             indicator.setMaxSize(28, 28);
+
             row.getChildren().addAll(avatar, texts, spacer, indicator);
 
+            // ✅ Only GROUP uses toggle behavior on press
             row.addEventFilter(javafx.scene.input.MouseEvent.MOUSE_PRESSED, ev -> {
                 if (newMsgMode != NewMsgMode.GROUP) return;
 
@@ -1843,7 +2275,6 @@ public class chatController {
 
                 var sm = lv.getSelectionModel();
 
-                // Toggle using the actual object reference (works with filtered lists)
                 if (sm.getSelectedItems().contains(item)) {
                     sm.clearSelection(lv.getItems().indexOf(item));
                 } else {
@@ -1854,8 +2285,6 @@ public class chatController {
                 ev.consume();
                 lv.refresh();
             });
-
-
         }
 
         @Override
@@ -1866,12 +2295,8 @@ public class chatController {
                 return;
             }
 
-            // avatar fallback (you can enhance to use item avatar if you have it)
-            avatar.setFill(new ImagePattern(fallback));
-            /*try {
-                Image img = new Image(getClass().getResourceAsStream("/assets/user-default.png"));
-                avatar.setFill(new ImagePattern(img));
-            } catch (Exception ignore) {}*/
+            // ✅ avatar from user.imagelink (cached) else default
+            applyUserAvatar(avatar, item.getUserId());
 
             name.setText(displayName(item));
             sub.setText(item.getUsername() == null ? "" : item.getUsername());
@@ -1887,17 +2312,18 @@ public class chatController {
                 ring.setStroke(selected ? Color.web("#7c3aed") : Color.web("#d1d5db"));
                 ring.setStrokeWidth(2);
                 indicator.getChildren().add(ring);
+
                 if (selected) {
                     Circle dot = new Circle(6);
                     dot.setFill(Color.web("#7c3aed"));
                     indicator.getChildren().add(dot);
                 }
             } else {
-                Circle bg = new Circle(10);
-                bg.setFill(Color.TRANSPARENT);
-                bg.setStroke(selected ? Color.web("#7c3aed") : Color.web("#d1d5db"));
-                bg.setStrokeWidth(2);
-                indicator.getChildren().add(bg);
+                Circle ring = new Circle(10);
+                ring.setFill(Color.TRANSPARENT);
+                ring.setStroke(selected ? Color.web("#7c3aed") : Color.web("#d1d5db"));
+                ring.setStrokeWidth(2);
+                indicator.getChildren().add(ring);
 
                 if (selected) {
                     Circle dot = new Circle(6);
@@ -1993,14 +2419,36 @@ public class chatController {
         Message msg = new Message();
         msg.setConversationId(selectedConversation.getId());
         msg.setSenderId(currentUserId);
-        msg.setBody(name);               // show filename in chat list fallback
+        msg.setBody(name);
         msg.setKind("ATTACHMENT");
 
-        long messageId = messageService.ajouter(msg); // now returns id
+        long messageId = messageService.ajouter(msg);
+        msg.setId(messageId);
 
+        // ✅ CRITICAL: advance cursor immediately so poller won't re-fetch this message
+        lastRenderedMsgId = Math.max(lastRenderedMsgId, messageId);
+
+        // ✅ render immediately (idempotent)
+        Platform.runLater(() -> {
+            if (selectedConversation == null || selectedConversation.getId() != msg.getConversationId()) return;
+            if (!msgRowById.containsKey(messageId)) {
+                try {
+                    renderOneMessageRow(msg);
+                } catch (SQLException e) {
+                    throw new RuntimeException(e);
+                }
+                messagesScroll.setVvalue(1.0);
+            }
+        });
+
+        // slow blob insert AFTER cursor advanced
         try (InputStream in = new BufferedInputStream(new FileInputStream(f))) {
             messageService.insertAttachmentBlob(messageId, name, mime, size, in);
         }
+
+        try {
+            messageService.markRead(msg.getConversationId(), currentUserId, lastRenderedMsgId);
+        } catch (Exception ignored) {}
     }
 
     private Node buildMessageNode(Message msg, boolean outgoing) throws SQLException {
@@ -3964,45 +4412,561 @@ public class chatController {
 
     @FXML
     private void handleAudioCall() {
-        openCallWindow(false);
+        if (selectedConversation == null) return;
+
+        try {
+            ObjectMapper om = new ObjectMapper();
+            ObjectNode n = om.createObjectNode();
+            n.put("type", "RING");
+            n.put("conversationId", (int) selectedConversationId);
+            n.put("fromUserId", currentUserId);
+            n.put("fromName", "User " + currentUserId);
+            n.put("callKind", "AUDIO");
+
+            stomp.send("/app/call.start", n.toString().getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        // keep your existing system
+        sendCallInvite(false);
     }
 
     @FXML
     private void handleVideoCall() {
-        openCallWindow(true);
-    }
-
-    private void openCallWindow(boolean videoEnabled) {
         if (selectedConversation == null) return;
 
         try {
-            javafx.fxml.FXMLLoader loader = new javafx.fxml.FXMLLoader(
-                    getClass().getResource("/org/example/yedikpromax/callView.fxml")
-            );
+            ObjectMapper om = new ObjectMapper();
+            ObjectNode n = om.createObjectNode();
+            n.put("type", "RING");
+            n.put("conversationId", (int) selectedConversationId);
+            n.put("fromUserId", currentUserId);
+            n.put("fromName", "User " + currentUserId);
+            n.put("callKind", "VIDEO");
 
-            javafx.scene.Parent root = loader.load();
+            stomp.send("/app/call.start", n.toString().getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-            javafx.scene.Scene scene = new javafx.scene.Scene(root, 980, 640);
+        // keep your existing system
+        sendCallInvite(true);
+    }
 
-            // IMPORTANT: Call window does NOT inherit chat CSS automatically
-            scene.getStylesheets().add(
-                    getClass().getResource("/org/example/yedikpromax/call-view.css").toExternalForm()
-            );
 
-            javafx.stage.Stage stage = new javafx.stage.Stage();
-            stage.setTitle(videoEnabled ? "Video call" : "Audio call");
-            stage.setScene(scene);
+    private void openCallWindow(long convId, boolean videoEnabled, String room) {
+        if (convId <= 0) return;
 
-            CallController call = loader.getController();
+        try {
+            String roomName = (room == null || room.isBlank())
+                    ? ("conv-" + convId)
+                    : room;
 
-            // Same conversation => same room for both users
-            String roomName = "yedik-" + selectedConversation.getId();
-            call.init(stage, roomName, videoEnabled);
+            String identity = "user-" + currentUserId;
 
-            stage.show();
+            // If you have DB display name, replace this with it.
+            String myName = "User " + currentUserId;
+
+            // Serve avatar bytes from Spring:
+            // GET http://127.0.0.1:8090/livekit/avatar/{userId}
+            String myAvatarUrl = "http://127.0.0.1:8090/livekit/avatar/" + currentUserId;
+
+            String tokenUrl = TOKEN_ENDPOINT
+                    + "?room=" + enc(roomName)
+                    + "&identity=" + enc(identity)
+                    + "&name=" + enc(myName)
+                    + "&avatar=" + enc(myAvatarUrl);
+
+            HttpRequest req = HttpRequest.newBuilder(URI.create(tokenUrl)).GET().build();
+
+            http.sendAsync(req, HttpResponse.BodyHandlers.ofString())
+                    .thenApply(resp -> {
+                        if (resp.statusCode() != 200) {
+                            throw new RuntimeException("Token failed (" + resp.statusCode() + "): " + resp.body());
+                        }
+                        try {
+                            JsonNode node = om.readTree(resp.body());
+                            JsonNode t = node.get("token");
+                            if (t == null || t.asText().isBlank()) {
+                                throw new RuntimeException("Token JSON missing 'token': " + resp.body());
+                            }
+                            return t.asText();
+                        } catch (Exception e) {
+                            throw new RuntimeException("Invalid token JSON: " + resp.body(), e);
+                        }
+                    })
+                    .thenAccept(token -> Platform.runLater(() -> {
+                        try {
+                            String callUrl = CALL_PAGE_ENDPOINT
+                                    + "?wsUrl=" + enc(LIVEKIT_URL)
+                                    + "&token=" + enc(token)
+                                    + "&mic=true"
+                                    + "&cam=" + (videoEnabled ? "true" : "false");
+
+                            if (Desktop.isDesktopSupported()) {
+                                Desktop.getDesktop().browse(URI.create(callUrl));
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }))
+                    .exceptionally(ex -> {
+                        ex.printStackTrace();
+                        return null;
+                    });
 
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    private static String enc(String s) {
+        return URLEncoder.encode(s == null ? "" : s, StandardCharsets.UTF_8);
+    }
+
+    private static String toDataUrlOrEmpty(byte[] avatar) {
+        if (avatar == null || avatar.length == 0) return "";
+        String mime = detectImageMime(avatar);
+        String b64 = Base64.getEncoder().encodeToString(avatar);
+        return "data:" + mime + ";base64," + b64;
+    }
+
+    private static String detectImageMime(byte[] b) {
+        if (b == null || b.length < 12) return "image/png";
+        if ((b[0] & 0xFF) == 0x89 && b[1] == 0x50 && b[2] == 0x4E && b[3] == 0x47) return "image/png";
+        if ((b[0] & 0xFF) == 0xFF && (b[1] & 0xFF) == 0xD8) return "image/jpeg";
+        if (b[0] == 'G' && b[1] == 'I' && b[2] == 'F') return "image/gif";
+        return "image/png";
+    }
+
+
+    private void showIncomingCallPopup(long convId,
+                                       boolean video,
+                                       String room,
+                                       long inviteMsgId) {
+
+        String display = "Incoming call";
+        byte[] avatar = null;
+
+        try {
+            Conversation details = conversationService.getDetails(convId, currentUserId);
+            if (details != null) {
+                if (details.getTitle() != null && !details.getTitle().isBlank()) {
+                    display = details.getTitle();
+                }
+                avatar = details.getAvatar();
+            }
+        } catch (Exception ignore) { }
+
+        showIncomingCallPopup(convId, video, room, inviteMsgId, display, avatar);
+    }
+
+    private void showIncomingCallPopup(long convId,
+                                       boolean video,
+                                       String room,
+                                       long inviteMsgId,
+                                       String displayTitle,
+                                       byte[] avatarBytes) {
+
+        if (root == null || root.getScene() == null || root.getScene().getWindow() == null) return;
+
+        javafx.stage.Window owner = root.getScene().getWindow();
+
+        // ----- refine title/type/avatar from DB -----
+        String type = "";
+        String titleText = (displayTitle == null || displayTitle.isBlank())
+                ? ("Conversation #" + convId)
+                : displayTitle;
+
+        try {
+            Conversation det = conversationService.getDetails(convId, currentUserId);
+            if (det != null && det.getType() != null) type = det.getType();
+
+            if ("DM".equalsIgnoreCase(type)) {
+                String dm = conversationService.getDmDisplayName(convId, currentUserId);
+                if (dm != null && !dm.isBlank()) titleText = dm;
+            } else if (det != null && det.getTitle() != null && !det.getTitle().isBlank()) {
+                titleText = det.getTitle();
+            }
+
+            if ((avatarBytes == null || avatarBytes.length == 0) && det != null) {
+                avatarBytes = det.getAvatar();
+            }
+        } catch (Exception ignored) {}
+
+        // Ensure only one popup
+        closeIncomingPopup();
+
+        // ===== Overlay root (transparent, but with padding so shadow won't touch edges) =====
+        javafx.scene.layout.StackPane overlay = new javafx.scene.layout.StackPane();
+        overlay.getStyleClass().add("call-pop-overlay");
+        overlay.setPadding(new javafx.geometry.Insets(36)); // IMPORTANT: prevents edge artifacts
+
+        // ===== Card =====
+        javafx.scene.layout.VBox card = new javafx.scene.layout.VBox(18);
+        card.setMaxWidth(520);
+        card.getStyleClass().add(video ? "call-pop-card-video" : "call-pop-card-audio");
+
+        // ===== Header row =====
+        javafx.scene.layout.HBox head = new javafx.scene.layout.HBox(12);
+        head.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        javafx.scene.shape.Circle avatar = new javafx.scene.shape.Circle(26);
+        avatar.getStyleClass().add("call-pop-avatar");
+
+        if (avatarBytes != null && avatarBytes.length > 0) {
+            try {
+                javafx.scene.image.Image img = new javafx.scene.image.Image(
+                        new java.io.ByteArrayInputStream(avatarBytes),
+                        52, 52, true, true
+                );
+                avatar.setFill(new javafx.scene.paint.ImagePattern(img));
+            } catch (Exception ignored) {}
+        } else {
+            String file = "GROUP".equalsIgnoreCase(type) ? "group-default.png" : "user-default.png";
+            var url = getClass().getResource("/assets/" + file);
+            if (url != null) {
+                javafx.scene.image.Image img = new javafx.scene.image.Image(url.toExternalForm(), 52, 52, true, true);
+                avatar.setFill(new javafx.scene.paint.ImagePattern(img));
+            }
+        }
+
+        javafx.scene.layout.VBox texts = new javafx.scene.layout.VBox(4);
+
+        javafx.scene.control.Label title = new javafx.scene.control.Label(titleText);
+        title.getStyleClass().add("call-pop-title");
+
+        javafx.scene.layout.HBox subRow = new javafx.scene.layout.HBox(8);
+        subRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        org.kordamp.ikonli.javafx.FontIcon kindIcon = new org.kordamp.ikonli.javafx.FontIcon();
+        kindIcon.setIconLiteral(video ? "mdi2v-video" : "mdi2p-phone");
+        kindIcon.getStyleClass().add("call-pop-kind-icon");
+
+        javafx.scene.control.Label sub = new javafx.scene.control.Label(video ? "Incoming video call" : "Incoming audio call");
+        sub.getStyleClass().add("call-pop-sub");
+
+        subRow.getChildren().addAll(kindIcon, sub);
+        texts.getChildren().addAll(title, subRow);
+        head.getChildren().addAll(avatar, texts);
+
+        // ===== Buttons =====
+        javafx.scene.layout.HBox actions = new javafx.scene.layout.HBox(16);
+        actions.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+
+        javafx.scene.control.Button decline = new javafx.scene.control.Button("Decline");
+        decline.getStyleClass().add("call-pop-decline");
+        org.kordamp.ikonli.javafx.FontIcon declineI = new org.kordamp.ikonli.javafx.FontIcon("mdi2c-close");
+        declineI.getStyleClass().add("call-pop-btn-icon");
+        decline.setGraphic(declineI);
+        decline.setGraphicTextGap(10);
+
+        javafx.scene.control.Button accept = new javafx.scene.control.Button("Accept");
+        accept.getStyleClass().add("call-pop-accept");
+        org.kordamp.ikonli.javafx.FontIcon acceptI = new org.kordamp.ikonli.javafx.FontIcon(video ? "mdi2v-video" : "mdi2p-phone");
+        acceptI.getStyleClass().add("call-pop-btn-icon");
+        accept.setGraphic(acceptI);
+        accept.setGraphicTextGap(10);
+
+        actions.getChildren().addAll(decline, accept);
+        card.getChildren().addAll(head, actions);
+        overlay.getChildren().add(card);
+        javafx.scene.layout.StackPane.setAlignment(card, javafx.geometry.Pos.CENTER);
+
+        // ===== Scene/Stage =====
+        javafx.scene.Scene scene = new javafx.scene.Scene(overlay);
+        scene.setFill(javafx.scene.paint.Color.TRANSPARENT);
+
+        // Reuse app stylesheets (this is where CSS comes from)
+        scene.getStylesheets().addAll(root.getScene().getStylesheets());
+
+        javafx.stage.Stage dialog = new javafx.stage.Stage();
+        dialog.initOwner(owner);
+        dialog.initModality(javafx.stage.Modality.WINDOW_MODAL);
+
+        // IMPORTANT: true transparent window (best for “no black dots”)
+        dialog.initStyle(javafx.stage.StageStyle.TRANSPARENT);
+
+        dialog.setAlwaysOnTop(true);
+        dialog.setScene(scene);
+
+        // Track it so ACCEPT/REJECT can close it
+        activeIncomingPopup = dialog;
+        activeIncomingConvId = convId;
+        dialog.setOnHidden(ev -> {
+            if (activeIncomingPopup == dialog) {
+                activeIncomingPopup = null;
+                activeIncomingConvId = -1;
+            }
+        });
+
+        // Animation
+        final javafx.animation.ScaleTransition pulse = new javafx.animation.ScaleTransition(javafx.util.Duration.millis(900), avatar);
+        dialog.setOnShown(e -> {
+            // center
+            double x = owner.getX() + (owner.getWidth() - dialog.getWidth()) / 2.0;
+            double y = owner.getY() + (owner.getHeight() - dialog.getHeight()) / 2.0;
+            dialog.setX(x);
+            dialog.setY(y);
+
+            card.setOpacity(0);
+            card.setScaleX(0.96);
+            card.setScaleY(0.96);
+
+            javafx.animation.FadeTransition ft = new javafx.animation.FadeTransition(javafx.util.Duration.millis(160), card);
+            ft.setToValue(1);
+
+            javafx.animation.ScaleTransition st = new javafx.animation.ScaleTransition(javafx.util.Duration.millis(160), card);
+            st.setToX(1);
+            st.setToY(1);
+
+            pulse.setFromX(1);
+            pulse.setFromY(1);
+            pulse.setToX(1.05);
+            pulse.setToY(1.05);
+            pulse.setCycleCount(javafx.animation.Animation.INDEFINITE);
+            pulse.setAutoReverse(true);
+            pulse.play();
+
+            ft.play();
+            st.play();
+        });
+
+        dialog.setOnHidden(e -> {
+            try { pulse.stop(); } catch (Exception ignored) {}
+        });
+
+        Runnable markInviteRead = () -> {
+            if (inviteMsgId <= 0) return;
+            try { messageService.markRead(convId, currentUserId, inviteMsgId); }
+            catch (Exception ex) { ex.printStackTrace(); }
+        };
+
+        decline.setOnAction(e -> {
+            markInviteRead.run();
+            try { sendReject(convId, video); } catch (Exception ex) { ex.printStackTrace(); }
+            dialog.close();
+        });
+
+        accept.setOnAction(e -> {
+            markInviteRead.run();
+            try { sendAccept(convId, video); } catch (Exception ex) { ex.printStackTrace(); }
+            dialog.close();
+            openCallWindow(convId, video, room);
+        });
+
+        // Click outside card = decline (optional)
+        overlay.setOnMouseClicked(e -> { if (e.getTarget() == overlay) decline.fire(); });
+
+        // Keyboard shortcuts
+        scene.setOnKeyPressed(e -> {
+            if (e.getCode() == javafx.scene.input.KeyCode.ESCAPE) decline.fire();
+            else if (e.getCode() == javafx.scene.input.KeyCode.ENTER) accept.fire();
+        });
+
+        dialog.show();
+    }
+
+
+    private void sendCallInvite(boolean videoEnabled) {
+        if (selectedConversation == null) return;
+
+        try {
+            long convId = selectedConversation.getId();
+            String room = "conv_" + convId;  // deterministic room
+
+            Message m = new Message();
+            m.setConversationId(convId);
+            m.setSenderId(currentUserId);
+            m.setKind("CALL");
+            m.setBody((videoEnabled ? "VIDEO|" : "AUDIO|") + room);
+
+            messageService.ajouter(m);
+            loadConversations(); // refresh sidebar
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void startGlobalCallPolling() {
+        // Guard: do NOT start twice
+        if (callTask != null && !callTask.isCancelled()) return;
+
+        System.out.println("Call poller started for user: " + currentUserId);
+
+        // Baseline: on app start, ignore old CALL messages so you don't get popups for history.
+        // We only want NEW invites arriving after the poller starts.
+        try {
+            List<Conversation> conversations0 = conversationService.listForUser(currentUserId);
+            long max0 = 0;
+            for (Conversation c : conversations0) {
+                List<Message> latest0 = messageService.listByConversation(c.getId(), 20);
+                for (Message mm : latest0) {
+                    if ("CALL".equalsIgnoreCase(mm.getKind()) && mm.getId() > max0) {
+                        max0 = mm.getId();
+                    }
+                }
+            }
+            lastGlobalCallMsgId = Math.max(lastGlobalCallMsgId, max0);
+            lastIncomingCallMsgId = Math.max(lastIncomingCallMsgId, max0);
+        } catch (Exception e) {
+            e.printStackTrace();
+
+        }
+
+        callTask = callPoller.scheduleAtFixedRate(() -> {
+            try {
+                List<Conversation> conversations = conversationService.listForUser(currentUserId);
+
+                long maxSeenThisTick = lastGlobalCallMsgId;
+
+                for (Conversation conv : conversations) {
+                    long convId = conv.getId();
+
+                    // If the conversation is currently open, message poller handles CALL detection
+                    if (selectedConversation != null && selectedConversation.getId() == convId) {
+                        continue;
+                    }
+
+                    // Small batch; still not ideal but OK for now
+                    List<Message> latest = messageService.listByConversation(convId, 20);
+
+                    for (Message m : latest) {
+                        long id = m.getId();
+                        if (id <= lastGlobalCallMsgId) continue;
+                        if (id > maxSeenThisTick) maxSeenThisTick = id;
+
+                        // Ignore my own messages
+                        if (m.getSenderId() == currentUserId) continue;
+
+                        if (!"CALL".equalsIgnoreCase(m.getKind())) continue;
+
+                        String body = m.getBody() == null ? "" : m.getBody();
+                        String[] parts = body.split("\\|", 2);
+
+                        boolean video = parts.length > 0 && "VIDEO".equalsIgnoreCase(parts[0]);
+                        String room = (parts.length > 1 && !parts[1].isBlank())
+                                ? parts[1]
+                                : "conv_" + convId;
+
+                        Platform.runLater(() -> showIncomingCallPopup(convId, video, room, id));
+                    }
+                }
+
+                // Advance watermark ONCE per tick (prevents re-processing)
+                lastGlobalCallMsgId = Math.max(lastGlobalCallMsgId, maxSeenThisTick);
+
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }, 0, 1000, TimeUnit.MILLISECONDS);
+    }
+
+    private void stopGlobalCallPolling() {
+        if (callTask != null) {
+            callTask.cancel(false);
+            callTask = null;
+            System.out.println("Call poller stopped for user: " + currentUserId);
+        }
+    }
+
+    private void onIncomingSignal(String json) {
+        try {
+            ObjectMapper om = new ObjectMapper();
+            JsonNode root = om.readTree(json);
+
+            String type = root.path("type").asText("");
+            long convId = root.path("conversationId").asLong(-1);
+            int fromUserId = root.path("fromUserId").asInt(-1);
+            String fromName = root.path("fromName").asText("User " + fromUserId);
+            String callKind = root.path("callKind").asText("AUDIO");
+            boolean video = "VIDEO".equalsIgnoreCase(callKind) || "VIDEO_CALL".equalsIgnoreCase(callKind);
+
+            if (convId <= 0) return;
+            if (fromUserId == currentUserId) return; // ignore our own echo
+
+            String room = "conv_" + convId;
+
+            switch (type) {
+
+                case "RING" -> {
+
+                    Platform.runLater(() -> showIncomingCallPopup(convId, video, room, 0L, fromName, null));
+                }
+
+                case "ACCEPT" -> {
+                    closeIncomingPopup();
+                    Platform.runLater(() -> openCallWindow(convId, video, room));
+                }
+
+                case "REJECT" -> {
+                    closeIncomingPopup();
+                    Platform.runLater(() -> System.out.println("Call rejected"));
+                }
+
+                default -> {
+                    // ignore unknown
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendAccept(long convId, boolean video) {
+        try {
+            ObjectMapper om = new ObjectMapper();
+            ObjectNode payload = om.createObjectNode();
+            payload.put("type", "ACCEPT");
+            payload.put("conversationId", convId);
+            payload.put("fromUserId", currentUserId);
+            //payload.put("fromName", currentUserName());
+            payload.put("callKind", video ? "VIDEO" : "AUDIO");
+
+            stomp.send("/app/call.accept", payload.toString().getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void sendReject(long convId, boolean video) {
+        try {
+            ObjectMapper om = new ObjectMapper();
+            ObjectNode payload = om.createObjectNode();
+            payload.put("type", "REJECT");
+            payload.put("conversationId", convId);
+            payload.put("fromUserId", currentUserId);
+            //payload.put("fromName", currentUserName());
+            payload.put("callKind", video ? "VIDEO" : "AUDIO");
+
+            stomp.send("/app/call.reject", payload.toString().getBytes(StandardCharsets.UTF_8));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void subscribeCallTopic(long conversationId) {
+        if (stomp == null || !stomp.isConnected()) return;
+
+        // unsubscribe old
+        if (callSub != null) {
+            try { callSub.unsubscribe(); } catch (Exception ignored) {}
+            callSub = null;
+        }
+
+        String dest = "/topic/call." + conversationId;
+        callSub = stomp.subscribeRaw(dest, this::onIncomingSignal);
+        System.out.println("✅ Subscribed to " + dest);
+    }
+
+    private void closeIncomingPopup() {
+        if (activeIncomingPopup != null) {
+            try { activeIncomingPopup.close(); } catch (Exception ignored) {}
+            activeIncomingPopup = null;
+            activeIncomingConvId = -1;
         }
     }
 

@@ -244,4 +244,52 @@ public class ServiceMessage implements IService<Message> {
         }
     }
 
+    public List<Message> listAfterId(long conversationId,
+                                     long afterId,
+                                     int limit) throws SQLException {
+
+        List<Message> messages = new ArrayList<>();
+
+        String sql = """
+        SELECT id,
+               conversation_id,
+               sender_id,
+               body,
+               kind,
+               created_at,
+               edited_at
+        FROM messages
+        WHERE conversation_id = ?
+          AND id > ?
+        ORDER BY id ASC
+        LIMIT ?
+        """;
+
+        try (PreparedStatement ps = connection.prepareStatement(sql)) {
+
+            ps.setLong(1, conversationId);
+            ps.setLong(2, afterId);
+            ps.setInt(3, limit);
+
+            try (ResultSet rs = ps.executeQuery()) {
+
+                while (rs.next()) {
+                    Message m = new Message();
+
+                    m.setId(rs.getLong("id"));
+                    m.setConversationId(rs.getLong("conversation_id"));
+                    m.setSenderId(rs.getInt("sender_id"));
+                    m.setBody(rs.getString("body"));
+                    m.setKind(rs.getString("kind"));
+                    m.setCreatedAt(rs.getTimestamp("created_at"));
+                    m.setEditedAt(rs.getTimestamp("edited_at"));
+
+                    messages.add(m);
+                }
+            }
+        }
+
+        return messages;
+    }
+
 }
