@@ -63,7 +63,7 @@
             <text>Trainings</text>
         </ToggleButton>
 
-        <ToggleButton  styleClass="nav-item" toggleGroup="$navGroup">
+        <ToggleButton fx:id="CMButton" styleClass="nav-item" toggleGroup="$navGroup" onAction="#onCommunicationClicked">
             <graphic>
                 <FontIcon iconLiteral="mdi2c-chat-outline"/>
             </graphic>

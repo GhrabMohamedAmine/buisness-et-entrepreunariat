@@ -147,5 +147,9 @@ public class MainController {
 
     }
 
+    public void messages() {
+        setView("/org/example/yedikpromax/chat-view.fxml");
+    }
+
 
 }

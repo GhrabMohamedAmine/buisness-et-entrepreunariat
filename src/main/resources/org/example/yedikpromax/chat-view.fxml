@@ -1,0 +1,688 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ListView?>
+<?import javafx.scene.control.ProgressIndicator?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
+<?import javafx.scene.control.TextArea?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
+<?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.TilePane?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<StackPane xmlns="http://javafx.com/javafx/17"
+           xmlns:fx="http://javafx.com/fxml/1"
+           fx:controller="controllers.chatController"
+           fx:id="root">
+
+    <BorderPane fx:id="contentRoot" styleClass="chat-root" stylesheets="@chat-view.css">
+
+        <padding>
+            <Insets top="18" right="18" bottom="18" left="18"/>
+        </padding>
+
+        <center>
+            <BorderPane prefWidth="1300" prefHeight="650" styleClass="chat-card">
+
+                <center>
+                    <SplitPane dividerPositions="0.28" styleClass="main-split">
+
+                        <!-- LEFT SIDEBAR -->
+                        <VBox minWidth="280" styleClass="sidebar">
+                            <padding>
+                                <Insets top="18" right="16" bottom="16" left="16"/>
+                            </padding>
+
+                            <HBox alignment="CENTER_LEFT">
+                                <Label text="Chat" styleClass="sidebar-title"/>
+                                <Region HBox.hgrow="ALWAYS"/>
+                                <Button onAction="#openNewMessageModal" styleClass="icon-button">
+                                    <graphic>
+                                        <FontIcon iconLiteral="mdi2p-plus" styleClass="icon"/>
+                                    </graphic>
+                                </Button>
+                            </HBox>
+
+                            <HBox alignment="CENTER_LEFT" spacing="10" styleClass="search-box">
+                                <FontIcon iconLiteral="mdi2m-magnify" styleClass="muted icon"/>
+                                <TextField fx:id="searchField" promptText="checher..." styleClass="search-field" HBox.hgrow="ALWAYS"/>
+                                <VBox.margin>
+                                    <Insets top="10" bottom="10"/>
+                                </VBox.margin>
+                            </HBox>
+
+                            <HBox spacing="10">
+                                <ToggleButton fx:id="filterAllBtn" text="All" selected="true" styleClass="pill"/>
+                                <ToggleButton fx:id="filterPrivateBtn" text="Private" styleClass="pill"/>
+                                <ToggleButton fx:id="filterGroupsBtn" text="Groups" styleClass="pill"/>
+                                <VBox.margin>
+                                    <Insets bottom="10"/>
+                                </VBox.margin>
+                            </HBox>
+
+                            <!-- Conversation List -->
+                            <ScrollPane fx:id="conversationScroll" fitToWidth="true"
+                                        hbarPolicy="NEVER"
+                                        vbarPolicy="AS_NEEDED"
+                                        styleClass="list-scroll">
+                                <content>
+                                    <VBox spacing="0"
+                                          styleClass="chat-list"
+                                          fx:id="conversationContainer"/>
+                                </content>
+                            </ScrollPane>
+                        </VBox>
+
+                        <!-- RIGHT CHAT AREA -->
+                        <StackPane fx:id="chatAreaStack" styleClass="chat-area-stack">
+
+                            <!-- EMPTY STATE (shown when no conversation selected) -->
+                            <VBox fx:id="emptyState"
+                                  alignment="CENTER"
+                                  spacing="10"
+                                  styleClass="empty-state">
+
+                                <FontIcon fx:id="emptyStateIcon"
+                                          iconLiteral="mdi2m-message-processing-outline"
+                                          styleClass="empty-state-icon"/>
+
+                                <Label text="Découvrir et collaborer avec vos collègues"
+                                       styleClass="empty-state-text"/>
+                            </VBox>
+
+                            <!-- Chat pane -->
+                            <BorderPane fx:id="chatPaneRoot" minWidth="520" styleClass="chat-pane">
+                                <!-- HEADER -->
+                                <top>
+                                    <HBox fx:id="chatHeader" alignment="CENTER_LEFT" spacing="12" styleClass="chat-header">
+                                        <padding>
+                                            <Insets top="14" right="16" bottom="14" left="16"/>
+                                        </padding>
+
+                                        <StackPane styleClass="avatar-wrap">
+                                            <Circle fx:id="chatAvatarCircle" radius="17" styleClass="avatar"/>
+                                            <FontIcon fx:id="chatAvatarIcon" styleClass="avatar-fallback-icon"/>
+                                            <Region styleClass="online-dot" StackPane.alignment="BOTTOM_LEFT"/>
+                                        </StackPane>
+
+                                        <VBox spacing="2">
+                                            <Label fx:id="chatTitle" styleClass="chat-title"/>
+                                            <Label fx:id="chatSubtitle" styleClass="chat-subtitle"/>
+                                        </VBox>
+
+                                        <Region HBox.hgrow="ALWAYS"/>
+                                        <Button fx:id="audioCallBtn"
+                                                styleClass="call-audio"
+                                                onAction="#handleAudioCall">
+                                            <graphic>
+                                                <FontIcon iconLiteral="mdi2p-phone-outline" styleClass="call-icon"/>
+                                            </graphic>
+                                        </Button>
+
+                                        <Button fx:id="videoCallBtn"
+                                                styleClass="call-video"
+                                                onAction="#handleVideoCall">
+                                            <graphic>
+                                                <FontIcon iconLiteral="mdi2v-video-outline" styleClass="call-icon"/>
+                                            </graphic>
+                                        </Button>
+
+                                        <Button fx:id="optionsBtn"
+                                                onAction="#openOptionsMenu"
+                                                styleClass="icon-button">
+                                            <graphic>
+                                                <FontIcon iconLiteral="mdi2d-dots-vertical" styleClass="icon"/>
+                                            </graphic>
+                                        </Button>
+                                    </HBox>
+                                </top>
+
+                                <!-- MESSAGES -->
+                                <center>
+                                    <ScrollPane fx:id="messagesScroll"
+                                                fitToWidth="true"
+                                                hbarPolicy="NEVER"
+                                                vbarPolicy="AS_NEEDED"
+                                                styleClass="messages-scroll">
+                                        <content>
+                                            <VBox spacing="18"
+                                                  styleClass="messages-box"
+                                                  fx:id="messagesContainer">
+                                                <padding>
+                                                    <Insets top="26" right="22" bottom="26" left="22"/>
+                                                </padding>
+                                            </VBox>
+                                        </content>
+                                    </ScrollPane>
+                                </center>
+
+                                <!-- COMPOSER -->
+                                <bottom>
+                                    <HBox fx:id="composerBar" spacing="10" styleClass="composer">
+                                        <padding>
+                                            <Insets top="12" right="16" bottom="12" left="16"/>
+                                        </padding>
+
+                                        <Button styleClass="icon-button" onAction="#handleAttachFile">
+                                            <graphic>
+                                                <FontIcon iconLiteral="mdi2p-paperclip" styleClass="icon"/>
+                                            </graphic>
+                                        </Button>
+
+                                        <Button fx:id="recCancelBtn" styleClass="danger-icon" visible="false" managed="false">
+                                            <graphic>
+                                                <FontIcon iconLiteral="mdi2c-close" styleClass="icon-button"/>
+                                            </graphic>
+                                        </Button>
+
+                                        <HBox fx:id="recIndicatorBox"
+                                              visible="false" managed="false"
+                                              spacing="8" alignment="CENTER_LEFT"
+                                              styleClass="rec-indicator"
+                                              HBox.hgrow="ALWAYS">
+                                            <Label text="●" styleClass="rec-dot"/>
+                                            <Label fx:id="recTimerLabel" text="00:00" styleClass="rec-time"/>
+                                        </HBox>
+
+                                        <HBox fx:id="recPreviewBox"
+                                              visible="false" managed="false"
+                                              spacing="8" alignment="CENTER_LEFT"
+                                              styleClass="rec-preview"
+                                              HBox.hgrow="ALWAYS">
+                                            <Button fx:id="recPreviewPlayBtn" styleClass="rec-preview-play">
+                                                <graphic>
+                                                    <FontIcon fx:id="recPreviewPlayIcon" iconLiteral="mdi2p-play" styleClass="icon"/>
+                                                </graphic>
+                                            </Button>
+                                            <Label fx:id="recPreviewTimeLabel" text="00:00" styleClass="rec-time"/>
+                                        </HBox>
+
+                                        <Button fx:id="micBtn" styleClass="icon-button" onAction="#handleMicToggle">
+                                            <graphic>
+                                                <FontIcon fx:id="micIcon" iconLiteral="mdi2m-microphone" styleClass="icon"/>
+                                            </graphic>
+                                        </Button>
+
+                                        <TextField fx:id="messageInput"
+                                                   promptText="Message..."
+                                                   onAction="#handleSend"
+                                                   styleClass="composer-field"
+                                                   HBox.hgrow="ALWAYS"/>
+
+                                        <Button fx:id="emojiBtn" styleClass="icon-button">
+                                            <graphic>
+                                                <FontIcon iconLiteral="mdi2e-emoticon-outline" styleClass="icon"/>
+                                            </graphic>
+                                        </Button>
+
+                                        <Button fx:id="sendButton"
+                                                styleClass="send-button"
+                                                onAction="#handleSend">
+                                            <graphic>
+                                                <FontIcon fx:id="sendIcon" iconLiteral="mdi2s-send" styleClass="send-icon"/>
+                                            </graphic>
+                                        </Button>
+                                    </HBox>
+                                </bottom>
+                            </BorderPane>
+
+                            <!-- ===== Drawer overlay (Messenger-style) ===== -->
+                            <StackPane fx:id="drawerOverlay"
+                                       visible="false" managed="false"
+                                       pickOnBounds="true"
+                                       styleClass="drawer-overlay">
+
+                                <Region fx:id="drawerBackdrop"
+                                        onMouseClicked="#closeDrawer"
+                                        styleClass="drawer-backdrop"/>
+
+                                <VBox fx:id="drawer"
+                                      prefWidth="340" maxWidth="360"
+                                      StackPane.alignment="CENTER_RIGHT"
+                                      styleClass="drawer">
+
+                                    <ScrollPane fitToWidth="true"
+                                                hbarPolicy="NEVER"
+                                                vbarPolicy="AS_NEEDED"
+                                                VBox.vgrow="ALWAYS"
+                                                styleClass="drawer-scroll">
+                                        <content>
+                                            <VBox spacing="18" styleClass="drawer-body">
+
+                                                <VBox spacing="10" alignment="CENTER" styleClass="drawer-header">
+                                                    <StackPane styleClass="drawer-avatar-wrap">
+                                                        <Circle fx:id="drawerAvatarCircle" radius="28" styleClass="drawer-avatar"/>
+                                                        <FontIcon fx:id="drawerAvatarIcon" styleClass="drawer-avatar-icon"/>
+                                                    </StackPane>
+
+                                                    <Label fx:id="drawerTitle" text="" styleClass="drawer-title"
+                                                           maxWidth="1.7976931348623157E308"/>
+
+                                                    <HBox alignment="CENTER" spacing="26" styleClass="drawer-actions">
+                                                        <VBox alignment="CENTER" spacing="6">
+                                                            <Button styleClass="round-action-btn">
+                                                                <graphic>
+                                                                    <FontIcon iconLiteral="mdi2b-bell-off-outline" styleClass="icon"/>
+                                                                </graphic>
+                                                            </Button>
+                                                            <Label text="Muet" styleClass="action-label"/>
+                                                        </VBox>
+
+                                                        <VBox alignment="CENTER" spacing="6">
+                                                            <Button styleClass="round-action-btn">
+                                                                <graphic>
+                                                                    <FontIcon iconLiteral="mdi2m-magnify" styleClass="icon"/>
+                                                                </graphic>
+                                                            </Button>
+                                                            <Label text="Rechercher" styleClass="action-label"/>
+                                                        </VBox>
+                                                    </HBox>
+                                                </VBox>
+
+                                                <!-- SECTION: Chat info -->
+                                                <VBox styleClass="section">
+                                                    <HBox alignment="CENTER_LEFT" spacing="10"
+                                                          styleClass="section-header"
+                                                          onMouseClicked="#toggleChatInfo">
+                                                        <Label text="Informations de la discussion" styleClass="section-title"/>
+                                                        <Region HBox.hgrow="ALWAYS"/>
+                                                        <FontIcon fx:id="chevChatInfo" iconLiteral="mdi2c-chevron-down" styleClass="chev"/>
+                                                    </HBox>
+
+                                                    <VBox fx:id="secChatInfo" spacing="10" styleClass="section-body"
+                                                          visible="false" managed="false">
+
+                                                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="drawer-row">
+                                                            <FontIcon iconLiteral="mdi2i-identifier" styleClass="icon"/>
+                                                            <VBox>
+                                                                <Label text="ID conversation" styleClass="drawer-row-title"/>
+                                                                <Label fx:id="conversationIdLabel" text="" styleClass="muted"/>
+                                                            </VBox>
+                                                        </HBox>
+
+                                                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="drawer-row">
+                                                            <FontIcon iconLiteral="mdi2c-calendar-outline" styleClass="icon"/>
+                                                            <VBox>
+                                                                <Label text="Créée le" styleClass="drawer-row-title"/>
+                                                                <Label fx:id="createdAtLabel" text="" styleClass="muted"/>
+                                                            </VBox>
+                                                        </HBox>
+
+                                                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="drawer-row">
+                                                            <FontIcon iconLiteral="mdi2f-forum-outline" styleClass="icon"/>
+                                                            <VBox>
+                                                                <Label text="Type conversation" styleClass="drawer-row-title"/>
+                                                                <Label fx:id="conversationTypeLabel" text="" styleClass="muted"/>
+                                                            </VBox>
+                                                        </HBox>
+
+                                                        <HBox spacing="10" alignment="CENTER_LEFT" styleClass="drawer-row">
+                                                            <FontIcon iconLiteral="mdi2m-message-outline" styleClass="icon"/>
+                                                            <VBox>
+                                                                <Label text="Nombre total de messages" styleClass="drawer-row-title"/>
+                                                                <Label fx:id="totalMessagesLabel" text="" styleClass="muted"/>
+                                                            </VBox>
+                                                        </HBox>
+
+                                                    </VBox>
+                                                </VBox>
+
+                                                <!-- SECTION: Customize chat -->
+                                                <VBox fx:id="customizeSection" styleClass="section">
+                                                    <HBox alignment="CENTER_LEFT" spacing="10"
+                                                          styleClass="section-header"
+                                                          onMouseClicked="#toggleCustomize">
+                                                        <Label text="Personnaliser la discussion" styleClass="section-title"/>
+                                                        <Region HBox.hgrow="ALWAYS"/>
+                                                        <FontIcon fx:id="chevCustomize" iconLiteral="mdi2c-chevron-down" styleClass="chev"/>
+                                                    </HBox>
+
+                                                    <VBox fx:id="secCustomize" spacing="10" styleClass="section-body"
+                                                          visible="false" managed="false">
+                                                        <Button text="Modifier le nom"
+                                                                styleClass="drawer-row-btn"
+                                                                onAction="#onChangeChatName">
+                                                            <graphic>
+                                                                <FontIcon iconLiteral="mdi2p-pencil-outline" styleClass="icon"/>
+                                                            </graphic>
+                                                        </Button>
+
+                                                        <Button text="Modifier la photo"
+                                                                styleClass="drawer-row-btn"
+                                                                onAction="#onChangeChatPhoto">
+                                                            <graphic>
+                                                                <FontIcon iconLiteral="mdi2c-camera-outline" styleClass="icon"/>
+                                                            </graphic>
+                                                        </Button>
+
+                                                        <Button text="Modifier les surnoms"
+                                                                styleClass="drawer-row-btn"
+                                                                onAction="#onEditNicknames">
+                                                            <graphic>
+                                                                <FontIcon iconLiteral="mdi2a-account-edit-outline" styleClass="icon"/>
+                                                            </graphic>
+                                                        </Button>
+                                                    </VBox>
+                                                </VBox>
+
+                                                <!-- SECTION: Chat members -->
+                                                <VBox styleClass="section">
+                                                    <HBox alignment="CENTER_LEFT" spacing="10"
+                                                          styleClass="section-header"
+                                                          onMouseClicked="#toggleMembers">
+                                                        <Label text="Membres" styleClass="section-title"/>
+                                                        <Region HBox.hgrow="ALWAYS"/>
+                                                        <FontIcon fx:id="chevMembers" iconLiteral="mdi2c-chevron-down" styleClass="chev"/>
+                                                    </HBox>
+
+                                                    <VBox fx:id="secMembers" spacing="10" styleClass="section-body"
+                                                          visible="false" managed="false">
+                                                        <ListView fx:id="membersList" styleClass="members-list"/>
+
+                                                        <Button fx:id="addPeopleBtn" text="Ajouter membres"
+                                                                onAction="#onAddPeople"
+                                                                styleClass="drawer-row-btn">
+                                                            <graphic>
+                                                                <FontIcon iconLiteral="mdi2a-account-plus-outline" styleClass="icon"/>
+                                                            </graphic>
+                                                        </Button>
+                                                    </VBox>
+                                                </VBox>
+
+                                                <!-- SECTION: Media, files and links -->
+                                                <VBox styleClass="section">
+                                                    <HBox alignment="CENTER_LEFT" spacing="10"
+                                                          styleClass="section-header"
+                                                          onMouseClicked="#toggleMedia">
+                                                        <Label text="Médias, fichiers et liens" styleClass="section-title"/>
+                                                        <Region HBox.hgrow="ALWAYS"/>
+                                                        <FontIcon fx:id="chevMedia" iconLiteral="mdi2c-chevron-down" styleClass="chev"/>
+                                                    </HBox>
+
+                                                    <VBox fx:id="secMedia" spacing="8" styleClass="section-body"
+                                                          visible="false" managed="false">
+                                                        <Button text="Médias" styleClass="drawer-row-btn" onAction="#openMediaPanelMedia">
+                                                            <graphic>
+                                                                <FontIcon iconLiteral="mdi2i-image-outline" styleClass="icon"/>
+                                                            </graphic>
+                                                        </Button>
+
+                                                        <Button text="Fichiers" styleClass="drawer-row-btn" onAction="#openMediaPanelFiles">
+                                                            <graphic>
+                                                                <FontIcon iconLiteral="mdi2f-file-outline" styleClass="icon"/>
+                                                            </graphic>
+                                                        </Button>
+
+                                                        <Button text="Liens" styleClass="drawer-row-btn" onAction="#openMediaPanelLinks">
+                                                            <graphic>
+                                                                <FontIcon iconLiteral="mdi2l-link-variant" styleClass="icon"/>
+                                                            </graphic>
+                                                        </Button>
+                                                    </VBox>
+                                                </VBox>
+
+                                                <!-- DELETE CHAT OPTION -->
+                                                <HBox fx:id="dangerActionRow"
+                                                      alignment="CENTER_LEFT"
+                                                      spacing="10"
+                                                      styleClass="danger-row"
+                                                      onMouseClicked="#onDangerAction">
+                                                    <FontIcon fx:id="dangerActionIcon"
+                                                              iconLiteral="mdi2t-trash-can-outline"
+                                                              styleClass="danger-icon"
+                                                              iconSize="18"/>
+                                                    <Label fx:id="dangerActionLabel"
+                                                           text="Supprimer la discussion"
+                                                           styleClass="danger-link"/>
+                                                </HBox>
+
+                                            </VBox>
+                                        </content>
+                                    </ScrollPane>
+
+                                </VBox>
+                            </StackPane>
+
+                            <!-- ===== Media overlay (ONE mediaOverlay, ONE mediaPanel) ===== -->
+                            <StackPane fx:id="mediaOverlay"
+                                       visible="false" managed="false"
+                                       pickOnBounds="true"
+                                       styleClass="drawer-overlay">
+
+                                <Region fx:id="mediaBackdrop"
+                                        onMouseClicked="#closeMediaPanel"
+                                        styleClass="media-backdrop"/>
+
+                                <VBox fx:id="mediaPanel"
+                                      prefWidth="340" maxWidth="360"
+                                      StackPane.alignment="CENTER_RIGHT"
+                                      styleClass="media-panel">
+
+                                    <HBox alignment="CENTER_LEFT" spacing="10" styleClass="media-panel-header">
+                                        <Button fx:id="mediaBackBtn" onAction="#closeMediaPanel" styleClass="icon-button">
+                                            <graphic>
+                                                <FontIcon iconLiteral="mdi2a-arrow-left" styleClass="icon"/>
+                                            </graphic>
+                                        </Button>
+                                        <Label text="Media, files and links" styleClass="drawer-title"/>
+                                    </HBox>
+
+                                    <TabPane fx:id="mediaTabs"
+                                             tabClosingPolicy="UNAVAILABLE"
+                                             VBox.vgrow="ALWAYS"
+                                             styleClass="media-tabs">
+                                        <tabs>
+                                            <Tab fx:id="tabMedia" text="Media">
+                                                <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="media-scroll">
+                                                    <content>
+                                                        <TilePane fx:id="mediaGrid"
+                                                                  prefColumns="3"
+                                                                  hgap="8" vgap="8"
+                                                                  styleClass="media-grid"/>
+                                                    </content>
+                                                </ScrollPane>
+                                            </Tab>
+
+                                            <Tab fx:id="tabFiles" text="Files">
+                                                <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="media-scroll">
+                                                    <content>
+                                                        <VBox fx:id="filesBox" spacing="8" styleClass="drawer-body"/>
+                                                    </content>
+                                                </ScrollPane>
+                                            </Tab>
+
+                                            <Tab fx:id="tabLinks" text="Links">
+                                                <ScrollPane fitToWidth="true" hbarPolicy="NEVER" styleClass="media-scroll">
+                                                    <content>
+                                                        <VBox fx:id="linksBox" spacing="10" styleClass="drawer-body"/>
+                                                    </content>
+                                                </ScrollPane>
+                                            </Tab>
+                                        </tabs>
+                                    </TabPane>
+
+                                </VBox>
+                            </StackPane>
+
+                        </StackPane>
+
+                    </SplitPane>
+                </center>
+
+            </BorderPane>
+        </center>
+
+    </BorderPane>
+
+    <!-- ===== Change chat name modal ===== -->
+    <StackPane fx:id="chatNameModalOverlay"
+               visible="false" managed="false"
+               pickOnBounds="true"
+               styleClass="modal-overlay">
+
+        <Region onMouseClicked="#closeChatNameModal"
+                styleClass="modal-dim"/>
+
+        <VBox fx:id="chatNameModalCard"
+              styleClass="modal-card"
+              spacing="12"
+              maxWidth="480"
+              maxHeight="220"
+              StackPane.alignment="CENTER">
+
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label text="Modifier le nom de la discussion" styleClass="modal-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button onAction="#closeChatNameModal" styleClass="icon-button">
+                    <graphic>
+                        <FontIcon iconLiteral="mdi2c-close" styleClass="icon"/>
+                    </graphic>
+                </Button>
+            </HBox>
+
+            <Label text="La modification du nom d’un groupe s’applique à tous les membres."
+                   wrapText="true" styleClass="modal-subtitle"/>
+
+            <TextField fx:id="chatNameField"
+                       promptText="Nom de la discussion"
+                       styleClass="modal-input"/>
+
+            <HBox alignment="CENTER_RIGHT" spacing="8">
+                <Button text="Annuler" onAction="#closeChatNameModal" styleClass="pill"/>
+                <Button fx:id="saveChatNameBtn" text="Enregistrer" onAction="#saveChatName" disable="true" styleClass="modal-save"/>
+            </HBox>
+
+        </VBox>
+    </StackPane>
+
+    <!-- ===== AI Résumé popup (shorter) ===== -->
+    <StackPane fx:id="aiSummaryOverlay"
+               visible="false" managed="false"
+               pickOnBounds="true"
+               styleClass="modal-overlay">
+
+        <Region onMouseClicked="#closeAiSummary"
+                styleClass="modal-dim"/>
+
+        <VBox styleClass="ai-summary-popup"
+              spacing="10"
+              maxWidth="520"
+              prefHeight="250"
+              maxHeight="320"
+              StackPane.alignment="CENTER">
+
+            <HBox alignment="CENTER_LEFT" spacing="10">
+                <Label fx:id="aiSummaryTitle" text="Résumé IA" styleClass="ai-summary-title"/>
+                <Region HBox.hgrow="ALWAYS"/>
+                <Button onAction="#closeAiSummary" styleClass="icon-button">
+                    <graphic>
+                        <FontIcon iconLiteral="mdi2c-close" styleClass="icon"/>
+                    </graphic>
+                </Button>
+            </HBox>
+
+            <ProgressIndicator fx:id="aiSummaryLoading"
+                               maxWidth="26" maxHeight="26"
+                               visible="false" managed="false"/>
+
+            <TextArea fx:id="aiSummaryText"
+                      editable="false"
+                      wrapText="true"
+                      prefRowCount="10"
+                      VBox.vgrow="ALWAYS"
+                      styleClass="ai-summary-text"/>
+        </VBox>
+    </StackPane>
+
+    <!-- NICKNAMES MODAL OVERLAY -->
+    <StackPane fx:id="nicknamesOverlay" visible="false" managed="false" styleClass="modal-overlay">
+        <BorderPane styleClass="modal-card" maxWidth="620" maxHeight="280">
+            <top>
+                <HBox alignment="CENTER_LEFT" spacing="10" styleClass="modal-header">
+                    <Label text="Surnoms" styleClass="modal-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button onAction="#closeNicknamesModal" styleClass="icon-btn" text="✕"/>
+                </HBox>
+            </top>
+
+            <center>
+                <ListView fx:id="nicknamesList" styleClass="members-list"/>
+            </center>
+        </BorderPane>
+    </StackPane>
+
+    <!-- NEW MESSAGE OVERLAY -->
+    <StackPane fx:id="newMessageOverlay" visible="false" managed="false" styleClass="modal-overlay">
+        <Pane styleClass="modal-dim" onMouseClicked="#closeNewMessageModal"/>
+
+        <BorderPane styleClass="modal-card" maxWidth="620" maxHeight="520">
+            <top>
+                <HBox alignment="CENTER_LEFT" spacing="10" styleClass="modal-header">
+                    <Label fx:id="newMsgTitle" text="Nouveau message" styleClass="modal-title"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button text="✕" styleClass="icon-button" onAction="#closeNewMessageModal"/>
+                </HBox>
+            </top>
+
+            <center>
+                <StackPane>
+                    <VBox fx:id="stepChooseType" spacing="14">
+                        <VBox fx:id="choicePrivate"
+                              spacing="2"
+                              style="-fx-padding: 14; -fx-background-radius: 14; -fx-border-radius: 14; -fx-border-color: #e5e7eb; -fx-border-width: 1;"
+                              onMouseClicked="#pickPrivateMode">
+                            <FontIcon iconLiteral="mdi2a-account" iconSize="26" styleClass="choice-icon"/>
+                            <Label text="Discussion privée" style="-fx-font-size: 14px; -fx-font-weight: 800;"/>
+                            <Label text="Message direct avec un collègue" style="-fx-opacity: 0.75;"/>
+                        </VBox>
+
+                        <VBox fx:id="choiceGroup"
+                              spacing="2"
+                              style="-fx-padding: 14; -fx-background-radius: 14; -fx-border-radius: 14; -fx-border-color: #e5e7eb; -fx-border-width: 1;"
+                              onMouseClicked="#pickGroupMode">
+                            <FontIcon iconLiteral="mdi2a-account-multiple" iconSize="26" styleClass="choice-icon"/>
+                            <Label text="Discussion de groupe" style="-fx-font-size: 14px; -fx-font-weight: 800;"/>
+                            <Label text="Collaborer avec plusieurs membres" style="-fx-opacity: 0.75;"/>
+                        </VBox>
+                    </VBox>
+
+                    <VBox fx:id="stepPickUsers" spacing="10" visible="false" managed="false">
+                        <Label text="Sélectionner des membres"
+                               style="-fx-font-size: 12px; -fx-font-weight: 700; -fx-opacity: 0.85;"/>
+
+                        <TextField fx:id="userSearchField" promptText="Rechercher des personnes..."/>
+
+                        <HBox fx:id="groupNameRow" spacing="10" visible="false" managed="false">
+                            <Label text="Nom du groupe" style="-fx-font-weight: 700;"/>
+                            <TextField fx:id="groupNameField" promptText="ex : Équipe Marketing" HBox.hgrow="ALWAYS"/>
+                        </HBox>
+
+                        <ListView fx:id="usersPickList"/>
+                    </VBox>
+                </StackPane>
+            </center>
+
+            <bottom>
+                <HBox alignment="CENTER_RIGHT" spacing="10" style="-fx-padding: 12 0 0 0;">
+                    <Button fx:id="newMsgBackBtn" text="Retour" onAction="#backNewMessage" visible="false" managed="false"/>
+                    <Region HBox.hgrow="ALWAYS"/>
+                    <Button fx:id="newMsgCancelBtn" text="Annuler" onAction="#closeNewMessageModal"/>
+                    <Button fx:id="newMsgPrimaryBtn" text="Continuer" onAction="#newMessagePrimary"/>
+                </HBox>
+            </bottom>
+        </BorderPane>
+    </StackPane>
+
+</StackPane>

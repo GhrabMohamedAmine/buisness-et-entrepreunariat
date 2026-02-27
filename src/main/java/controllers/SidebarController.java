@@ -7,6 +7,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.control.Button;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
 import javafx.stage.Stage;
@@ -15,8 +16,7 @@ import services.UserService;
 import java.io.IOException;
 
 public class SidebarController {
-    @FXML
-    private ToggleButton btnHome, btnSettings, btnProfile;
+
     @FXML private ToggleGroup navGroup;
 
     @FXML
@@ -32,6 +32,13 @@ public class SidebarController {
 
 
     private MainController mainCon =new MainController();
+    @FXML
+    private Button LOGOUT;
+
+    @FXML
+    private ToggleButton CMButton;
+
+
     //private User userConnected = mainCon.getCurrentuser();;
     @FXML
     public void initialize() {
@@ -121,6 +128,7 @@ public class SidebarController {
         System.out.println("Loading: " + pageName);
 
     }
+    @FXML
     public void handleLogout(ActionEvent event) {
         UserService.logout();
         switchScene(event, "/Start/1ere.fxml");
@@ -135,5 +143,10 @@ public class SidebarController {
             System.err.println("Impossible de charger le fichier FXML : " + fxmlPath);
             e.printStackTrace();
         }
+    }
+
+    @FXML
+    public void onCommunicationClicked(){
+        mainCon.messages();
     }
 }
