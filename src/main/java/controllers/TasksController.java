@@ -26,6 +26,7 @@ import entities.Project;
 import entities.Task;
 import services.ProjectService;
 import services.TaskService;
+import services.UserService;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -35,7 +36,6 @@ import java.util.Locale;
 import java.util.List;
 
 public class TasksController {
-    private static final int CURRENT_USER_ID = 1;
     @FXML private VBox tasksGroupsContainer;
     @FXML private TextField searchField;
     @FXML private Button filterButton;
@@ -467,7 +467,12 @@ public class TasksController {
         if (task == null) {
             return false;
         }
-        int assigneeId = task.getAssignedTo();
-        return assigneeId <= 0 || assigneeId == CURRENT_USER_ID;
+        int currentUserId = resolveCurrentUserId();
+        return currentUserId > 0 && task.getAssignedTo() == currentUserId;
+    }
+
+    private int resolveCurrentUserId() {
+        var currentUser = UserService.getCurrentUser();
+        return currentUser == null ? -1 : currentUser.getId();
     }
 }

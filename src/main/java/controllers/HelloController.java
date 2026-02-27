@@ -39,7 +39,6 @@ import java.time.format.DateTimeFormatter;
 
 public class HelloController {
     private static final int RECENT_PROJECTS_LIMIT = 5;
-    private static final int CURRENT_USER_ID = 1;
     private static final int MAX_VISIBLE_ASSIGNEE_AVATARS = 4;
     private static final DateTimeFormatter DATE_INPUT = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter DATE_OUTPUT = DateTimeFormatter.ofPattern("dd MMM yyyy");
@@ -114,13 +113,17 @@ public class HelloController {
         if (tasksListContainer == null || tasksListContainer.getScene() == null) {
             return;
         }
+        User currentUser = UserService.getCurrentUser();
+        if (currentUser == null) {
+            return;
+        }
         Node mainLayout = tasksListContainer.getScene().getRoot();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/AddTaskModal.fxml"));
             Parent root = loader.load();
 
             AddTaskController controller = loader.getController();
-            controller.setAssignedUserId(CURRENT_USER_ID);
+            controller.setAssignedUserId(currentUser.getId());
             controller.setSubtitleText("Create a personal task assigned to you");
 
             Stage popupStage = new Stage();
@@ -246,10 +249,11 @@ public class HelloController {
 
     private void loadKpis() {
         totalProjectsKpiLabel.setText(String.valueOf(projectService.getTotalProjectsCount()));
-        tasksInProgressKpiLabel.setText(String.valueOf(taskService.getTasksInProgressCount()));
-        completedTasksKpiLabel.setText(String.valueOf(taskService.getCompletedTasksCount()));
-        upcomingDeadlinesKpiLabel.setText(String.valueOf(taskService.getUpcomingDeadlinesCount(3)));
-        overdueUndoneKpiLabel.setText(String.valueOf(taskService.getOverdueUndoneTasksCount()));
+        int currentUserId = resolveCurrentUserId();
+        tasksInProgressKpiLabel.setText(String.valueOf(taskService.getTasksInProgressCount(currentUserId)));
+        completedTasksKpiLabel.setText(String.valueOf(taskService.getCompletedTasksCount(currentUserId)));
+        upcomingDeadlinesKpiLabel.setText(String.valueOf(taskService.getUpcomingDeadlinesCount(3, currentUserId)));
+        overdueUndoneKpiLabel.setText(String.valueOf(taskService.getOverdueUndoneTasksCount(currentUserId)));
     }
 
     private void loadCurrentUserTasks() {
@@ -257,7 +261,8 @@ public class HelloController {
             return;
         }
         tasksListContainer.getChildren().clear();
-        List<Task> tasks = taskService.getTasksByAssignedUser(CURRENT_USER_ID);
+        int currentUserId = resolveCurrentUserId();
+        List<Task> tasks = taskService.getTasksByAssignedUser(currentUserId);
         if (tasks.isEmpty()) {
             Label emptyLabel = new Label("No tasks assigned.");
             emptyLabel.getStyleClass().add("task-time");
@@ -300,6 +305,10 @@ public class HelloController {
         status.getStyleClass().add(TaskValueMapper.statusPillStyleClass(normalizedStatus));
 
         statusCheck.setOnAction(e -> {
+            if (!canCurrentUserModifyTaskStatus(task)) {
+                statusCheck.setSelected(!statusCheck.isSelected());
+                return;
+            }
             String newStatus = statusCheck.isSelected() ? TaskValueMapper.STATUS_DONE : TaskValueMapper.STATUS_TODO;
             boolean updated = taskService.updateTaskStatus(task.getId(), newStatus);
             if (!updated) {
@@ -310,6 +319,9 @@ public class HelloController {
         });
 
         inProgressIcon.setOnMouseClicked(e -> {
+            if (!canCurrentUserModifyTaskStatus(task)) {
+                return;
+            }
             if (TaskValueMapper.STATUS_IN_PROGRESS.equals(TaskValueMapper.normalizeStatus(task.getStatus()))) {
                 return;
             }
@@ -318,6 +330,12 @@ public class HelloController {
                 loadData();
             }
         });
+
+        boolean canModifyStatus = canCurrentUserModifyTaskStatus(task);
+        statusCheck.setDisable(!canModifyStatus);
+        inProgressIcon.setDisable(!canModifyStatus);
+        inProgressIcon.setMouseTransparent(!canModifyStatus);
+        inProgressIcon.setOpacity(canModifyStatus ? 1.0 : 0.45);
 
         row.getChildren().addAll(statusCheck, inProgressIcon, titleLabel, priority, status);
         return row;
@@ -367,5 +385,18 @@ public class HelloController {
         } catch (Exception e) {
             return dateStr;
         }
+    }
+
+    private int resolveCurrentUserId() {
+        User currentUser = UserService.getCurrentUser();
+        return currentUser == null ? -1 : currentUser.getId();
+    }
+
+    private boolean canCurrentUserModifyTaskStatus(Task task) {
+        if (task == null) {
+            return false;
+        }
+        int currentUserId = resolveCurrentUserId();
+        return currentUserId > 0 && task.getAssignedTo() == currentUserId;
     }
 }

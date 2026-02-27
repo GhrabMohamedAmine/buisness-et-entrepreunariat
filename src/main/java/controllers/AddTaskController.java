@@ -144,6 +144,8 @@ public class AddTaskController {
         }
 
         int resolvedProjectId = projectId > 0 ? projectId : selectedProject.getId();
+        User currentUser = UserService.getCurrentUser();
+        int creatorId = currentUser == null ? selectedUser.getId() : currentUser.getId();
         Task task = new Task(
                 title,
                 desc,
@@ -153,7 +155,7 @@ public class AddTaskController {
                 dueDatePicker.getValue().toString(),
                 resolvedProjectId,
                 selectedUser.getId(), // assignee
-                1 // creator (replace with logged-in user id when auth/session is added)
+                creatorId
         );
 
         taskService.addTask(task);

@@ -119,7 +119,7 @@ public class TaskService {
                 "WHERE project_id = ? " +
                 "AND due_date IS NOT NULL " +
                 "AND DATE(due_date) < CURDATE() " +
-                "AND UPPER(REPLACE(REPLACE(COALESCE(status, ''), ' ', '_'), '-', '_')) <> 'DONE'";
+                "AND UPPER(REPLACE(REPLACE(COALESCE(status, ''), ' ', ''), '-', '')) <> 'DONE'";
         try (Connection conn = MyDatabase.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, projectId);
@@ -135,7 +135,7 @@ public class TaskService {
 
     public int getTasksInProgressCount() {
         String query = "SELECT COUNT(*) FROM tasks " +
-                "WHERE UPPER(REPLACE(REPLACE(COALESCE(status, ''), ' ', '_'), '-', '_')) = 'IN_PROGRESS'";
+                "WHERE UPPER(REPLACE(REPLACE(COALESCE(status, ''), ' ', ''), '-', '')) = 'IN_PROGRESS'";
         try (Connection conn = MyDatabase.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
@@ -148,12 +148,52 @@ public class TaskService {
         return 0;
     }
 
+    public int getTasksInProgressCount(int userId) {
+        if (userId <= 0) {
+            return 0;
+        }
+        String query = "SELECT COUNT(*) FROM tasks " +
+                "WHERE assigned_to = ? " +
+                "AND UPPER(REPLACE(REPLACE(COALESCE(status, ''), ' ', ''), '-', '')) = 'IN_PROGRESS'";
+        try (Connection conn = MyDatabase.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
     public int getCompletedTasksCount() {
         String query = "SELECT COUNT(*) FROM tasks " +
-                "WHERE UPPER(REPLACE(REPLACE(COALESCE(status, ''), ' ', '_'), '-', '_')) = 'DONE'";
+                "WHERE UPPER(REPLACE(REPLACE(COALESCE(status, ''), ' ', ''), '-', '')) = 'DONE'";
         try (Connection conn = MyDatabase.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public int getCompletedTasksCount(int userId) {
+        if (userId <= 0) {
+            return 0;
+        }
+        String query = "SELECT COUNT(*) FROM tasks " +
+                "WHERE assigned_to = ? " +
+                "AND UPPER(REPLACE(REPLACE(COALESCE(status, ''), ' ', ''), '-', '')) = 'DONE'";
+        try (Connection conn = MyDatabase.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -168,10 +208,34 @@ public class TaskService {
                 "WHERE due_date IS NOT NULL " +
                 "AND DATE(due_date) >= CURDATE() " +
                 "AND DATE(due_date) <= DATE_ADD(CURDATE(), INTERVAL ? DAY) " +
-                "AND UPPER(REPLACE(REPLACE(COALESCE(status, ''), ' ', '_'), '-', '_')) <> 'DONE'";
+                "AND UPPER(REPLACE(REPLACE(COALESCE(status, ''), ' ', ''), '-', '')) <> 'DONE'";
         try (Connection conn = MyDatabase.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(query)) {
             pstmt.setInt(1, daysAhead);
+            ResultSet rs = pstmt.executeQuery();
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public int getUpcomingDeadlinesCount(int daysAhead, int userId) {
+        if (userId <= 0) {
+            return 0;
+        }
+        String query = "SELECT COUNT(*) FROM tasks " +
+                "WHERE assigned_to = ? " +
+                "AND due_date IS NOT NULL " +
+                "AND DATE(due_date) >= CURDATE() " +
+                "AND DATE(due_date) <= DATE_ADD(CURDATE(), INTERVAL ? DAY) " +
+                "AND UPPER(REPLACE(REPLACE(COALESCE(status, ''), ' ', ''), '-', '')) <> 'DONE'";
+        try (Connection conn = MyDatabase.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            pstmt.setInt(2, daysAhead);
             ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 return rs.getInt(1);
@@ -186,10 +250,32 @@ public class TaskService {
         String query = "SELECT COUNT(*) FROM tasks " +
                 "WHERE due_date IS NOT NULL " +
                 "AND DATE(due_date) < CURDATE() " +
-                "AND UPPER(REPLACE(REPLACE(COALESCE(status, ''), ' ', '_'), '-', '_')) <> 'DONE'";
+                "AND UPPER(REPLACE(REPLACE(COALESCE(status, ''), ' ', ''), '-', '')) <> 'DONE'";
         try (Connection conn = MyDatabase.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
+            if (rs.next()) {
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public int getOverdueUndoneTasksCount(int userId) {
+        if (userId <= 0) {
+            return 0;
+        }
+        String query = "SELECT COUNT(*) FROM tasks " +
+                "WHERE assigned_to = ? " +
+                "AND due_date IS NOT NULL " +
+                "AND DATE(due_date) < CURDATE() " +
+                "AND UPPER(REPLACE(REPLACE(COALESCE(status, ''), ' ', ''), '-', '')) <> 'DONE'";
+        try (Connection conn = MyDatabase.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            ResultSet rs = pstmt.executeQuery();
             if (rs.next()) {
                 return rs.getInt(1);
             }
@@ -358,11 +444,12 @@ public class TaskService {
         }
     }
 
+
     private String normalizeStatus(String status) {
         if (status == null || status.isBlank()) {
             return "TODO";
         }
-        String normalized = status.trim().toUpperCase().replace(' ', '_').replace('-', '_');
+        String normalized = status.trim().toUpperCase();
         if ("TO_DO".equals(normalized)) {
             return "TODO";
         }
