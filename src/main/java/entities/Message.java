@@ -1,4 +1,4 @@
-package model;
+package entities;
 import java.sql.Timestamp;
 public class Message {
     private long id;

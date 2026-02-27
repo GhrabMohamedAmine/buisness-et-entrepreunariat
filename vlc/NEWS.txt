@@ -189,7 +189,7 @@ Decoders:
  * Fix crash when AV1 hardware decoder fails
 
 Interface:
- * Fix annoying disappearance of the Windows fullscreen controller
+ * Fix annoying disappearance of the Windows fullscreen controllers
 
 Demuxers:
  * Fix potential security issue (OOB Write) on MMS:// by checking user size bounds
@@ -241,7 +241,7 @@ Contribs:
 
 Misc:
  * Improve muxing timestamps in a few formats (reset to 0)
- * Fix some rendering issues on Linux with the fullscreen controller
+ * Fix some rendering issues on Linux with the fullscreen controllers
  * Fix GOOM visualization
  * Fixes for Youtube playback
  * Fix some MPRIS inconsistencies that broke some OS widgets on Linux
@@ -1130,7 +1130,7 @@ macOS:
 Qt:
  * Fix last folder used in open dialogs
  * Allow to customize the seek jump when using the mousewheel
- * Fix fullscreen controller positionment on multiscreen setups
+ * Fix fullscreen controllers positionment on multiscreen setups
  * Fix pasted URLs not being trimmed
  * Fix jump size not being configurable
  * Fix missing time labels updates
@@ -1202,7 +1202,7 @@ Stream Output:
  * Fix casting to VP9
 
 macOS Interface:
- * Re-add option to disable the fullscreen controller panel
+ * Re-add option to disable the fullscreen controllers panel
  * Auto-layout improvements
  * Remove misleading playback warning indicator
  * Fix crash with the interface for lua extensions (like VLSub)
@@ -1484,7 +1484,7 @@ Service Discovery:
 Mac OS X Interface
  * Drop support for Mac OS X 10.6 Snow Leopard
  * Support right-to-left user interface layout for right-to-left languages
- * New resizable fullscreen controller with improved design
+ * New resizable fullscreen controllers with improved design
  * Add status bar icon which displays metadata and play controls
  * Add support for keyboard blacklight dimming during fullscreen video playback
  * Improve and simplify preferences window
@@ -2480,7 +2480,7 @@ Services discovery:
 OS X Interface:
  * Add support for multiple video outputs
  * Add accessibility support to playback windows, open panel and fullscreen
-   controller
+   controllers
  * Add a GUI to manage podcasts
  * Add a new panel for media conversation and streaming
  * Add a GUI for the QTSound access input to process audio captured locally
@@ -2506,7 +2506,7 @@ OS X Interface:
  * Add options to the Advanced Open File dialog for start and stop time
  * Add an option to play videos as a desktop background
  * Add support for playing video and showing audio visualizations side by side
- * improve fullscreen controller time slider with larger click target
+ * improve fullscreen controllers time slider with larger click target
  * rewrite of minimal macosx module for use within VLCKit
  * Add support for 'macosx-autoplay' to the Apple Event / Apple Script bindings
    when adding new inputs - this also affects network streams opened through
@@ -2540,7 +2540,7 @@ Skins2:
  * Extend sliders, offsets options
  * New bitmaps caching mechanism
  * Numerous fixes and improvements
- * Skinning of the Fullscreen controller
+ * Skinning of the Fullscreen controllers
 
 libVLC:
  * new libvlc_audio_output_device_list_get and libvlc_audio_output_device_list_release functions
@@ -2673,7 +2673,7 @@ Decoders:
 
 Mac OS X:
  * Fix subtitle rendering resolution when using OS X's native fullscreen mode
- * Improve fullscreen controller time slider with larger click target
+ * Improve fullscreen controllers time slider with larger click target
  * Fix listing of the lua interfaces (web, telnet and console)
    in the advanced preferences panel
  * Fix spatializer audio filter panel
@@ -2681,7 +2681,7 @@ Mac OS X:
  * Fix BDMV folder selection issue on OS X Mountain Lion, which treats such
    folders as a AVCHD file as soon as they include an item named INDEX.BDM
  * Fix bug which caused a hidden fullscreen panel
- * Fix various minor UI drawing issues (main window, fullscreen controller,
+ * Fix various minor UI drawing issues (main window, fullscreen controllers,
    lua extensions, ...)
  * Allow VLC to be associated with .dvdmedia packages
 
@@ -2797,7 +2797,7 @@ Mac OS X:
  * Deactivate CoreAnimation effects on Leopard
  * Fix menus display and behavior
  * Fix various crashes and small issues including bookmarks, playlist, buttons,
-   streaming wizard, video size, hotkeys and fullscreen controller
+   streaming wizard, video size, hotkeys and fullscreen controllers
  * Fix font selection for Unicode subtitles
  * Improve system sleep behavior when playing audio-only media. The screen is
    allowed to sleep while the system is kept awake during playback.
@@ -3010,7 +3010,7 @@ Video filters:
  * Fix gradfun unloading on Windows platform
 
 Mac OS X interface:
- * allow to hide the playlist to get a small controller window
+ * allow to hide the playlist to get a small controllers window
  * allow to hide the sidebar
  * disable Lion fullscreen mode by default, since its behavior is misleading
    - this fixes fullscreen video output on a secondary screen
@@ -3169,7 +3169,7 @@ Interfaces:
  * Qt: port to MacOS X platform
  * Qt: various interface improvements, notably on the seek bar
  * Skins2 / Qt: misc improvements and usability fixes
- * Skins2: fullscreen controller support, relative placement support
+ * Skins2: fullscreen controllers support, relative placement support
    and important cleanups and optimisations
  * Mac OS X: re-written Main Window, which also includes the Video Windows
    It is available in 2 looks, one grey (Lion style) and one black (QTX style)
@@ -3185,13 +3185,13 @@ Interfaces:
    -I luaintf --lua-intf myscript
  * ncurses: heavy refactor of the complete interface
  * dbus: Upgrade to an mpris2 compliant interface, see http://www.mpris.org
- * dbus: Rewrite of the main loop to use a more efficient poll-based model
+ * dbus: Rewrite of the main loop to use a more efficient poll-based entities
  * webUI/http: Rewrite of the web interface, using jQuery
  * webUI/http: some requests are now supported in JSON in addition to XML
  * webUI/http: path values for input and output are deprecated in favour of uri
  * Qt/Win32: the update system now downloads the updates in the temp folder
  * Qt: preferences are now searchable
- * Qt: the fullscreen controller is now stackable, full-width, at the bottom
+ * Qt: the fullscreen controllers is now stackable, full-width, at the bottom
 
 Video Output:
  * New video output based on Direct2D for Windows 7 and Vista (with Platform Update)
@@ -3352,7 +3352,7 @@ Mac OS X:
 
 Mozilla/ActiveX webplugin:
  * Fullscreen mode is fixed on Win32
- * Very simple fullscreen controller is visible on Win32
+ * Very simple fullscreen controllers is visible on Win32
 
 Demuxers/Meta Readers:
  * Better support for cover art embedded in mp4, wma
@@ -3823,7 +3823,7 @@ Video Output:
      Classic AtmoLight (http://www.vdr-wiki.de/wiki/index.php/Atmo-plugin)
      Quattro AtmoLight (use just 4 Classic AtmoLights as one)
      MoMoLight (http://www.ambilight4pc.com/momolight/momolight.html)
-     Simple serial DMX controller (http://www.ulrichradig.de/ search for DMX)
+     Simple serial DMX controllers (http://www.ulrichradig.de/ search for DMX)
 
 Extensions:
  * New content extensions lua framework
@@ -4118,7 +4118,7 @@ Muxers:
  * Fix sound recording of .flv files with mp3 audio
 
 Qt Interface:
- * Possibility to change the opacity level of the Fullscreen controller
+ * Possibility to change the opacity level of the Fullscreen controllers
  * Fix various crashes and VIDEO_TS folders opening
 
 Mac OS X Interface:
@@ -4317,7 +4317,7 @@ Mac OS X Interface:
  * Fixed circumstances, which could lead to an empty Information panel
    - Note that VLC will show information on the currently _selected_ item
      instead of the currently _playing_ item, if the playlist is visible in the
-     main controller window.
+     main controllers window.
  * Fixed multiple UTF8 issues in the Streaming / Exporting Wizard
 
 Mac OS X Port:
@@ -4426,14 +4426,14 @@ Windows port:
  * Fixed sensitivity of Fullscreen Controller
  * Fixed error messages on startup when VLC wasn't correctly uninstalled
    before installation
- * Fix showing of controller when returning from fullscreen playback
+ * Fix showing of controllers when returning from fullscreen playback
  * Multiple directory and path location fixes.
 
 Qt4 interface:
- * Added Faster/Slower icons to the controller panel
+ * Added Faster/Slower icons to the controllers panel
  * Fixed lost playlist columns when switching the playlist view
  * Added needed options to Simple preferences (to avoid NVIDIA drivers issues)
- * Fullscreen controller: added time label, remembering of last position
+ * Fullscreen controllers: added time label, remembering of last position
  * Fixed drag'n drop behaviour on the playlist
  * Multiple other fixes (Enter hotkey in preferences, Skins selection...)
 
@@ -4470,7 +4470,7 @@ Important notes:
    - On Mac OS X, you can find it in VLC.app/Contents/MacOS/share/http/.hosts
      and respectively in VLC.app/Contents/MacOS/share/http/old/.hosts
  * This version of VLC contains a new interface for Windows and Linux.
-   This interface has a fullscreen controller and simplified preferences.
+   This interface has a fullscreen controllers and simplified preferences.
    This interface lacks the "Streaming Wizard" that used to be present in VLC
    0.8.6, but provides basic profiles.
  * The behavior of --sout-keep was changed. It's now activated by default.
@@ -4658,7 +4658,7 @@ Interfaces:
    * Full support for meta data editing (ID3v2, Ogg/Vorbis, AAC, APEv1/2)
  * Windows/Linux
    * Brand new interface for Linux and Windows, based on the Qt toolkit
-   * Fullscreen controller (transparency on Linux+Composite)
+   * Fullscreen controllers (transparency on Linux+Composite)
  * Mac OS X
    * Improved video output features
    * Online access to VideoLAN's Help Wiki within VLC
@@ -4930,7 +4930,7 @@ CDDA / VCDX plugins:
  * Security updates (VideoLAN-SA-0701, CVE-2007-0017)
 
 Mac OS X Interface:
- * Fullscreen controller improvements
+ * Fullscreen controllers improvements
 
 
 Changes between 0.8.5 and 0.8.6:
@@ -4971,7 +4971,7 @@ Interfaces:
    * Systray support in skins
  * OS X
    * Support for Apple Remote control
-   * Fullscreen controller panel (artwork by Simon Damkjær Andersen)
+   * Fullscreen controllers panel (artwork by Simon Damkjær Andersen)
    * New playmode buttons (artwork by Simon Damkjær Andersen)
    * right/ctrl-click menu in video outputs
    * Main Menu uses autohide when playing videos in fullscreen mode
@@ -5709,7 +5709,7 @@ Subtitles:
  * Support for subtitles in DVB streams.
 
 Mac OS X port:
- * New controller designed by Max Rudberg from www.maxthemes.com
+ * New controllers designed by Max Rudberg from www.maxthemes.com
  * Save playlist.
  * Works on 10.1.x again. Apologies for that problem.
  * Support for Panther.
@@ -5987,7 +5987,7 @@ Mac OS X port:
  * support for mono audio output devices
  * reset the audio-device to its default mode before quitting VLC
  * fixed several cosmetic issues
- * you can drag the controller window by its background (as it should be)
+ * you can drag the controllers window by its background (as it should be)
  * the messages window remembers more lines
  * delay and fps can now be overruled with subtitles files
  * http and ogg stream output options

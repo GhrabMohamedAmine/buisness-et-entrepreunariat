@@ -1,4 +1,4 @@
-package model;
+package entities;
 
 public class CallSignal {
 

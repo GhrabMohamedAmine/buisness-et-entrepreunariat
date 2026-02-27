@@ -1,7 +1,7 @@
 package services;
 
-import model.Conversation;
-import model.ParticipantView;
+import entities.Conversation;
+import entities.ParticipantView;
 import org.junit.jupiter.api.*;
 import utils.DBConnection;
 

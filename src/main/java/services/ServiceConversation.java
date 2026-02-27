@@ -1,6 +1,6 @@
 package services;
-import model.Conversation;
-import model.ParticipantView;
+import entities.Conversation;
+import entities.ParticipantView;
 import utils.DBConnection;
 
 import java.sql.*;

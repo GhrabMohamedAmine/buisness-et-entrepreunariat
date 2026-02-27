@@ -1,4 +1,4 @@
-package controller;
+package controllers;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import javafx.animation.*;
@@ -7,7 +7,6 @@ import javafx.beans.binding.BooleanBinding;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
@@ -16,16 +15,13 @@ import java.nio.charset.StandardCharsets;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
-import javafx.stage.Stage;
-import model.Conversation;
-import model.Message;
+import entities.Conversation;
+import entities.Message;
 import services.EmojiRepo;
 import services.ServiceConversation;
 import services.ServiceMessage;
@@ -54,7 +50,7 @@ import javafx.collections.ObservableList;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListView;
 import java.io.*;
-import model.ParticipantView;
+import entities.ParticipantView;
 import utils.StompClientHandler;
 
 import java.util.*;

@@ -31,6 +31,6 @@ module org.example.yedikpromax {
     opens services to com.google.gson;
     exports org.example.yedikpromax;
 
-    exports controller;
-    opens controller to javafx.fxml;
+    exports controllers;
+    opens controllers to javafx.fxml;
 }

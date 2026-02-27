@@ -1,7 +1,7 @@
 package services;
 
-import model.Message;
-import model.ParticipantView;
+import entities.Message;
+import entities.ParticipantView;
 import utils.DBConnection;
 
 import java.io.IOException;
