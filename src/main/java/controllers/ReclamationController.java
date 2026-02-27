@@ -24,6 +24,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
@@ -53,6 +54,7 @@ public class ReclamationController implements Initializable {
     @FXML private TextField titreField;
     @FXML private TextField categorieField;
     @FXML private TextField projetField;
+    @FXML private VBox statusControl;
     @FXML private ComboBox<String> statutCombo;
 
     // Éléments pour le fichier
@@ -62,6 +64,7 @@ public class ReclamationController implements Initializable {
     @FXML private Label titreError;
     @FXML private Label categorieError;
     @FXML private Label projetError;
+    //@FXML private VBox statusControl2;
 
     // Nouveaux éléments pour la recherche et le filtrage
     @FXML private ToggleButton filterAll;
@@ -79,6 +82,7 @@ public class ReclamationController implements Initializable {
     private ProjectService prpr= new ProjectService();
 
 
+
     // Pour la modification
     private int idAModifier = 0;
     private File selectedFile;              // Fichier sélectionné
@@ -94,6 +98,18 @@ public class ReclamationController implements Initializable {
         for (Project p : projects) {
             projectNames.add(p.getName());
         }
+        String role = MainController.getInstance().getCurrentuser().getRole().toLowerCase();
+        boolean checkerRole = (role.equals("ADMIN"));
+        System.out.println("Role: "+role+"\ncheckerRole: " + checkerRole);
+
+
+        statusControl.setVisible(checkerRole);
+        statusControl.setManaged(checkerRole);
+
+        //System.out.println(statusControl2.toString());
+
+//        statusControl2.setVisible(checkerRole);
+//        statusControl2.setManaged(checkerRole);
 
         projectCombo.getItems().setAll(projectNames);
         reclamationService = new ReclamationService();

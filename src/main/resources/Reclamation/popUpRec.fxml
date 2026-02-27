@@ -54,7 +54,7 @@
         </HBox>
 
         <!-- Statut -->
-        <VBox spacing="5">
+        <VBox fx:id="statusControl" spacing="5">
             <Label text="Statut" styleClass="form-label" />
             <ComboBox fx:id="statutCombo" maxWidth="Infinity" styleClass="form-combo">
                 <items>
