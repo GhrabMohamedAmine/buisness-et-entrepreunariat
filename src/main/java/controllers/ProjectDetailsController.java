@@ -53,7 +53,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProjectDetailsController {
-    private static final int CURRENT_USER_ID = 1;
     private static final String[] AVATAR_COLOR_CLASSES = {"purple", "blue", "green", "orange"};
     private static final DateTimeFormatter ACTIVITY_DATE_INPUT = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter ACTIVITY_DATE_OUTPUT = DateTimeFormatter.ofPattern("dd MMM", Locale.ENGLISH);
@@ -187,7 +186,7 @@ public class ProjectDetailsController {
             if (task == null || task.getStatus() == null) {
                 continue;
             }
-            String normalized = task.getStatus().trim().toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
+            String normalized = task.getStatus().trim().toUpperCase(Locale.ROOT);
             if ("DONE".equals(normalized)) {
                 done++;
             }
@@ -318,7 +317,7 @@ public class ProjectDetailsController {
 
     private String normalizeStatus(String status) {
         if (status == null) return "TODO";
-        return status.trim().toUpperCase().replace(' ', '_').replace('-', '_');
+        return status.trim().toUpperCase();
     }
 
     private String normalizeActivityType(String type) {
@@ -942,8 +941,13 @@ public class ProjectDetailsController {
         if (task == null) {
             return false;
         }
-        int assigneeId = task.getAssignedTo();
-        return assigneeId <= 0 || assigneeId == CURRENT_USER_ID;
+        int currentUserId = resolveCurrentUserId();
+        return currentUserId > 0 && task.getAssignedTo() == currentUserId;
+    }
+
+    private int resolveCurrentUserId() {
+        User currentUser = UserService.getCurrentUser();
+        return currentUser == null ? -1 : currentUser.getId();
     }
 
     private void addCardToKanbanColumn(VBox column, Parent row) {
