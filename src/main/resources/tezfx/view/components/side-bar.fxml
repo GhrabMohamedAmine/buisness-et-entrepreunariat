@@ -90,7 +90,7 @@
     <Region VBox.vgrow="ALWAYS"/>
 
 
-    <Button fx:id="LOGOUT" styleClass="logout-item">
+    <Button onAction="#handleLogout" fx:id="LOGOUT" styleClass="logout-item">
         <graphic>
             <FontIcon iconLiteral="mdi2l-logout"/>
         </graphic>

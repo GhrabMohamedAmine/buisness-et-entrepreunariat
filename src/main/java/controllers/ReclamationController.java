@@ -64,7 +64,7 @@ public class ReclamationController implements Initializable {
     @FXML private Label titreError;
     @FXML private Label categorieError;
     @FXML private Label projetError;
-    //@FXML private VBox statusControl2;
+    @FXML private VBox statusControl2;
 
     // Nouveaux éléments pour la recherche et le filtrage
     @FXML private ToggleButton filterAll;
@@ -81,8 +81,6 @@ public class ReclamationController implements Initializable {
     private ToggleGroup filterGroup;
     private ProjectService prpr= new ProjectService();
 
-
-
     // Pour la modification
     private int idAModifier = 0;
     private File selectedFile;              // Fichier sélectionné
@@ -98,20 +96,25 @@ public class ReclamationController implements Initializable {
         for (Project p : projects) {
             projectNames.add(p.getName());
         }
-        String role = MainController.getInstance().getCurrentuser().getRole().toLowerCase();
-        boolean checkerRole = (role.equals("ADMIN"));
+        String role = UserService.getCurrentUser().getRole().toLowerCase();
+        boolean checkerRole = role.equals("admin"); // Correction : comparaison en minuscules
         System.out.println("Role: "+role+"\ncheckerRole: " + checkerRole);
 
+        // Gestion de l'affichage du statut selon le rôle et le FXML chargé
+        if (statusControl != null) {
+            statusControl.setVisible(checkerRole);
+            statusControl.setManaged(checkerRole);
+        }
+        if (statusControl2 != null) {
+            statusControl2.setVisible(checkerRole);
+            statusControl2.setManaged(checkerRole);
+        }
 
-        statusControl.setVisible(checkerRole);
-        statusControl.setManaged(checkerRole);
+        // Remplir la comboBox des projets seulement si elle existe (popups)
+        if (projectCombo != null) {
+            projectCombo.getItems().setAll(projectNames);
+        }
 
-        //System.out.println(statusControl2.toString());
-
-//        statusControl2.setVisible(checkerRole);
-//        statusControl2.setManaged(checkerRole);
-
-        projectCombo.getItems().setAll(projectNames);
         reclamationService = new ReclamationService();
         if (topName != null) {
             loadCurrentUserProfile();
@@ -174,7 +177,7 @@ public class ReclamationController implements Initializable {
             if (selected == null || selected == filterAll) return true;
             if (selected == filterOpen) return "En attente".equalsIgnoreCase(r.getStatut());
             if (selected == filterProgress) return "En cours".equalsIgnoreCase(r.getStatut());
-            if (selected == filterResolved) return "Rèsolu".equalsIgnoreCase(r.getStatut()); // Attention à l'accent
+            if (selected == filterResolved) return "Rèsolu".equalsIgnoreCase(r.getStatut());
             if (selected == filterClosed) return "Fermer".equalsIgnoreCase(r.getStatut());
             return true;
         };
@@ -262,7 +265,7 @@ public class ReclamationController implements Initializable {
                     alert.setContentText("Voulez-vous vraiment supprimer : " + rec.getTitre() + " ?");
                     if (alert.showAndWait().get() == ButtonType.OK) {
                         reclamationService.delete(rec.getId());
-                        reclamationList.remove(rec); // filteredData se met à jour automatiquement
+                        reclamationList.remove(rec);
                     }
                 });
             }
@@ -281,9 +284,6 @@ public class ReclamationController implements Initializable {
         });
     }
 
-    /**
-     * Active le double-clic sur une ligne pour ouvrir le fichier joint (s'il existe).
-     */
     private void setupDoubleClick() {
         reclamationTable.setRowFactory(tv -> {
             TableRow<Reclamation> row = new TableRow<>();
@@ -302,9 +302,6 @@ public class ReclamationController implements Initializable {
         });
     }
 
-    /**
-     * Ouvre le fichier attaché à une réclamation.
-     */
     private void openAttachedFile(Reclamation rec) {
         Reclamation fullRec = reclamationService.getById(rec.getId());
         if (fullRec == null || fullRec.getFichier() == null || fullRec.getFichier().length == 0) {

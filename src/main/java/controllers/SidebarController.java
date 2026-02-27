@@ -1,10 +1,18 @@
 package controllers;
 
 import entities.User;
+import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.stage.Stage;
+import services.UserService;
+
+import java.io.IOException;
 
 public class SidebarController {
     @FXML
@@ -112,5 +120,20 @@ public class SidebarController {
     private void loadPage(String pageName) {
         System.out.println("Loading: " + pageName);
 
+    }
+    public void handleLogout(ActionEvent event) {
+        UserService.logout();
+        switchScene(event, "/Start/1ere.fxml");
+    }
+    private void switchScene(ActionEvent event, String fxmlPath) {
+        try {
+            Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
+            Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            stage.setScene(new Scene(root));
+            stage.show();
+        } catch (IOException e) {
+            System.err.println("Impossible de charger le fichier FXML : " + fxmlPath);
+            e.printStackTrace();
+        }
     }
 }
