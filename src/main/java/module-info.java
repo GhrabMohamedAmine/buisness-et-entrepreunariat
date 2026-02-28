@@ -32,8 +32,11 @@ module org.example.yedikpromax {
     requires com.google.zxing.javase;
     requires org.kordamp.ikonli.feather;
     requires javafx.media;
-    //requires org.example.yedikpromax;
-    //requires org.example.yedikpromax;
+
+    requires org.kordamp.ikonli.fontawesome5;
+    requires okhttp3;
+
+
 
     opens org.example.yedikpromax to javafx.fxml;
     opens services to com.google.gson;
@@ -41,6 +44,8 @@ module org.example.yedikpromax {
     opens Mains to javafx.graphics, javafx.fxml;
     opens com.example.testp1.controllers to javafx.fxml;
     opens com.example.testp1 to javafx.fxml;
+    opens entities to javafx.base;
+//  opens services.ai to com.fasterxml.jackson.databind;
 
     exports controllers;
     exports Mains;
