@@ -21,6 +21,7 @@
         <URL value="@../../styles/stylesheet.css"/>
         <URL value="@../../styles/buttons.css"/>
         <URL value="@../../styles/project-css.css"/>
+
     </stylesheets>
 
    <left>
@@ -67,7 +68,7 @@
                </StackPane>
 
                <Button fx:id="globalFab" styleClass="fab-button"
-                       StackPane.alignment="BOTTOM_RIGHT">
+                       StackPane.alignment="BOTTOM_RIGHT" visible="false" managed="false">
                   <graphic>
                      <FontIcon iconLiteral="mdi2c-chat-processing-outline" iconSize="32" styleClass="white-icon"/>
                   </graphic>

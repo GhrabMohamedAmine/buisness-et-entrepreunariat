@@ -59,6 +59,24 @@
             <groupId>eu.hansolo</groupId>
             <artifactId>tilesfx</artifactId>
             <version>17.0.8</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+
+        <dependency>
+            <groupId>org.controlsfx</groupId>
+            <artifactId>controlsfx</artifactId>
+            <version>11.2.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
 
@@ -312,11 +330,6 @@
             <version>4.1</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.controlsfx</groupId>
-            <artifactId>controlsfx</artifactId>
-            <version>11.2.1</version>
-        </dependency>
 
         <dependency>
             <groupId>org.kordamp.bootstrapfx</groupId>
@@ -366,41 +379,11 @@
                 </dependency>
             </dependencies>
         </profile>
-
-        <profile>
-            <id>jxbrowser-mac-intel</id>
-            <activation>
-                <os>
-                    <family>mac</family>
-                    <arch>x86_64</arch>
-                </os>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>com.teamdev.jxbrowser</groupId>
-                    <artifactId>jxbrowser-mac</artifactId>
-                    <version>${jxbrowser.version}</version>
-                </dependency>
-            </dependencies>
-        </profile>
-
-        <profile>
-            <id>jxbrowser-mac-arm</id>
-            <activation>
-                <os>
-                    <family>mac</family>
-                    <arch>aarch64</arch>
-                </os>
-            </activation>
-            <dependencies>
-                <dependency>
-                    <groupId>com.teamdev.jxbrowser</groupId>
-                    <artifactId>jxbrowser-mac-arm</artifactId>
-                    <version>${jxbrowser.version}</version>
-                </dependency>
-            </dependencies>
-        </profile>
     </profiles>
+
+
+
+
 
     <build>
         <plugins>

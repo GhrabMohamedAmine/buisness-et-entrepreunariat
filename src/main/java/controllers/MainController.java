@@ -14,6 +14,7 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
+import org.example.yedikpromax.HelloApplication;
 import services.UserService;
 
 import java.io.ByteArrayInputStream;
@@ -55,11 +56,11 @@ public class MainController {
     @FXML
     public void initialize() {
         instance = this;
-//        mainView.getStylesheets().addAll(
-//                getClass().getResource("/styles/stylesheet.css").toExternalForm(),
-//                getClass().getResource("/styles/buttons.css").toExternalForm(),
-//                getClass().getResource("/styles/project-css.css").toExternalForm()
-//        );
+//
+
+
+        // ✅ Your CSS after theme
+
         staticContentArea = contentArea;
         //currentuser = service.getCurrentUser();
         System.out.println("Current user: " + currentuser.toString());

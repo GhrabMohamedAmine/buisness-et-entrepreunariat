@@ -22,12 +22,18 @@
 <?import javafx.scene.shape.Circle?>
 <?import org.kordamp.ikonli.javafx.FontIcon?>
 
+<?import java.net.URL?>
 <StackPane xmlns="http://javafx.com/javafx/17"
            xmlns:fx="http://javafx.com/fxml/1"
            fx:controller="controllers.chatController"
            fx:id="root">
+    <stylesheets>
+        <URL value="@../../../styles/primer-light.css"/>
+        <URL value="@chat-view.css"/>
+        <URL value="@call-view.css"/>
+    </stylesheets>
 
-    <BorderPane fx:id="contentRoot" styleClass="chat-root" stylesheets="@chat-view.css">
+    <BorderPane fx:id="contentRoot" styleClass="chat-root" >
 
         <padding>
             <Insets top="18" right="18" bottom="18" left="18"/>
@@ -242,11 +248,13 @@
                             <StackPane fx:id="drawerOverlay"
                                        visible="false" managed="false"
                                        pickOnBounds="true"
-                                       styleClass="drawer-overlay">
+                                       styleClass="drawer-overlay"
+                                       stylesheets="chat-view.css">
 
                                 <Region fx:id="drawerBackdrop"
                                         onMouseClicked="#closeDrawer"
-                                        styleClass="drawer-backdrop"/>
+                                        styleClass="drawer-backdrop"
+                                        />
 
                                 <VBox fx:id="drawer"
                                       prefWidth="340" maxWidth="360"

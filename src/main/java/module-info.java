@@ -33,11 +33,14 @@ module org.example.yedikpromax {
     requires org.kordamp.ikonli.feather;
     requires javafx.media;
     //requires org.example.yedikpromax;
+    //requires org.example.yedikpromax;
 
     opens org.example.yedikpromax to javafx.fxml;
     opens services to com.google.gson;
     exports org.example.yedikpromax;
     opens Mains to javafx.graphics, javafx.fxml;
+    opens com.example.testp1.controllers to javafx.fxml;
+    opens com.example.testp1 to javafx.fxml;
 
     exports controllers;
     exports Mains;

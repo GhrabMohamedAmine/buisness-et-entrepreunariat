@@ -558,7 +558,7 @@
 }
 
 .drawer {
-    -fx-background-color: -fx-control-inner-background;
+    -fx-background-color: #FFFFFF;
     -fx-background-radius: 16;
     -fx-padding: 16;
     -fx-spacing: 14;

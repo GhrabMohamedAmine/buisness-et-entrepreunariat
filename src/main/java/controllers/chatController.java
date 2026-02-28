@@ -4101,11 +4101,20 @@ public class chatController {
         javafx.scene.control.Tab tGif = new javafx.scene.control.Tab("GIF", gifRoot);
         tGif.setClosable(false);
         outer.getTabs().addAll(tEmoji, tGif);
+
         javafx.scene.layout.VBox root = new javafx.scene.layout.VBox(outer);
         root.getStyleClass().add("eg-popup");
         root.setPrefSize(380, 420);
         root.setMinSize(javafx.scene.layout.Region.USE_PREF_SIZE, javafx.scene.layout.Region.USE_PREF_SIZE);
         root.setMaxSize(javafx.scene.layout.Region.USE_PREF_SIZE, javafx.scene.layout.Region.USE_PREF_SIZE);
+
+        // =====================================================================
+        // ✅ ISOLATED CSS INJECTION:
+        // This applies the stylesheet ONLY to the emoji popup and its children.
+        // Replace "/css/emoji.css" with the actual path in your resources folder.
+        // =====================================================================
+        String cssPath = getClass().getResource("/org/example/yedikpromax/chat-view.css").toExternalForm();
+        root.getStylesheets().add(cssPath);
 
         emojiPopup.getContent().clear();
         emojiPopup.getContent().add(root);
