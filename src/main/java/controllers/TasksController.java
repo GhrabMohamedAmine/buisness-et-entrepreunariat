@@ -108,7 +108,7 @@ public class TasksController {
         tasksGroupsContainer.getChildren().clear();
 
         String normalizedQuery = normalizeSearch(query);
-        List<Project> projects = projectService.getAllProjects();
+        List<Project> projects = getVisibleProjectsForCurrentUser();
         int colorIndex = 0;
 
         for (Project project : projects) {
@@ -136,6 +136,14 @@ public class TasksController {
             }
 
             tasksGroupsContainer.getChildren().add(createProjectBlock(project, projectTasks, colorIndex++));
+        }
+
+        if (tasksGroupsContainer.getChildren().isEmpty()) {
+            Label empty = new Label(isCurrentUserEmployee()
+                    ? "No tasks found for your assigned projects."
+                    : "No tasks found.");
+            empty.getStyleClass().add("task-time");
+            tasksGroupsContainer.getChildren().add(empty);
         }
     }
 
@@ -474,5 +482,24 @@ public class TasksController {
     private int resolveCurrentUserId() {
         var currentUser = UserService.getCurrentUser();
         return currentUser == null ? -1 : currentUser.getId();
+    }
+
+    private List<Project> getVisibleProjectsForCurrentUser() {
+        var currentUser = UserService.getCurrentUser();
+        if (currentUser == null || currentUser.getRole() == null) {
+            return projectService.getAllProjects();
+        }
+        String normalizedRole = currentUser.getRole().trim().toUpperCase(Locale.ROOT);
+        if ("EMPLOYEE".equals(normalizedRole)) {
+            return projectService.getProjectsForUser(currentUser.getId());
+        }
+        return projectService.getAllProjects();
+    }
+
+    private boolean isCurrentUserEmployee() {
+        var currentUser = UserService.getCurrentUser();
+        return currentUser != null
+                && currentUser.getRole() != null
+                && "EMPLOYEE".equals(currentUser.getRole().trim().toUpperCase(Locale.ROOT));
     }
 }

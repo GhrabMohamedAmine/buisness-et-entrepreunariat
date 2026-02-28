@@ -18,6 +18,7 @@ import services.UserService;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -67,6 +68,7 @@ public class AddTaskController {
         if (projectCombo != null) {
             projectCombo.valueProperty().addListener((obs, oldValue, newValue) -> refreshAssignableUsers());
         }
+        enforceAssignmentPolicyByRole();
         clearErrors();
     }
 
@@ -85,7 +87,7 @@ public class AddTaskController {
     }
 
     private void loadProjects() {
-        List<Project> projects = projectService.getAllProjects();
+        List<Project> projects = getVisibleProjectsForCurrentUser();
         projectCombo.getItems().setAll(projects);
         projectCombo.setConverter(new StringConverter<>() {
             @Override
@@ -174,6 +176,8 @@ public class AddTaskController {
     private boolean validateInputs(String title, String desc, User selectedUser, Project selectedProject) {
         clearErrors();
         boolean valid = true;
+        User currentUser = UserService.getCurrentUser();
+        boolean manager = isCurrentUserManager();
 
         if (title.isBlank()) {
             setError(titleErrorLabel, "Task name is required.");
@@ -206,6 +210,9 @@ public class AddTaskController {
         if (selectedUser == null) {
             setError(userErrorLabel, "Assigned user is required.");
             valid = false;
+        } else if (!manager && currentUser != null && selectedUser.getId() != currentUser.getId()) {
+            setError(userErrorLabel, "Only managers can assign tasks to other users.");
+            valid = false;
         }
 
         if (priorityCombo.getValue() == null) {
@@ -216,6 +223,14 @@ public class AddTaskController {
         if (projectId <= 0 && selectedProject == null) {
             setError(projectErrorLabel, "Project is required.");
             valid = false;
+        } else if (!isCurrentUserManager()) {
+            int targetProjectId = projectId > 0
+                    ? projectId
+                    : (selectedProject == null ? -1 : selectedProject.getId());
+            if (targetProjectId > 0 && !isProjectAssignedToCurrentUser(targetProjectId)) {
+                setError(projectErrorLabel, "You can only create tasks in your assigned projects.");
+                valid = false;
+            }
         }
 
         return valid;
@@ -252,7 +267,7 @@ public class AddTaskController {
             }
         }
         userCombo.setValue(null);
-        userCombo.setDisable(false);
+        userCombo.setDisable(!isCurrentUserManager());
     }
 
     private void refreshAssignableUsers() {
@@ -292,6 +307,45 @@ public class AddTaskController {
         }
         Project selectedProject = projectCombo == null ? null : projectCombo.getValue();
         return selectedProject == null ? -1 : selectedProject.getId();
+    }
+
+    private void enforceAssignmentPolicyByRole() {
+        User currentUser = UserService.getCurrentUser();
+        if (currentUser == null || isCurrentUserManager()) {
+            return;
+        }
+        fixedAssignedUserId = currentUser.getId();
+        applyFixedAssignedUser();
+        userCombo.setPromptText("Only managers can assign other users");
+    }
+
+    private boolean isCurrentUserManager() {
+        User currentUser = UserService.getCurrentUser();
+        return currentUser != null
+                && currentUser.getRole() != null
+                && "MANAGER".equals(currentUser.getRole().trim().toUpperCase(Locale.ROOT));
+    }
+
+    private List<Project> getVisibleProjectsForCurrentUser() {
+        User currentUser = UserService.getCurrentUser();
+        if (currentUser == null || currentUser.getRole() == null) {
+            return projectService.getAllProjects();
+        }
+        String normalizedRole = currentUser.getRole().trim().toUpperCase(Locale.ROOT);
+        if ("EMPLOYEE".equals(normalizedRole)) {
+            return projectService.getProjectsForUser(currentUser.getId());
+        }
+        return projectService.getAllProjects();
+    }
+
+    private boolean isProjectAssignedToCurrentUser(int projectIdToCheck) {
+        User currentUser = UserService.getCurrentUser();
+        if (currentUser == null) {
+            return false;
+        }
+        return projectService.getProjectsForUser(currentUser.getId())
+                .stream()
+                .anyMatch(project -> project.getId() == projectIdToCheck);
     }
 
 }
