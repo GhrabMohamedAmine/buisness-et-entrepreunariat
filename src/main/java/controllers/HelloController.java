@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -44,7 +45,6 @@ public class HelloController {
     private static final DateTimeFormatter DATE_OUTPUT = DateTimeFormatter.ofPattern("dd MMM yyyy");
     @FXML
     private Button addButton;
-    private ProjectsController projectsC = new ProjectsController();
 
     @FXML private VBox recentProjectsContainer;
     @FXML private Label tasksInProgressKpiLabel;
@@ -66,8 +66,9 @@ public class HelloController {
     public void initialize() {
 
         loadData();
-        addButton.setVisible(projectsC.isUserManager());
-        addButton.setManaged(projectsC.isUserManager());
+        boolean manager = isCurrentUserManager();
+        addButton.setVisible(manager);
+        addButton.setManaged(manager);
     }
     @FXML
     private void openAddProjectPopup() {
@@ -154,7 +155,7 @@ public class HelloController {
 
     public void loadData() {
         assigneesByProject = projectService.getProjectAssigneesMap();
-        List<Project> projectsFromDB = projectService.getAllProjects().stream()
+        List<Project> projectsFromDB = getVisibleProjectsForCurrentUser().stream()
                 .filter(project -> taskService.getTaskCount(project.getId()) > 0)
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
         projectsFromDB.sort(Comparator.comparingInt(Project::getId).reversed());
@@ -171,7 +172,9 @@ public class HelloController {
         }
         recentProjectsContainer.getChildren().clear();
         if (projects == null || projects.isEmpty()) {
-            Label emptyLabel = new Label("No recent projects with tasks.");
+            Label emptyLabel = new Label(isCurrentUserManager()
+                    ? "No recent projects with tasks."
+                    : "No recent assigned projects with tasks.");
             emptyLabel.getStyleClass().add("task-time");
             recentProjectsContainer.getChildren().add(emptyLabel);
             return;
@@ -398,5 +401,24 @@ public class HelloController {
         }
         int currentUserId = resolveCurrentUserId();
         return currentUserId > 0 && task.getAssignedTo() == currentUserId;
+    }
+
+    private List<Project> getVisibleProjectsForCurrentUser() {
+        User currentUser = UserService.getCurrentUser();
+        if (currentUser == null || currentUser.getRole() == null) {
+            return projectService.getAllProjects();
+        }
+        String normalizedRole = currentUser.getRole().trim().toUpperCase(Locale.ROOT);
+        if ("EMPLOYEE".equals(normalizedRole)) {
+            return projectService.getProjectsForUser(currentUser.getId());
+        }
+        return projectService.getAllProjects();
+    }
+
+    private boolean isCurrentUserManager() {
+        User currentUser = UserService.getCurrentUser();
+        return currentUser != null
+                && currentUser.getRole() != null
+                && "MANAGER".equals(currentUser.getRole().trim().toUpperCase(Locale.ROOT));
     }
 }

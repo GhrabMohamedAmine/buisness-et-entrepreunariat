@@ -21,7 +21,7 @@ public class ProjectService {
         List<Project> projects = new ArrayList<>();
         String query = "SELECT p.id, p.name, p.description, p.budget, p.start_date, p.end_date, p.assigned_to, p.created_by, " +
                 "CASE WHEN COUNT(t.id) = 0 THEN 0 " +
-                "ELSE ROUND(100 * SUM(CASE WHEN UPPER(REPLACE(REPLACE(COALESCE(t.status, ''), ' ', '_'), '-', '_')) = 'DONE' THEN 1 ELSE 0 END) / COUNT(t.id), 0) END AS computed_progress " +
+                "ELSE ROUND(100 * SUM(CASE WHEN UPPER(REPLACE(REPLACE(COALESCE(t.status, ''), ' ', ''), '-', '')) = 'DONE' THEN 1 ELSE 0 END) / COUNT(t.id), 0) END AS computed_progress " +
                 "FROM projects p " +
                 "LEFT JOIN tasks t ON t.project_id = p.id " +
                 "GROUP BY p.id, p.name, p.description, p.budget, p.start_date, p.end_date, p.assigned_to, p.created_by";
@@ -46,6 +46,43 @@ public class ProjectService {
             throw new RuntimeException(e);
         }
 
+        return projects;
+    }
+
+    public List<Project> getProjectsForUser(int userId) {
+        ensureProjectAssignmentsTable();
+        List<Project> projects = new ArrayList<>();
+        String query = "SELECT p.id, p.name, p.description, p.budget, p.start_date, p.end_date, p.assigned_to, p.created_by, " +
+                "CASE WHEN COUNT(t.id) = 0 THEN 0 " +
+                "ELSE ROUND(100 * SUM(CASE WHEN UPPER(REPLACE(REPLACE(COALESCE(t.status, ''), ' ', ''), '-', '')) = 'DONE' THEN 1 ELSE 0 END) / COUNT(t.id), 0) END AS computed_progress " +
+                "FROM projects p " +
+                "LEFT JOIN tasks t ON t.project_id = p.id " +
+                "WHERE p.assigned_to = ? " +
+                "OR EXISTS (SELECT 1 FROM project_assignments pa WHERE pa.project_id = p.id AND pa.user_id = ?) " +
+                "GROUP BY p.id, p.name, p.description, p.budget, p.start_date, p.end_date, p.assigned_to, p.created_by";
+
+        try (Connection conn = MyDatabase.getConnection();
+             PreparedStatement stmt = conn.prepareStatement(query)) {
+            stmt.setInt(1, userId);
+            stmt.setInt(2, userId);
+            try (ResultSet rs = stmt.executeQuery()) {
+                while (rs.next()) {
+                    projects.add(new Project(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getString("description"),
+                            rs.getInt("computed_progress"),
+                            rs.getDouble("budget"),
+                            rs.getString("start_date"),
+                            rs.getString("end_date"),
+                            rs.getInt("assigned_to"),
+                            rs.getInt("created_by")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         return projects;
     }
 

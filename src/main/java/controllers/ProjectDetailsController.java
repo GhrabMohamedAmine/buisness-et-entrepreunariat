@@ -186,7 +186,7 @@ public class ProjectDetailsController {
             if (task == null || task.getStatus() == null) {
                 continue;
             }
-            String normalized = task.getStatus().trim().toUpperCase(Locale.ROOT);
+            String normalized = task.getStatus().trim().toUpperCase(Locale.ROOT) ;
             if ("DONE".equals(normalized)) {
                 done++;
             }

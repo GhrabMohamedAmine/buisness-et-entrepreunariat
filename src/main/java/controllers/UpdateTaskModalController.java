@@ -16,6 +16,7 @@ import services.UserService;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -88,6 +89,7 @@ public class UpdateTaskModalController {
                 break;
             }
         }
+        enforceAssignmentPolicyByRole();
     }
 
     public boolean isSaved() {
@@ -102,6 +104,11 @@ public class UpdateTaskModalController {
             return;
         }
 
+        int assigneeId = userCombo.getValue().getId();
+        if (!isCurrentUserManager()) {
+            assigneeId = currentTask.getAssignedTo();
+        }
+
         Task updated = new Task(
                 title,
                 desc,
@@ -110,7 +117,7 @@ public class UpdateTaskModalController {
                 currentTask.getStartDate(),
                 dueDatePicker.getValue().toString(),
                 currentTask.getProjectId(),
-                userCombo.getValue().getId(),
+                assigneeId,
                 currentTask.getCreatedby()
         );
         updated.setId(currentTask.getId());
@@ -134,6 +141,7 @@ public class UpdateTaskModalController {
     private boolean validateInputs(String title, String desc, User selectedUser) {
         clearErrors();
         boolean valid = true;
+        boolean manager = isCurrentUserManager();
 
         if (title.isBlank()) {
             setError(titleErrorLabel, "Task name is required.");
@@ -171,6 +179,9 @@ public class UpdateTaskModalController {
 
         if (selectedUser == null) {
             setError(userErrorLabel, "Assigned user is required.");
+            valid = false;
+        } else if (!manager && currentTask != null && selectedUser.getId() != currentTask.getAssignedTo()) {
+            setError(userErrorLabel, "Only managers can reassign tasks.");
             valid = false;
         }
 
@@ -213,5 +224,21 @@ public class UpdateTaskModalController {
                 .toList();
         userCombo.getItems().setAll(allowedUsers);
         userCombo.setPromptText(allowedUsers.isEmpty() ? "No members assigned to this project" : "Select team member...");
+    }
+
+    private void enforceAssignmentPolicyByRole() {
+        if (isCurrentUserManager()) {
+            userCombo.setDisable(false);
+            return;
+        }
+        userCombo.setDisable(true);
+        userCombo.setPromptText("Only managers can reassign tasks");
+    }
+
+    private boolean isCurrentUserManager() {
+        User currentUser = UserService.getCurrentUser();
+        return currentUser != null
+                && currentUser.getRole() != null
+                && "MANAGER".equals(currentUser.getRole().trim().toUpperCase(Locale.ROOT));
     }
 }

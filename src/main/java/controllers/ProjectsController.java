@@ -6,6 +6,7 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Button;
+import javafx.scene.control.Label;
 import javafx.scene.effect.BoxBlur;
 import javafx.scene.effect.ColorAdjust;
 import javafx.scene.control.ScrollPane;
@@ -18,15 +19,15 @@ import javafx.stage.StageStyle;
 import entities.Project;
 import entities.User;
 import services.ProjectService;
+import services.UserService;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class ProjectsController {
 
-    private MainController mainC = new MainController();
-    private User loggedUser = mainC.getCurrentuser();
     @FXML
     private FlowPane projectsGrid;
     @FXML
@@ -39,6 +40,7 @@ public class ProjectsController {
     private TextField searchField;
 
     private final ProjectService projectService = new ProjectService();
+    private final UserService userService = new UserService();
 
     @FXML
     public void initialize() {
@@ -57,7 +59,10 @@ public class ProjectsController {
     }
 
     public boolean isUserManager(){
-        return loggedUser.getRole().toUpperCase().equals("MANAGER");
+        User loggedUser = userService.getCurrentUser();
+        return loggedUser != null
+                && loggedUser.getRole() != null
+                && "MANAGER".equals(loggedUser.getRole().trim().toUpperCase(Locale.ROOT));
     }
 
     public void loadData() {
@@ -67,7 +72,7 @@ public class ProjectsController {
     private void loadData(String query) {
         projectsGrid.getChildren().clear();
 
-        List<Project> projectList = projectService.getAllProjects();
+        List<Project> projectList = getVisibleProjectsForCurrentUser();
         Map<Integer, List<User>> assigneesByProject = projectService.getProjectAssigneesMap();
         String normalizedQuery = query == null ? "" : query.trim().toLowerCase();
         if (!normalizedQuery.isEmpty()) {
@@ -76,6 +81,16 @@ public class ProjectsController {
                             || (p.getDescription() != null && p.getDescription().toLowerCase().contains(normalizedQuery)))
                     .toList();
         }
+
+        if (projectList.isEmpty()) {
+            Label emptyLabel = new Label(isCurrentUserEmployee()
+                    ? "No projects are assigned to you yet."
+                    : "No projects found.");
+            emptyLabel.getStyleClass().add("task-time");
+            projectsGrid.getChildren().add(emptyLabel);
+            return;
+        }
+
         System.out.println("Projects found in DB: " + projectList.size());
 
         for (Project project : projectList) {
@@ -98,6 +113,24 @@ public class ProjectsController {
                 e.printStackTrace();
             }
         }
+    }
+
+    private List<Project> getVisibleProjectsForCurrentUser() {
+        User loggedUser = userService.getCurrentUser();
+        if (loggedUser == null || loggedUser.getRole() == null) {
+            return projectService.getAllProjects();
+        }
+        if ("EMPLOYEE".equals(loggedUser.getRole().trim().toUpperCase(Locale.ROOT))) {
+            return projectService.getProjectsForUser(loggedUser.getId());
+        }
+        return projectService.getAllProjects();
+    }
+
+    private boolean isCurrentUserEmployee() {
+        User loggedUser = userService.getCurrentUser();
+        return loggedUser != null
+                && loggedUser.getRole() != null
+                && "EMPLOYEE".equals(loggedUser.getRole().trim().toUpperCase(Locale.ROOT));
     }
 
     @FXML
