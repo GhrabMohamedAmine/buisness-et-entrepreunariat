@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.control.TextField?>
+<?import javafx.scene.layout.FlowPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.shape.Circle?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<HBox prefHeight="900.0" prefWidth="1300.0" styleClass="root-pane" stylesheets="@styles.css"
+      xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="controllers.UserReclamationController">
+
+    <children>
+        <VBox spacing="0" HBox.hgrow="ALWAYS" styleClass="main-content">
+
+            <HBox alignment="CENTER_LEFT" prefHeight="80.0" styleClass="top-bar">
+                <padding><Insets left="30" right="30" /></padding>
+
+                <VBox alignment="CENTER_LEFT">
+                    <Label styleClass="page-title" text="Mes Réclamations" />
+                    <Label styleClass="page-subtitle" text="Gérez vos tickets et suivez leur avancement" />
+                </VBox>
+
+                <Region HBox.hgrow="ALWAYS" />
+
+                <Button onAction="#openNewReclamationModal" styleClass="btn-primary" text="Nouveau Ticket">
+                    <graphic><FontIcon iconLiteral="mdi2p-plus" iconSize="18" iconColor="white"/></graphic>
+                </Button>
+
+                <Region prefWidth="20" />
+
+                <HBox alignment="CENTER" spacing="12" styleClass="user-badge">
+                    <VBox alignment="CENTER_RIGHT">
+                        <Label styleClass="user-name" text="Utilisateur" />
+                        <Label styleClass="user-role" text="Client" />
+                    </VBox>
+                    <Circle fx:id="btnProfil"
+                            fill="#E5E7EB"
+                            radius="20"
+                            stroke="WHITE"
+                            strokeWidth="2"
+                            onMouseClicked="#versProfil"
+                            style="-fx-cursor: hand;" />
+                </HBox>
+            </HBox>
+
+            <ScrollPane fitToWidth="true" styleClass="custom-scroll" VBox.vgrow="ALWAYS">
+                <content>
+                    <VBox spacing="30">
+                        <padding><Insets bottom="40" left="40" right="40" top="30" /></padding>
+
+                        <HBox spacing="20">
+                            <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS">
+                                <HBox alignment="CENTER_LEFT" spacing="10">
+                                    <VBox styleClass="icon-box-purple"><FontIcon iconLiteral="mdi2t-ticket-outline" iconSize="20" iconColor="#7C3AED"/></VBox>
+                                    <Label styleClass="kpi-label" text="Tickets Ouverts" />
+                                </HBox>
+                                <Label fx:id="lblOpen" styleClass="kpi-value" text="3" />
+                            </VBox>
+
+                            <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS">
+                                <HBox alignment="CENTER_LEFT" spacing="10">
+                                    <VBox styleClass="icon-box-orange"><FontIcon iconLiteral="mdi2t-timer-sand" iconSize="20" iconColor="#D97706"/></VBox>
+                                    <Label styleClass="kpi-label" text="En Cours" />
+                                </HBox>
+                                <Label fx:id="lblProgress" styleClass="kpi-value" text="1" />
+                            </VBox>
+
+                            <VBox styleClass="kpi-card" HBox.hgrow="ALWAYS">
+                                <HBox alignment="CENTER_LEFT" spacing="10">
+                                    <VBox styleClass="icon-box-green"><FontIcon iconLiteral="mdi2c-check-circle-outline" iconSize="20" iconColor="#059669"/></VBox>
+                                    <Label styleClass="kpi-label" text="Résolus" />
+                                </HBox>
+                                <Label fx:id="lblSolved" styleClass="kpi-value" text="5" />
+                            </VBox>
+                        </HBox>
+
+                        <HBox alignment="CENTER_LEFT" spacing="15">
+                            <HBox alignment="CENTER_LEFT" styleClass="search-box">
+                                <FontIcon iconLiteral="mdi2m-magnify" iconColor="#9CA3AF" iconSize="18"/>
+                                <TextField fx:id="searchField" promptText="Rechercher un ticket..." styleClass="transparent-input" />
+                            </HBox>
+
+                            <Region HBox.hgrow="ALWAYS" />
+
+                            <Label style="-fx-text-fill: #6B7280; -fx-font-size: 13px;" text="Trier par :" />
+                            <Button styleClass="btn-filter" text="Date Récente" graphicTextGap="8">
+                                <graphic><FontIcon iconLiteral="mdi2s-sort" iconColor="#6B7280"/></graphic>
+                            </Button>
+                        </HBox>
+
+                        <FlowPane fx:id="ticketsContainer" hgap="25" vgap="25" styleClass="ticket-grid">
+
+                            <VBox styleClass="ticket-card">
+                                <HBox alignment="CENTER_LEFT" spacing="10">
+                                    <Label styleClass="ticket-title" text="Bug Connexion VPN" wrapText="true" maxWidth="190" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label styleClass="status-pill, status-progress" text="En cours" />
+                                </HBox>
+
+                                <Label styleClass="ticket-category" text="Technique • Réseau" />
+                                <Label styleClass="ticket-desc" text="Impossible d'accéder au serveur via le VPN depuis la mise à jour..." wrapText="true" VBox.vgrow="ALWAYS" />
+
+                                <Region VBox.vgrow="ALWAYS" minHeight="15"/>
+
+                                <HBox alignment="CENTER_LEFT" styleClass="ticket-footer">
+                                    <Label styleClass="ticket-date" text="15 Fév, 14:30" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Button styleClass="icon-btn">
+                                        <graphic><FontIcon iconLiteral="mdi2p-pencil-outline" iconSize="18" iconColor="#6B7280" /></graphic>
+                                    </Button>
+                                </HBox>
+                            </VBox>
+
+                            <VBox styleClass="ticket-card">
+                                <HBox alignment="CENTER_LEFT" spacing="10">
+                                    <Label styleClass="ticket-title" text="Erreur Facturation" wrapText="true" maxWidth="190" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Label styleClass="status-pill, status-resolved" text="Résolu" />
+                                </HBox>
+
+                                <Label styleClass="ticket-category" text="Comptabilité" />
+                                <Label styleClass="ticket-desc" text="Le montant de la facture #402 ne correspond pas au devis signé." wrapText="true" VBox.vgrow="ALWAYS" />
+
+                                <Region VBox.vgrow="ALWAYS" minHeight="15"/>
+
+                                <HBox alignment="CENTER_LEFT" styleClass="ticket-footer">
+                                    <Label styleClass="ticket-date" text="10 Jan, 09:15" />
+                                    <Region HBox.hgrow="ALWAYS" />
+                                    <Button styleClass="icon-btn">
+                                        <graphic><FontIcon iconLiteral="mdi2e-eye-outline" iconSize="18" iconColor="#6B7280" /></graphic>
+                                    </Button>
+                                </HBox>
+                            </VBox>
+
+                        </FlowPane>
+                    </VBox>
+                </content>
+            </ScrollPane>
+        </VBox>
+    </children>
+</HBox>
