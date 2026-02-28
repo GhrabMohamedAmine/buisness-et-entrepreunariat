@@ -12,6 +12,10 @@ import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import services.AssignmentService;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 
 import org.kordamp.ikonli.javafx.FontIcon;
 
@@ -133,14 +137,26 @@ public class ClientResourcesController {
     }
 
     // ===================== CARD =====================
+    // ===================== CARD =====================
     private VBox createCard(ResourceAssignment a, String statusText) {
 
         VBox card = new VBox(10);
         card.getStyleClass().add("resource-card");
-        card.setPrefWidth(320);
+        card.setPrefWidth(340);
         card.setPadding(new Insets(14));
 
-        // Header: Name + Type badge
+        // ---------- Top Row: thumbnail + header ----------
+        ImageView thumb = new ImageView();
+        thumb.getStyleClass().add("thumb");
+        thumb.setFitWidth(72);
+        thumb.setFitHeight(72);
+        thumb.setPreserveRatio(true);
+        thumb.setSmooth(true);
+
+        // Load image if exists
+        loadThumbImage(thumb, a.getResourceImagePath());
+
+        // Header right side
         Label name = new Label(a.getResourceName() != null ? a.getResourceName() : "Resource");
         name.getStyleClass().add("card-title");
 
@@ -150,8 +166,8 @@ public class ClientResourcesController {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        HBox header = new HBox(10, name, spacer, type);
-        header.setAlignment(Pos.CENTER_LEFT);
+        HBox titleRow = new HBox(10, name, spacer, type);
+        titleRow.setAlignment(Pos.CENTER_LEFT);
 
         // Details
         Label qty = new Label("Qty: " + a.getQuantity());
@@ -163,25 +179,32 @@ public class ClientResourcesController {
         Label cost = new Label("Cost: " + String.format("%.2f", a.getTotalCost()));
         cost.getStyleClass().add("card-line");
 
-        // Status chip
+        VBox infoBox = new VBox(6, titleRow, qty, date, cost);
+        infoBox.getStyleClass().add("card-info");
+        infoBox.setAlignment(Pos.TOP_LEFT);
+
+        HBox top = new HBox(12, thumb, infoBox);
+        top.setAlignment(Pos.TOP_LEFT);
+
+        // ---------- Footer ----------
         Label statusChip = new Label(statusText);
         statusChip.getStyleClass().addAll("status-chip", statusClass(statusText));
 
-        // Footer: icons (only pending/requested/declined) + status
         HBox footer = new HBox(10);
+        footer.getStyleClass().add("card-footer");
         footer.setAlignment(Pos.CENTER_RIGHT);
 
         if (isEditableStatus(statusText)) {
 
             Button editBtn = new Button();
             editBtn.getStyleClass().add("icon-btn");
-            editBtn.setGraphic(new FontIcon("fas-pencil-alt")); // ✅ good FA5 literal
+            editBtn.setGraphic(new FontIcon("fas-pencil-alt"));
             editBtn.setTooltip(new Tooltip("Update request"));
             editBtn.setOnAction(e -> openRequestPopupInternal(a));
 
             Button deleteBtn = new Button();
             deleteBtn.getStyleClass().add("icon-btn");
-            deleteBtn.setGraphic(new FontIcon("fas-trash")); // ✅ good FA5 literal
+            deleteBtn.setGraphic(new FontIcon("fas-trash"));
             deleteBtn.setTooltip(new Tooltip("Delete request"));
             deleteBtn.setOnAction(e -> confirmDelete(a));
 
@@ -190,8 +213,31 @@ public class ClientResourcesController {
 
         footer.getChildren().add(statusChip);
 
-        card.getChildren().addAll(header, qty, date, cost, footer);
+        card.getChildren().addAll(top, footer);
         return card;
+    }
+
+    private void loadThumbImage(ImageView thumb, String imagePath) {
+        try {
+            // Fallback: simple placeholder from classpath (optional)
+            // If you want a real placeholder image file, tell me and I’ll give you one.
+            if (imagePath == null || imagePath.isBlank()) {
+                thumb.getStyleClass().add("thumb-empty");
+                return;
+            }
+
+            // if the file doesn't exist => fallback
+            if (!Files.exists(Paths.get(imagePath))) {
+                thumb.getStyleClass().add("thumb-empty");
+                return;
+            }
+
+            String uri = Paths.get(imagePath).toUri().toString();
+            thumb.setImage(new Image(uri, true));
+
+        } catch (Exception e) {
+            thumb.getStyleClass().add("thumb-empty");
+        }
     }
 
     private boolean isEditableStatus(String st) {

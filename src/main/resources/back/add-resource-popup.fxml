@@ -2,6 +2,7 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.image.ImageView?>
 <?import javafx.scene.layout.*?>
 
 <VBox xmlns="http://javafx.com/javafx/17"
@@ -50,6 +51,20 @@
         <Label text="Available Quantity:" GridPane.rowIndex="5" GridPane.columnIndex="0"/>
         <TextField fx:id="avquantField" promptText="EX: 8"
                    GridPane.rowIndex="5" GridPane.columnIndex="1"/>
+
+        <!-- ✅ NEW: Image -->
+        <Label text="Image:" GridPane.rowIndex="6" GridPane.columnIndex="0"/>
+
+        <HBox spacing="10" alignment="CENTER_LEFT"
+              GridPane.rowIndex="6" GridPane.columnIndex="1">
+            <ImageView fx:id="imagePreview"
+                       fitWidth="120"
+                       fitHeight="80"
+                       preserveRatio="true"
+                       smooth="true"/>
+            <Button text="Choose..." onAction="#chooseImage" styleClass="btn-secondary"/>
+        </HBox>
+
     </GridPane>
 
     <!-- Buttons -->

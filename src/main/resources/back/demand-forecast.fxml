@@ -17,7 +17,10 @@
     </top>
 
     <center>
-        <VBox spacing="16" padding="20">
+        <VBox spacing="16">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
 
             <HBox spacing="12" alignment="CENTER_LEFT">
                 <Label text="Resource Type:" styleClass="label"/>

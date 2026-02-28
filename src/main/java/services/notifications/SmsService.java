@@ -13,9 +13,9 @@ public class SmsService {
     private final HttpClient client = HttpClient.newHttpClient();
 
     // Put these in environment variables (recommended)
-    private final String accountSid = "ACcabb9c6165d713adc0a3d3a1eeac34f0";
-    private final String authToken  = "f85885307c14879dfd690523279dccce";
-    private final String fromNumber = "+18312851533";
+    private final String accountSid = "AC4af4d39fef77bc2bdbc522dc4de0d936";
+    private final String authToken  = "533396f8f3ec6ada8b9f8b26c7ba6b08";
+    private final String fromNumber = "+12185208769";
     // e.g. +1xxxx
 
     public SmsService() {

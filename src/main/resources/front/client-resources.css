@@ -159,4 +159,26 @@
     -fx-icon-color: #7c3aed;
     -fx-icon-size: 16;
 }
+/* ====== Thumbnail (image) ====== */
+.thumb {
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: #eef2ff;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 10, 0, 0, 3);
+}
+
+/* If no image found */
+.thumb-empty {
+    -fx-opacity: 0.7;
+}
+
+/* Better spacing inside card */
+.card-info {
+    -fx-padding: 2 0 0 0;
+}
+
+.card-footer {
+    -fx-padding: 2 0 0 0;
+}
 

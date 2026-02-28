@@ -11,6 +11,9 @@ public class ResourceAssignment {
     private String resourceName;
     private String resourceType;
 
+    // ✅ NEW: image path from resources.image_path
+    private String resourceImagePath;
+
     private String projectCode;
     private String clientCode;
 
@@ -34,6 +37,10 @@ public class ResourceAssignment {
 
     public String getResourceType() { return resourceType; }
     public void setResourceType(String resourceType) { this.resourceType = resourceType; }
+
+    // ✅ NEW
+    public String getResourceImagePath() { return resourceImagePath; }
+    public void setResourceImagePath(String resourceImagePath) { this.resourceImagePath = resourceImagePath; }
 
     public String getProjectCode() { return projectCode; }
     public void setProjectCode(String projectCode) { this.projectCode = projectCode; }

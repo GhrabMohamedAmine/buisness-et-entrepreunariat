@@ -43,6 +43,10 @@ public class ManageResourcesController {
     @FXML private Label maintenanceLabel;
 
     @FXML private TextField searchField;
+    @FXML
+    private void openDemandForecast() {
+        MainFX.loadPage("/back/demand-forecast.fxml");
+    }
 
     private final ResourceService service = new ResourceService();
 
@@ -51,6 +55,11 @@ public class ManageResourcesController {
 
     // ✅ Filter + Sort wrappers
     private FilteredList<Resource> filteredData;
+
+    @FXML
+    private void goToReturns() {
+        MainFX.loadPage("/back/physical-returns.fxml");
+    }
 
     @FXML
     public void initialize() {

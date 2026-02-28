@@ -26,27 +26,30 @@
         </left>
 
         <right>
-            <Button text="Back"
-                    onAction="#goBack"
-                    styleClass="secondary-btn"/></right>
-          <left> <Button text="🤖 AI Recommend"
-                    onAction="#openAIRecommend"
-                    styleClass="primary-btn"/></left>
-
-
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="🤖 AI Recommend"
+                        onAction="#openAIRecommend"
+                        styleClass="primary-btn"/>
+                <Button text="Back"
+                        onAction="#goBack"
+                        styleClass="secondary-btn"/>
+            </HBox>
+        </right>
     </BorderPane>
+    <!-- Filters -->
+    <HBox spacing="12" alignment="CENTER_LEFT" styleClass="filter-bar">
+        <TextField fx:id="searchField" promptText="Search by resource name..." styleClass="search-field"/>
+        <ComboBox fx:id="typeFilter" prefWidth="180" styleClass="filter-combo"/>
+    </HBox>
 
-    <!-- Table -->
-    <TableView fx:id="resourcesTable" VBox.vgrow="ALWAYS">
-        <columns>
-            <TableColumn fx:id="codeCol" text="Code" prefWidth="90"/>
-            <TableColumn fx:id="nameCol" text="Name" prefWidth="250"/>
-            <TableColumn fx:id="typeCol" text="Type" prefWidth="140"/>
-            <TableColumn fx:id="unitCostCol" text="Unit Cost" prefWidth="120"/>
-            <TableColumn fx:id="totalQtyCol" text="Total Qty" prefWidth="95"/>
-            <TableColumn fx:id="avQtyCol" text="Available" prefWidth="95"/>
-            <TableColumn fx:id="actionCol" text="Action" prefWidth="150"/>
-        </columns>
-    </TableView>
+    <!-- Cards -->
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="scroll">
+        <content>
+            <FlowPane fx:id="cardsFlow"
+                      hgap="14" vgap="14"
+                      prefWrapLength="980"
+                      styleClass="cards-wrap"/>
+        </content>
+    </ScrollPane>
 
 </VBox>
