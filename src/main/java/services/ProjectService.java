@@ -43,7 +43,7 @@ public class ProjectService {
                 ));
             }
         } catch (SQLException e) {
-            throw new RuntimeException(e);
+            e.printStackTrace();
         }
 
         return projects;

@@ -6,9 +6,9 @@ import java.sql.SQLException;
 
 public class DB {
 
-    private final String URL ="jdbc:mysql://localhost:3306/nexum";
-    private final String USERNAME ="root";
-    private final String PWD ="";
+    private final String URL = System.getenv().getOrDefault("DB_URL", "jdbc:mysql://localhost:8889/Nexum");
+    private final String USERNAME = System.getenv().getOrDefault("DB_USERNAME", "root");
+    private final String PWD = System.getenv().getOrDefault("DB_PASSWORD", "root");
 
     private Connection conx;
 

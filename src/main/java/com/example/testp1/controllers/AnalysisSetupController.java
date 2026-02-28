@@ -21,6 +21,11 @@ public class AnalysisSetupController {
         this.onSimulationRequested = onSimulationRequested;
     }
 
+    @FXML
+    public void initialize() {
+        // Setup screen currently only captures user context for AI simulation.
+    }
+
     /**
      * 3. This is triggered by your FXML button: onAction="#handleRunSimulation"
      */
@@ -34,4 +39,5 @@ public class AnalysisSetupController {
             onSimulationRequested.accept(userContext); // This instantly triggers startAiAnalysis() in your TabController
         }
     }
+
 }

@@ -217,7 +217,7 @@
                     <execution>
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>tezfx/Mains.HelloApplication</mainClass>
+                            <mainClass>com.example.testp1/Mains.HelloApplication</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>
@@ -231,4 +231,3 @@
         </plugins>
     </build>
 </project>
-

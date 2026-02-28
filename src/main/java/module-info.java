@@ -18,6 +18,7 @@ module com.example.testp1 {
 
     requires org.kordamp.ikonli.javafx;
     requires org.kordamp.ikonli.feather;
+    requires org.kordamp.ikonli.materialdesign2;
 
     requires com.fasterxml.jackson.annotation;
     requires com.fasterxml.jackson.databind;
