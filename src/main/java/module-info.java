@@ -9,6 +9,7 @@ module Nexum {
     requires org.kordamp.ikonli.fontawesome5;
     requires okhttp3;
     requires com.fasterxml.jackson.databind;
+    requires javafx.graphics;
 
     opens controllers to javafx.fxml;
     opens entities to javafx.base;

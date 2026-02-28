@@ -25,6 +25,7 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.List;
+import java.util.Stack;
 
 public class ResourcesCatalogController {
 
@@ -49,7 +50,7 @@ public class ResourcesCatalogController {
 
     @FXML
     public void initialize() {
-
+        this.clientCode = StackController.getInstance().getCurrentClientCode();
         // init type filter
         if (typeFilter != null) {
             typeFilter.setItems(FXCollections.observableArrayList("ALL", "PHYSICAL", "SOFTWARE"));
@@ -281,18 +282,19 @@ public class ResourcesCatalogController {
 
     @FXML
     private void goBack() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/front/client-resources.fxml"));
-            Parent root = loader.load();
-
-            ClientResourcesController c = loader.getController();
-            c.setClientCode(clientCode);
-
-            Stage stage = (Stage) cardsFlow.getScene().getWindow();
-            stage.setScene(new Scene(root));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        StackController.getInstance().loadPageCR();
+//        try {
+//            FXMLLoader loader = new FXMLLoader(getClass().getResource("/front/client-resources.fxml"));
+//            Parent root = loader.load();
+//
+//            ClientResourcesController c = loader.getController();
+//            c.setClientCode(clientCode);
+//
+//            Stage stage = (Stage) cardsFlow.getScene().getWindow();
+//            stage.setScene(new Scene(root));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
     }
 
     private void showError(String title, String msg) {

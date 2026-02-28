@@ -27,7 +27,8 @@ public class ManageRequestsController {
     @FXML private TableColumn<ResourceAssignment, Void> actionCol;
     @FXML
     private void goBack() {
-        MainFX.loadPage("/back/manage-resources.fxml");
+        SmAdminStackController.getInstance().loadPageMRS();
+        //MainFX.loadPage("/back/manage-resources.fxml");
     }
 
     private final AdminRequestService service = new AdminRequestService();

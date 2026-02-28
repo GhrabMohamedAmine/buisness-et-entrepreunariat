@@ -152,7 +152,8 @@ public class PhysicalReturnsController {
 
     @FXML
     private void goBack() {
-        MainFX.loadPage("/back/manage-requests.fxml"); // change if you want another page
+        SmAdminStackController.getInstance().loadPageMRS();
+        //MainFX.loadPage("/back/manage-requests.fxml"); // change if you want another page
     }
 
     private boolean confirm(String title, String msg) {

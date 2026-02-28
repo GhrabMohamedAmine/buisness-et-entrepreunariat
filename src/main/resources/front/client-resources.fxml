@@ -16,21 +16,20 @@
     </padding>
 
     <!-- Header -->
-    <BorderPane>
-        <left>
+    <HBox>
             <VBox spacing="4">
                 <Label text="My Resources" styleClass="title"/>
                 <Label text="Requests, accepted allocations, and declined items"
                        styleClass="subtitle"/>
             </VBox>
-        </left>
+        <Region prefWidth="800"/>
 
-        <right>
+
+
             <Button text="+ Request Resource"
                     styleClass="primary-btn"
                     onAction="#openRequestPage"/>
-        </right>
-    </BorderPane>
+    </HBox>
 
     <!-- Stats -->
     <HBox spacing="14">

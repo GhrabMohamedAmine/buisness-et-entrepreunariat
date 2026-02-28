@@ -45,7 +45,8 @@ public class ManageResourcesController {
     @FXML private TextField searchField;
     @FXML
     private void openDemandForecast() {
-        MainFX.loadPage("/back/demand-forecast.fxml");
+        SmAdminStackController.getInstance().loadPageDF();
+        //MainFX.loadPage("/back/demand-forecast.fxml");
     }
 
     private final ResourceService service = new ResourceService();
@@ -58,7 +59,8 @@ public class ManageResourcesController {
 
     @FXML
     private void goToReturns() {
-        MainFX.loadPage("/back/physical-returns.fxml");
+        SmAdminStackController.getInstance().loadPagePHYR();
+        //MainFX.loadPage("/back/physical-returns.fxml");
     }
 
     @FXML
@@ -89,7 +91,8 @@ public class ManageResourcesController {
     // ===================== NAVIGATION =====================
     @FXML
     private void goToManageRequests() {
-        MainFX.loadPage("/back/manage-requests.fxml");
+        SmAdminStackController.getInstance().loadPageMR();
+        //MainFX.loadPage("/back/manage-requests.fxml");
     }
 
     // ===================== REFRESH =====================

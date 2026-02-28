@@ -39,6 +39,8 @@ public class ClientResourcesController {
 
     @FXML
     public void initialize() {
+
+        this.clientCode = StackController.getInstance().getCurrentClientCode();
         loadAndRender();
     }
 
@@ -49,19 +51,20 @@ public class ClientResourcesController {
     }
     @FXML
     private void openRequestPage() {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/front/resources-catalog.fxml"));
-            Parent root = loader.load();
-
-            // pass clientCode to catalog controller
-            ResourcesCatalogController c = loader.getController();
-            c.setClientCode(clientCode);
-
-            Stage stage = (Stage) requestedFlow.getScene().getWindow();
-            stage.setScene(new Scene(root));
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        StackController.getInstance().loadPageRR();
+//        try {
+//            FXMLLoader loader = new FXMLLoader(getClass().getResource("/front/resources-catalog.fxml"));
+//            Parent root = loader.load();
+//
+//            // pass clientCode to catalog controller
+//            ResourcesCatalogController c = loader.getController();
+//            c.setClientCode(clientCode);
+//
+//            Stage stage = (Stage) requestedFlow.getScene().getWindow();
+//            stage.setScene(new Scene(root));
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
     }
 
     // ===================== OPEN POPUP (EDIT MODE) =====================
