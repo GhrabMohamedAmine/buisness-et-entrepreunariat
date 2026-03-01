@@ -171,3 +171,13 @@
 .button{
     -fx-background-insets: 0;
 }
+
+.correct {
+    -fx-background-color: #4CAF50; /* Green */
+    -fx-text-fill: white;
+}
+
+.wrong {
+    -fx-background-color: #F44336; /* Red */
+    -fx-text-fill: white;
+}

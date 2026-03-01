@@ -30,6 +30,8 @@ public class SidebarController {
     private ToggleButton FPbutton;
     @FXML
     private ToggleButton RSbutton;
+    @FXML
+    private ToggleButton TRRbtn;
 
 
     private MainController mainCon =new MainController();
@@ -40,6 +42,8 @@ public class SidebarController {
     private ToggleButton CMButton;
     @FXML
     private ImageView logoImage;
+    @FXML
+    private ToggleButton TRMbtn;
 
 
     //private User userConnected = mainCon.getCurrentuser();;
@@ -63,6 +67,7 @@ public class SidebarController {
             case "CONSULTANT"->{
                 hideBTN(RSbutton);
                 hideBTN(TRbutton);
+                hideBTN(TRRbtn);
                 showBTN(FPbutton);
                 showBTN(PJbutton);
             }
@@ -156,5 +161,20 @@ public class SidebarController {
     @FXML
     public void setResourcesView() {
         mainCon.resources();
+    }
+
+    @FXML
+    public void onResultClicked() {
+        mainCon.resultFormations();
+    }
+
+    @FXML
+    public void onTrainingClicked() {
+        mainCon.formations();
+    }
+
+    @FXML
+    public void onTrainingManClicked() {
+        mainCon.manFormations();
     }
 }

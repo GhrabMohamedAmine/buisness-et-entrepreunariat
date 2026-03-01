@@ -155,5 +155,17 @@ public class MainController {
         setView("/front/RSstack.fxml");
     }
 
+    public void formations() {
+        setView("/fxml/layout/client_layout.fxml");
+    }
+
+    public void manFormations(){
+        setView("/tezfx/view/MRformation.fxml");
+    }
+
+    public void resultFormations(){
+        setView("/fxml/client_results.fxml");
+    }
+
 
 }

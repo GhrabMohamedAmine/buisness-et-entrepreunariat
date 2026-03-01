@@ -27,7 +27,10 @@ public class QuizCardController {
 
     @FXML
     public void initialize() {
+        String cssPath = getClass().getResource("/css/styles123.css").toExternalForm();
 
+        // 2. Add it to the container
+        root.getStylesheets().add(cssPath);
         root.setOnMouseEntered(e -> {
             root.setStyle(
                     "-fx-background-color:white;" +
@@ -58,7 +61,8 @@ public class QuizCardController {
         r3.setText("C. " + q.getR3());
 
         highlightCorrect(q.getCorrect());
-
+        String run = String.valueOf(r1.getStyleClass());
+        System.out.println(run);
         // image
         if(q.getImage()!=null){
             File imgFile = new File(System.getProperty("user.home")
@@ -75,12 +79,13 @@ public class QuizCardController {
     }
 
     private void highlightCorrect(int c){
-        r1.getStyleClass().removeAll("correct","wrong");
-        r2.getStyleClass().removeAll("correct","wrong");
-        r3.getStyleClass().removeAll("correct","wrong");
+        r1.getStyleClass().removeAll(".correct",".wrong");
+        r2.getStyleClass().removeAll(".correct",".wrong");
+        r3.getStyleClass().removeAll(".correct",".wrong");
 
-        if(c==1) r1.getStyleClass().add("correct"); else r1.getStyleClass().add("wrong");
-        if(c==2) r2.getStyleClass().add("correct"); else r2.getStyleClass().add("wrong");
-        if(c==3) r3.getStyleClass().add("correct"); else r3.getStyleClass().add("wrong");
+
+        if(c==1) r1.getStyleClass().add(".correct"); else r1.getStyleClass().add(".wrong");
+        if(c==2) r2.getStyleClass().add(".correct"); else r2.getStyleClass().add(".wrong");
+        if(c==3) r3.getStyleClass().add(".correct"); else r3.getStyleClass().add(".wrong");
     }
 }

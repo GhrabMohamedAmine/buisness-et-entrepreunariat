@@ -4,7 +4,7 @@
 
 .root{
     -fx-background-color: linear-gradient(to bottom,#f4f7fb,#e9eef5);
-    -fx-font-family: "Segoe UI", "Inter", Arial;
+    -fx-font-family:  "Inter";
 }
 
 
@@ -170,4 +170,16 @@
 
 .button{
     -fx-background-insets: 0;
+}
+
+label .correct {
+    -fx-background-color: #4CAF50; /* Green */
+    -fx-text-fill: white;
+    -fx-text-weight: bold;
+}
+
+label .wrong {
+    -fx-background-color: #F44336; /* Red */
+    -fx-text-fill: white;
+    -fx-text-weight: bold;
 }

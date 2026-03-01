@@ -37,6 +37,9 @@ module org.example.yedikpromax {
     requires okhttp3;
     requires javafx.graphics;
     requires spring.boot.autoconfigure;
+    requires kernel;
+    requires layout;
+    //requires org.example.yedikpromax;
     //requires org.example.yedikpromax;
 
 
@@ -53,4 +56,5 @@ module org.example.yedikpromax {
     exports controllers;
     exports Mains;
     opens controllers to javafx.fxml;
+    opens utils to javafx.fxml;
 }

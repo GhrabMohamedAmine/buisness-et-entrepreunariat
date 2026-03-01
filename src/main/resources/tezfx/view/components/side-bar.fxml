@@ -56,12 +56,7 @@
             <text>Tasks</text>
         </ToggleButton>
 
-        <ToggleButton fx:id="TRbutton" styleClass="nav-item" toggleGroup="$navGroup">
-            <graphic>
-                <FontIcon iconLiteral="mdi2s-school-outline"/>
-            </graphic>
-            <text>Trainings</text>
-        </ToggleButton>
+
 
         <ToggleButton fx:id="CMButton" styleClass="nav-item" toggleGroup="$navGroup" onAction="#onCommunicationClicked">
             <graphic>
@@ -82,6 +77,29 @@
                 <FontIcon iconLiteral="mdi2c-currency-usd"/>
             </graphic>
             <text>Financial Analysis</text>
+        </ToggleButton>
+
+
+        <ToggleButton fx:id="TRbutton" styleClass="nav-item" toggleGroup="$navGroup" onAction="#onTrainingClicked">
+            <graphic>
+                <FontIcon iconLiteral="mdi2s-school-outline"/>
+            </graphic>
+            <text>Trainings</text>
+        </ToggleButton>
+
+        <ToggleButton fx:id="TRRbtn" styleClass="nav-item" toggleGroup="$navGroup" onAction="#onResultClicked">
+            <graphic>
+                <FontIcon iconLiteral="mdi2p-playlist-check" />
+
+            </graphic>
+            <text>Results</text>
+        </ToggleButton>
+
+        <ToggleButton fx:id="TRMbtn" styleClass="nav-item" toggleGroup="$navGroup" onAction="#onTrainingManClicked">
+            <graphic>
+                <FontIcon iconLiteral="mdi2s-school-outline"/>
+            </graphic>
+            <text>Training Managment</text>
         </ToggleButton>
 
 

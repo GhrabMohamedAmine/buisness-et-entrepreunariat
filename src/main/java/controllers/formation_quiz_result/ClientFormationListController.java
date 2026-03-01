@@ -32,7 +32,7 @@ public class ClientFormationListController {
 
         // charger toutes les formations
         formations = formationService.getAll();
-
+        System.out.println("userId = " + userId);
         // remplir filtre
         filterCombo.getItems().addAll(
                 "Toutes",
@@ -133,6 +133,8 @@ public class ClientFormationListController {
         // PROGRESS BAR
         ProgressBar progressBar = new ProgressBar(0);
         progressBar.setPrefWidth(300);
+        progressBar.setStyle("-fx-background-color: #7C3AED;"+ /* This is the Nexum Purple */
+        "-fx-background-radius: 5;");
 
         // ACTION BUTTON
         Button actionBtn = new Button();

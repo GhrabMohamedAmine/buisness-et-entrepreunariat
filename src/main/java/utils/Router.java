@@ -29,9 +29,7 @@ public class Router {
             Parent view = loader.load();
 
             // ⭐ APPLY GLOBAL CSS HERE
-            view.getStylesheets().add(
-                    Router.class.getResource("/css/styles123.css").toExternalForm()
-            );
+
 
             // store controller (important for video stop later)
             view.getProperties().put("controller", loader.getController());
