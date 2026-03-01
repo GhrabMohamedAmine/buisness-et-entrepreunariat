@@ -14,33 +14,36 @@ public class AutoApprovalEngine {
 
     public enum Decision { ACCEPTED, DECLINED, PENDING }
 
-    public Decision decideForPhysicalRequest(String clientCode) throws SQLException {
-        int score = 100;
+    // ✅ Use userId instead of clientCode
+    public Decision decideForPhysicalRequest(int userId) throws SQLException {
+        int score = getUserScore(userId);
 
         if (score <= 0) return Decision.DECLINED;
 
-        int acceptedCount = countAcceptedAssignments(clientCode);
+        int acceptedCount = countAcceptedAssignments(userId);
 
         if (score >= 100 && acceptedCount >= 3) return Decision.ACCEPTED;
 
         return Decision.PENDING;
     }
 
-    private int getClientScore(String clientCode) throws SQLException {
-        String sql = "SELECT score FROM utilisateurs WHERE client_code = ?";
+    // ✅ user score by utilisateur.id
+    private int getUserScore(int userId) throws SQLException {
+        String sql = "SELECT score FROM utilisateurs WHERE id = ?";
         try (PreparedStatement ps = cnx.prepareStatement(sql)) {
-            ps.setString(1, clientCode);
+            ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next()) throw new SQLException("Client not found for client_code=" + clientCode);
+                if (!rs.next()) throw new SQLException("User not found for id=" + userId);
                 return rs.getInt("score");
             }
         }
     }
 
-    private int countAcceptedAssignments(String clientCode) throws SQLException {
-        String sql = "SELECT COUNT(*) c FROM resource_assignment WHERE client_code=? AND UPPER(status)='ACCEPTED'";
+    // ✅ count accepted assignments by resource_assignment.user_id
+    private int countAcceptedAssignments(int userId) throws SQLException {
+        String sql = "SELECT COUNT(*) c FROM resource_assignment WHERE user_id=? AND UPPER(status)='ACCEPTED'";
         try (PreparedStatement ps = cnx.prepareStatement(sql)) {
-            ps.setString(1, clientCode);
+            ps.setInt(1, userId);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? rs.getInt("c") : 0;
             }

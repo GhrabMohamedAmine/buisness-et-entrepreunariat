@@ -221,13 +221,15 @@ public class UserService {
         return users;
     }
 
-    public String getPhoneByClientCode(String clientCode) throws SQLException {
-        String sql = "SELECT telephone FROM utilisateurs WHERE client_code = ?";
+    public String getPhoneByUserId(int userId) throws SQLException {
+        String sql = "SELECT telephone FROM utilisateurs WHERE id = ?";
         PreparedStatement ps = connection.prepareStatement(sql);
-        ps.setString(1, clientCode);
+        ps.setInt(1, userId);
 
         ResultSet rs = ps.executeQuery();
-        if (rs.next()) return rs.getString("telephone");
+        if (rs.next()) {
+            return rs.getString("telephone");
+        }
         return null;
     }
 

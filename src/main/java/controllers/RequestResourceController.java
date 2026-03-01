@@ -3,12 +3,14 @@ package controllers;
 import com.example.testp1.model.ProjectDAO;
 import entities.Resource;
 import entities.ResourceAssignment;
+import entities.User;
 import javafx.collections.FXCollections;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.stage.Stage;
 import services.AssignmentService;
 import services.ResourceService;
+import services.UserService;
 
 import java.sql.SQLException;
 import java.util.List;
@@ -20,23 +22,39 @@ public class RequestResourceController {
     @FXML private TextField quantityField;
     @FXML private Label costLabel;
     @FXML private Button submitBtn;
-    @FXML private ComboBox ProjectCombo;
-    private final ProjectDAO projectDAO = new ProjectDAO();
+    @FXML private ComboBox<String> ProjectCombo;
 
+    private final ProjectDAO projectDAO = new ProjectDAO();
     private final ResourceService resourceService = new ResourceService();
     private final AssignmentService assignmentService = new AssignmentService();
 
-    private String clientCode = "CL001";
-    private ResourceAssignment editing = null;
+    // ✅ session user id (from UserService.currentUser)
+    private int userId;
 
-    // forced selected resource (when opened from catalog table)
+    private ResourceAssignment editing = null;
     private Resource forcedResource = null;
 
     @FXML
     public void initialize() {
+
+        // ✅ ALWAYS read the current user from UserService session
+        User u = UserService.getCurrentUser();
+        this.userId = (u == null) ? 0 : u.getId();
+
+        System.out.println("DEBUG RequestResourceController userId = " + userId);
+
+        if (userId <= 0) {
+            showError("Session not found. Please login again.");
+            // Disable submit to avoid FK errors
+            if (submitBtn != null) submitBtn.setDisable(true);
+            return;
+        }
+
         loadResources();
 
-        ProjectCombo.setItems(FXCollections.observableArrayList(projectDAO.getAvailableProjectNames()));
+        ProjectCombo.setItems(
+                FXCollections.observableArrayList(projectDAO.getAvailableProjectNames())
+        );
 
         quantityField.textProperty().addListener((obs, oldV, newV) -> updateEstimatedCost());
         resourceCombo.valueProperty().addListener((obs, oldV, newV) -> updateEstimatedCost());
@@ -54,20 +72,18 @@ public class RequestResourceController {
 
         } catch (SQLException e) {
             e.printStackTrace();
+            showError("Database error: " + e.getMessage());
         }
     }
-    
-    private void loadProjects(){
 
-    }
-
-    // opened from catalog table
+    // ================= FORCED RESOURCE (FROM CATALOG) =================
     public void setForcedResource(Resource r) {
         this.forcedResource = r;
 
         if (resourceCombo != null) {
             applyForcedResource();
         }
+
         updateEstimatedCost();
     }
 
@@ -77,14 +93,13 @@ public class RequestResourceController {
         resourceCombo.setDisable(true);
     }
 
-    // edit mode (used from ClientResourcesController)
+    // ================= EDIT MODE =================
     public void setEditMode(ResourceAssignment a) {
         this.editing = a;
 
         ProjectCombo.setValue(projectDAO.getNameById(Integer.parseInt(a.getProjectCode())));
         quantityField.setText(String.valueOf(a.getQuantity()));
 
-        // allow changing resource in edit mode
         forcedResource = null;
         resourceCombo.setDisable(false);
 
@@ -96,13 +111,20 @@ public class RequestResourceController {
         }
 
         updateEstimatedCost();
-        if (submitBtn != null) submitBtn.setText("Save Changes");
+
+        if (submitBtn != null) {
+            submitBtn.setText("Save Changes");
+        }
     }
 
+    // ================= COST =================
     private void updateEstimatedCost() {
         try {
             Resource r = (forcedResource != null) ? forcedResource : resourceCombo.getValue();
-            if (r == null) { costLabel.setText("0.00"); return; }
+            if (r == null) {
+                costLabel.setText("0.00");
+                return;
+            }
 
             int qty = Integer.parseInt(quantityField.getText().trim());
             double cost = qty * r.getUnitcost();
@@ -113,21 +135,28 @@ public class RequestResourceController {
         }
     }
 
+    // ================= SUBMIT =================
     @FXML
     private void handleRequest() {
+
+        if (userId <= 0) {
+            showError("Session not found. Please login again.");
+            return;
+        }
+
         Resource selected = (forcedResource != null) ? forcedResource : resourceCombo.getValue();
         if (selected == null) {
             showError("Please choose a resource.");
             return;
         }
-        String name = ProjectCombo.getSelectionModel().getSelectedItem().toString();
 
-        String projectCode = String.valueOf(projectDAO.getIdByName(name));
-        if (projectCode.isEmpty()) {
-            showError("Project code is required.");
+        if (ProjectCombo.getValue() == null) {
+            showError("Please choose a project.");
             return;
         }
 
+        String projectName = ProjectCombo.getValue();
+        String projectCode = String.valueOf(projectDAO.getIdByName(projectName));
 
         int qty;
         try {
@@ -151,9 +180,21 @@ public class RequestResourceController {
 
         try {
             if (editing == null) {
-                assignmentService.requestResource(selected.getId(), projectCode, clientCode, qty, totalCost);
+                assignmentService.requestResource(
+                        selected.getId(),
+                        projectCode,
+                        userId,
+                        qty,
+                        totalCost
+                );
             } else {
-                assignmentService.updateRequest(editing.getAssignmentId(), selected.getId(), projectCode, qty, totalCost);
+                assignmentService.updateRequest(
+                        editing.getAssignmentId(),
+                        selected.getId(),
+                        projectCode,
+                        qty,
+                        totalCost
+                );
             }
 
             closeWindow();
@@ -179,9 +220,5 @@ public class RequestResourceController {
         a.setHeaderText("Request Failed");
         a.setContentText(msg);
         a.showAndWait();
-    }
-
-    public void setClientCode(String clientCode) {
-        this.clientCode = clientCode;
     }
 }

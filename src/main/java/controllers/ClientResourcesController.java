@@ -1,6 +1,7 @@
 package controllers;
 
 import entities.ResourceAssignment;
+import entities.User;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Insets;
@@ -8,17 +9,18 @@ import javafx.geometry.Pos;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import services.AssignmentService;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import services.UserService;
 
 import org.kordamp.ikonli.javafx.FontIcon;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.List;
 
@@ -34,13 +36,16 @@ public class ClientResourcesController {
 
     private final AssignmentService assignmentService = new AssignmentService();
 
-    // TEMP client code (replace later by session)
-    private String clientCode = "CL001";
+    // ✅ session user id
+    private int userId = 0;
 
     @FXML
     public void initialize() {
+        User u = UserService.getCurrentUser();
+        this.userId = (u == null) ? 0 : u.getId();
 
-        this.clientCode = StackController.getInstance().getCurrentClientCode();
+        System.out.println("DEBUG ClientResourcesController userId = " + userId);
+
         loadAndRender();
     }
 
@@ -49,34 +54,29 @@ public class ClientResourcesController {
     private void openRequestPopup() {
         openRequestPopupInternal(null);
     }
+
     @FXML
     private void openRequestPage() {
         StackController.getInstance().loadPageRR();
-//        try {
-//            FXMLLoader loader = new FXMLLoader(getClass().getResource("/front/resources-catalog.fxml"));
-//            Parent root = loader.load();
-//
-//            // pass clientCode to catalog controller
-//            ResourcesCatalogController c = loader.getController();
-//            c.setClientCode(clientCode);
-//
-//            Stage stage = (Stage) requestedFlow.getScene().getWindow();
-//            stage.setScene(new Scene(root));
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
     }
 
     // ===================== OPEN POPUP (EDIT MODE) =====================
     private void openRequestPopupInternal(ResourceAssignment assignmentToEdit) {
         try {
+            // ✅ session check
+            if (userId <= 0) {
+                showErr("Session Error", "User session not found. Please login again.");
+                return;
+            }
+
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/front/request-resource-popup.fxml"));
             Parent root = loader.load();
 
             RequestResourceController popupController = loader.getController();
-            popupController.setClientCode(clientCode);
 
-            // Edit mode (must exist in RequestResourceController)
+            // ✅ DO NOT pass userId anymore; controller reads session itself.
+            // popupController.setUserId(userId);
+
             if (assignmentToEdit != null) {
                 popupController.setEditMode(assignmentToEdit);
             }
@@ -92,13 +92,17 @@ public class ClientResourcesController {
 
         } catch (Exception e) {
             e.printStackTrace();
+            showErr("UI Error", e.getMessage());
         }
     }
 
     // ===================== LOAD + RENDER =====================
     private void loadAndRender() {
         try {
-            List<ResourceAssignment> list = assignmentService.getByClient(clientCode);
+            if (userId <= 0) return;
+
+            // ✅ load by userId
+            List<ResourceAssignment> list = assignmentService.getByUser(userId);
 
             requestedFlow.getChildren().clear();
             acceptedFlow.getChildren().clear();
@@ -108,7 +112,6 @@ public class ClientResourcesController {
 
             for (ResourceAssignment a : list) {
                 String st = normalizeStatus(a.getStatus());
-
                 VBox card = createCard(a, st);
 
                 if (st.equals("PENDING") || st.equals("REQUESTED")) {
@@ -132,6 +135,7 @@ public class ClientResourcesController {
 
         } catch (SQLException e) {
             e.printStackTrace();
+            showErr("DB Error", e.getMessage());
         }
     }
 
@@ -140,7 +144,6 @@ public class ClientResourcesController {
     }
 
     // ===================== CARD =====================
-    // ===================== CARD =====================
     private VBox createCard(ResourceAssignment a, String statusText) {
 
         VBox card = new VBox(10);
@@ -148,7 +151,6 @@ public class ClientResourcesController {
         card.setPrefWidth(340);
         card.setPadding(new Insets(14));
 
-        // ---------- Top Row: thumbnail + header ----------
         ImageView thumb = new ImageView();
         thumb.getStyleClass().add("thumb");
         thumb.setFitWidth(72);
@@ -156,10 +158,8 @@ public class ClientResourcesController {
         thumb.setPreserveRatio(true);
         thumb.setSmooth(true);
 
-        // Load image if exists
         loadThumbImage(thumb, a.getResourceImagePath());
 
-        // Header right side
         Label name = new Label(a.getResourceName() != null ? a.getResourceName() : "Resource");
         name.getStyleClass().add("card-title");
 
@@ -172,7 +172,6 @@ public class ClientResourcesController {
         HBox titleRow = new HBox(10, name, spacer, type);
         titleRow.setAlignment(Pos.CENTER_LEFT);
 
-        // Details
         Label qty = new Label("Qty: " + a.getQuantity());
         qty.getStyleClass().add("card-line");
 
@@ -189,7 +188,6 @@ public class ClientResourcesController {
         HBox top = new HBox(12, thumb, infoBox);
         top.setAlignment(Pos.TOP_LEFT);
 
-        // ---------- Footer ----------
         Label statusChip = new Label(statusText);
         statusChip.getStyleClass().addAll("status-chip", statusClass(statusText));
 
@@ -222,22 +220,16 @@ public class ClientResourcesController {
 
     private void loadThumbImage(ImageView thumb, String imagePath) {
         try {
-            // Fallback: simple placeholder from classpath (optional)
-            // If you want a real placeholder image file, tell me and I’ll give you one.
             if (imagePath == null || imagePath.isBlank()) {
                 thumb.getStyleClass().add("thumb-empty");
                 return;
             }
-
-            // if the file doesn't exist => fallback
             if (!Files.exists(Paths.get(imagePath))) {
                 thumb.getStyleClass().add("thumb-empty");
                 return;
             }
-
             String uri = Paths.get(imagePath).toUri().toString();
             thumb.setImage(new Image(uri, true));
-
         } catch (Exception e) {
             thumb.getStyleClass().add("thumb-empty");
         }
@@ -249,7 +241,6 @@ public class ClientResourcesController {
         return st.equals("PENDING") || st.equals("REQUESTED") || st.equals("DECLINED");
     }
 
-    // ===================== DELETE =====================
     private void confirmDelete(ResourceAssignment a) {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
         alert.setTitle("Delete Request");
@@ -260,14 +251,11 @@ public class ClientResourcesController {
         alert.showAndWait().ifPresent(res -> {
             if (res == ButtonType.OK) {
                 try {
-                    assignmentService.delete(a.getAssignmentId()); // must exist
+                    assignmentService.delete(a.getAssignmentId());
                     loadAndRender();
                 } catch (SQLException ex) {
                     ex.printStackTrace();
-                    Alert err = new Alert(Alert.AlertType.ERROR);
-                    err.setHeaderText("Delete failed");
-                    err.setContentText(ex.getMessage());
-                    err.showAndWait();
+                    showErr("Delete failed", ex.getMessage());
                 }
             }
         });
@@ -284,8 +272,11 @@ public class ClientResourcesController {
         return "status-pending";
     }
 
-    public void setClientCode(String clientCode) {
-        this.clientCode = clientCode;
-        loadAndRender();
+    private void showErr(String title, String msg) {
+        Alert a = new Alert(Alert.AlertType.ERROR);
+        a.setTitle(title);
+        a.setHeaderText(null);
+        a.setContentText(msg);
+        a.showAndWait();
     }
 }

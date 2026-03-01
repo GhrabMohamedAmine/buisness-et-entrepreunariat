@@ -1,6 +1,7 @@
 package controllers;
 
 import entities.Resource;
+import entities.User;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -18,6 +19,7 @@ import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import services.ResourceService;
+import services.UserService;
 import services.ai.AIRecommendationService;
 
 import java.io.IOException;
@@ -25,14 +27,10 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.List;
-import java.util.Stack;
 
 public class ResourcesCatalogController {
 
-    // ✅ cards container (from resources-catalog.fxml)
     @FXML private FlowPane cardsFlow;
-
-    // ✅ filters (add them in FXML)
     @FXML private TextField searchField;
     @FXML private ComboBox<String> typeFilter;
 
@@ -42,25 +40,30 @@ public class ResourcesCatalogController {
 
     private FilteredList<Resource> filtered;
 
-    private String clientCode = "CL001";
+    // ✅ session user id (from UserService.currentUser)
+    private int userId = 0;
 
-    public void setClientCode(String clientCode) {
-        this.clientCode = clientCode;
+    // Optional: keep it if some other controller still calls it
+    public void setUserId(int userId) {
+        this.userId = userId;
     }
 
     @FXML
     public void initialize() {
-        this.clientCode = StackController.getInstance().getCurrentClientCode();
-        // init type filter
+
+        // ✅ ALWAYS read current user from UserService session first
+        User u = UserService.getCurrentUser();
+        this.userId = (u == null) ? 0 : u.getId();
+
+        System.out.println("DEBUG ResourcesCatalogController userId = " + userId);
+
         if (typeFilter != null) {
             typeFilter.setItems(FXCollections.observableArrayList("ALL", "PHYSICAL", "SOFTWARE"));
             typeFilter.getSelectionModel().select("ALL");
         }
 
-        // filtered list
         filtered = new FilteredList<>(data, r -> true);
 
-        // listeners
         if (searchField != null) {
             searchField.textProperty().addListener((obs, oldV, newV) -> applyFilters());
         }
@@ -136,13 +139,11 @@ public class ResourcesCatalogController {
     }
 
     private VBox createResourceCard(Resource r) {
-
         VBox card = new VBox(10);
         card.getStyleClass().add("catalog-card");
         card.setPrefWidth(320);
         card.setPadding(new Insets(14));
 
-        // Thumbnail
         ImageView thumb = new ImageView();
         thumb.getStyleClass().add("catalog-thumb");
         thumb.setFitWidth(292);
@@ -152,7 +153,6 @@ public class ResourcesCatalogController {
 
         loadImageInto(thumb, r.getImagePath());
 
-        // Header row: name + badge
         Label name = new Label(r.getName() != null ? r.getName() : "Resource");
         name.getStyleClass().add("catalog-title");
 
@@ -165,18 +165,13 @@ public class ResourcesCatalogController {
         HBox header = new HBox(10, name, spacer, badge);
         header.setAlignment(Pos.CENTER_LEFT);
 
-        // Info grid
         GridPane info = new GridPane();
         info.getStyleClass().add("catalog-info");
         info.setHgap(14);
         info.setVgap(6);
 
         Label unit = new Label("Unit: " + String.format("%.2f", r.getUnitcost()));
-        unit.getStyleClass().add("catalog-line");
-
         Label total = new Label("Total: " + r.getQuantity());
-        total.getStyleClass().add("catalog-line");
-
         Label av = new Label("Available: " + (int) r.getAvquant());
         av.getStyleClass().addAll("catalog-line", availabilityClass(r.getAvquant()));
 
@@ -184,7 +179,6 @@ public class ResourcesCatalogController {
         info.add(total, 1, 0);
         info.add(av, 0, 1);
 
-        // Request button
         Button requestBtn = new Button("Request");
         requestBtn.getStyleClass().add("catalog-request-btn");
 
@@ -201,12 +195,6 @@ public class ResourcesCatalogController {
         return card;
     }
 
-    private String availabilityClass(double av) {
-        if (av <= 0) return "av-zero";
-        if (av <= 5) return "av-low";
-        return "av-ok";
-    }
-
     private void loadImageInto(ImageView view, String path) {
         try {
             if (path == null || path.isBlank() || !Files.exists(Paths.get(path))) {
@@ -219,6 +207,36 @@ public class ResourcesCatalogController {
         } catch (Exception e) {
             view.getStyleClass().add("thumb-empty");
             view.setImage(null);
+        }
+    }
+
+    private void openRequestPopup(Resource selected) {
+        try {
+            // ✅ Ensure session exists
+            if (userId <= 0) {
+                showError("Session Error", "User session not found. Please login again.");
+                return;
+            }
+
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/front/request-resource-popup.fxml"));
+            Parent root = loader.load();
+
+            RequestResourceController popupController = loader.getController();
+
+            // ✅ Optional now, but safe
+            popupController.setForcedResource(selected);
+
+            Stage stage = new Stage();
+            stage.setTitle("Request Resource");
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setScene(new Scene(root));
+            stage.setResizable(false);
+            stage.showAndWait();
+
+            loadResources();
+
+        } catch (IOException ex) {
+            showError("UI Error", ex.getMessage());
         }
     }
 
@@ -240,7 +258,7 @@ public class ResourcesCatalogController {
                     Platform.runLater(() -> {
                         data.remove(finalFound);
                         data.add(0, finalFound);
-                        applyFilters(); // keep filters applied
+                        applyFilters();
                     });
                 }
             });
@@ -257,44 +275,15 @@ public class ResourcesCatalogController {
         }
     }
 
-    private void openRequestPopup(Resource selected) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/front/request-resource-popup.fxml"));
-            Parent root = loader.load();
-
-            RequestResourceController popupController = loader.getController();
-            popupController.setClientCode(clientCode);
-            popupController.setForcedResource(selected);
-
-            Stage stage = new Stage();
-            stage.setTitle("Request Resource");
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setScene(new Scene(root));
-            stage.setResizable(false);
-            stage.showAndWait();
-
-            loadResources();
-
-        } catch (IOException ex) {
-            showError("UI Error", ex.getMessage());
-        }
-    }
-
     @FXML
     private void goBack() {
         StackController.getInstance().loadPageCR();
-//        try {
-//            FXMLLoader loader = new FXMLLoader(getClass().getResource("/front/client-resources.fxml"));
-//            Parent root = loader.load();
-//
-//            ClientResourcesController c = loader.getController();
-//            c.setClientCode(clientCode);
-//
-//            Stage stage = (Stage) cardsFlow.getScene().getWindow();
-//            stage.setScene(new Scene(root));
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+    }
+
+    private String availabilityClass(double av) {
+        if (av <= 0) return "av-zero";
+        if (av <= 5) return "av-low";
+        return "av-ok";
     }
 
     private void showError(String title, String msg) {
