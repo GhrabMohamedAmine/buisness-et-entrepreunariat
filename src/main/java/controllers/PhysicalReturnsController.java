@@ -38,7 +38,7 @@ public class PhysicalReturnsController {
 
     @FXML
     public void initialize() {
-        clientCol.setCellValueFactory(new PropertyValueFactory<>("clientCode"));
+        //clientCol.setCellValueFactory(new PropertyValueFactory<>("user_id"));
         projectCol.setCellValueFactory(new PropertyValueFactory<>("projectCode"));
         resourceCol.setCellValueFactory(new PropertyValueFactory<>("resourceName"));
         qtyCol.setCellValueFactory(new PropertyValueFactory<>("quantity"));
@@ -106,6 +106,7 @@ public class PhysicalReturnsController {
                 });
             }
 
+
             @Override
             protected void updateItem(Void item, boolean empty) {
                 super.updateItem(item, empty);
@@ -130,6 +131,7 @@ public class PhysicalReturnsController {
         try {
             List<ResourceAssignment> list = service.getPhysicalOut();
             ObservableList<ResourceAssignment> obs = FXCollections.observableArrayList(list);
+
             table.setItems(obs);
 
             infoLabel.setText("Showing " + obs.size() + " physical resources currently out.");

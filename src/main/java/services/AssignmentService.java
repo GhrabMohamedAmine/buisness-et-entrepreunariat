@@ -135,7 +135,9 @@ public class AssignmentService {
                 if (lateDaysTotal <= 0) continue;
 
                 int totalLate = (int) lateDaysTotal;
-                int toApply = totalLate - applied;
+
+                int toApply = totalLate;
+                System.out.println("toApply: "+toApply +"\nApplied : "+applied +"\nLate : "+lateDaysTotal);
                 if (toApply <= 0) continue;
 
                 updateUserScoreDelta(userId, -(toApply * PENALTY_PER_DAY));
@@ -176,7 +178,7 @@ public class AssignmentService {
                         "JOIN resources r ON r.resource_id = ra.resource_id " +
                         "WHERE r.resource_type = 'PHYSICAL' " +
                         "  AND UPPER(ra.status) = 'ACCEPTED' " +
-                        "  AND ra.return_date IS NULL " +
+                        "  AND ra.return_date IS NOT NULL "+
                         "ORDER BY ra.assignment_date DESC";
 
         try (PreparedStatement ps = cnx.prepareStatement(sql);
