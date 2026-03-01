@@ -19,7 +19,7 @@ public class AiQuizGenerator {
 
         try {
 
-            String API_KEY = "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";
+            String API_KEY = "";
 
             URL url = new URL(API_URL);
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
