@@ -22,23 +22,30 @@
             </HBox>
 
             <VBox spacing="4" VBox.vgrow="ALWAYS">
-                <Button alignment="BASELINE_LEFT" maxWidth="Infinity" styleClass="menu-item" text="Dashboard">
-                    <graphic><FontIcon iconLiteral="mdi2v-view-dashboard-outline" iconSize="18" /></graphic>
-                </Button>
-                <Button alignment="BASELINE_LEFT" maxWidth="Infinity" styleClass="menu-item, active" text="User Management">
+<!--                <Button alignment="BASELINE_LEFT" maxWidth="Infinity" styleClass="menu-item" text="Dashboard">-->
+<!--                    <graphic><FontIcon iconLiteral="mdi2v-view-dashboard-outline" iconSize="18" /></graphic>-->
+<!--                </Button>-->
+                <Button fx:id="btnUserT" alignment="BASELINE_LEFT" maxWidth="Infinity" styleClass="menu-item, active" text="User Management" onAction="#returnToUserPage">
                     <graphic><FontIcon iconLiteral="mdi2a-account-group-outline" iconSize="18" /></graphic>
                 </Button>
                 <Button fx:id="btnReclamations" onAction="#handleReclamationsNavigation"
                         alignment="BASELINE_LEFT" maxWidth="Infinity" styleClass="menu-item" text="Reclamations">
                     <graphic><FontIcon iconLiteral="mdi2a-alert-circle-outline" iconSize="18" /></graphic>
                 </Button>
+                <Button fx:id="btnResources" onAction="#handleResources"
+                        alignment="BASELINE_LEFT" maxWidth="Infinity" styleClass="menu-item" text="Resources">
+                    <graphic>
+                        <FontIcon iconLiteral="mdi2t-tools" iconSize="18"/>
+                    </graphic>
+                </Button>
             </VBox>
             <Button  onAction="#handleLogout" alignment="BASELINE_LEFT" maxWidth="Infinity" styleClass="menu-item" text="Log out">
                 <graphic><FontIcon  iconLiteral="mdi2l-logout" iconSize="18" /></graphic>
             </Button>
         </VBox>
-
-        <VBox spacing="0" HBox.hgrow="ALWAYS">
+        <StackPane fx:id="AdminView">
+           <fx:include source="../back/SmAdminStack.fxml" fx:id="ResourceView"/>
+        <VBox fx:id="UsertableView" spacing="0" HBox.hgrow="ALWAYS">
             <HBox alignment="CENTER_LEFT" prefHeight="70.0" spacing="20" style="-fx-background-color: white; -fx-border-color: #E5E7EB; -fx-border-width: 0 0 1 0;">
                 <padding><Insets left="30" right="30" /></padding>
                 <TextField prefWidth="400.0" promptText="Search..." style="-fx-background-color: #F3F4F6; -fx-background-radius: 8;" />
@@ -128,5 +135,6 @@
                 </VBox>
             </VBox>
         </VBox>
+        </StackPane>
     </children>
 </HBox>

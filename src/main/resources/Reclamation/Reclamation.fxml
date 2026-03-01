@@ -32,14 +32,17 @@
             </HBox>
 
             <VBox spacing="4" VBox.vgrow="ALWAYS">
-                <Button alignment="BASELINE_LEFT" maxWidth="Infinity" styleClass="menu-item" text="Dashboard">
-                    <graphic><FontIcon iconLiteral="mdi2v-view-dashboard-outline" iconSize="18" /></graphic>
-                </Button>
                 <Button onAction="#handleUserManagementNavigation" alignment="BASELINE_LEFT" maxWidth="Infinity" styleClass="menu-item" text="User Management">
                     <graphic><FontIcon iconLiteral="mdi2a-account-group-outline" iconSize="18" /></graphic>
                 </Button>
                 <Button alignment="BASELINE_LEFT" maxWidth="Infinity" styleClass="menu-item, active" text="Reclamations">
                     <graphic><FontIcon iconLiteral="mdi2a-alert-circle-outline" iconSize="18" /></graphic>
+                </Button>
+                <Button  onAction="#goBack"
+                        alignment="BASELINE_LEFT" maxWidth="Infinity" styleClass="menu-item" text="Resources">
+                    <graphic>
+                        <FontIcon iconLiteral="mdi2t-tools" iconSize="18"/>
+                    </graphic>
                 </Button>
             </VBox>
 

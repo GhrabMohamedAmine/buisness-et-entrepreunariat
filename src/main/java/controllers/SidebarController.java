@@ -10,6 +10,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.Button;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.control.ToggleGroup;
+import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import services.UserService;
 
@@ -37,6 +38,8 @@ public class SidebarController {
 
     @FXML
     private ToggleButton CMButton;
+    @FXML
+    private ImageView logoImage;
 
 
     //private User userConnected = mainCon.getCurrentuser();;
@@ -148,5 +151,10 @@ public class SidebarController {
     @FXML
     public void onCommunicationClicked(){
         mainCon.messages();
+    }
+
+    @FXML
+    public void setResourcesView() {
+        mainCon.resources();
     }
 }

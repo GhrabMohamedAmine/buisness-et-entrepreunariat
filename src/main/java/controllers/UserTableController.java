@@ -17,12 +17,15 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
+import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import services.EmailService;
 import services.UserService;
 
@@ -41,6 +44,7 @@ public class UserTableController implements Initializable {
     @FXML private Circle topAvatar;
     @FXML private TableView<User> userTable;
     @FXML private TextField searchField;
+    private static UserTableController instance;
 
     // Statistiques
     @FXML private Label totalUsersCount;
@@ -69,10 +73,31 @@ public class UserTableController implements Initializable {
             "Chef Projet",
             "Expert Financier"
     );
+    @FXML
+    private Button btnResources;
+    @FXML
+    private Button btnReclamations;
+    @FXML
+    private StackPane AdminView;
+    @FXML
+    private VBox UsertableView;
+    @FXML
+    private StackPane ResourceView;
+    @FXML
+    private Button btnUserT;
+    private Button[] sidebarButtons;
+
+    public static UserTableController getInstance() {
+        return instance;
+    }
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
         setupColumns();
+
+        instance = this;
+
+        sidebarButtons = new Button[]{btnUserT, btnResources };
 
         // Initialisation du groupe de toggles AVANT de charger les données
         ToggleGroup statusGroup = new ToggleGroup();
@@ -93,6 +118,13 @@ public class UserTableController implements Initializable {
                 applyFilters();
             }
         });
+
+        ResourceView.setVisible(false);
+        ResourceView.setManaged(false);
+
+        UsertableView.setVisible(true);
+        UsertableView.setManaged(true);
+        UsertableView.toFront();
 
         // Écouteur de recherche
         searchField.textProperty().addListener((observable, oldValue, newValue) -> applyFilters());
@@ -428,6 +460,7 @@ public class UserTableController implements Initializable {
         switchScene(event, "/Reclamation/Reclamation.fxml");
     }
 
+    @FXML
     public void handleLogout(ActionEvent event) {
         UserService.logout();
         switchScene(event, "/Start/1ere.fxml");
@@ -465,5 +498,49 @@ public class UserTableController implements Initializable {
             e.printStackTrace();
             showAlert("Erreur", "Impossible d'ouvrir le popup d'invitation.");
         }
+    }
+
+    @FXML
+    public void handleResources() {
+        ResourceView.setVisible(true);
+        ResourceView.setManaged(true);
+        ResourceView.toFront();
+
+        UsertableView.setVisible(false);
+        UsertableView.setManaged(false);
+
+        setActiveButton(btnResources);
+        setInActiveButton(btnReclamations);
+        setInActiveButton(btnUserT);
+    }
+
+
+    @FXML
+    public void returnToUserPage() {
+        ResourceView.setVisible(false);
+        ResourceView.setManaged(false);
+
+        UsertableView.setVisible(true);
+        UsertableView.setManaged(true);
+        UsertableView.toFront();
+        setActiveButton(btnUserT);
+        setInActiveButton(btnReclamations);
+        //setInActiveButton(btnResources);
+
+    }
+
+
+
+    private void setActiveButton(Button clickedButton) {
+        for (Button btn : sidebarButtons) {
+            btn.getStyleClass().remove("menu-item");
+        }
+        clickedButton.getStyleClass().add("menu-item, active");
+    }
+    private void setInActiveButton(Button clickedButton) {
+        for (Button btn : sidebarButtons) {
+            btn.getStyleClass().remove("menu-item, active");
+        }
+        clickedButton.getStyleClass().add("menu-item");
     }
 }

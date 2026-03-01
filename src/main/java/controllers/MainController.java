@@ -151,6 +151,9 @@ public class MainController {
     public void messages() {
         setView("/org/example/yedikpromax/chat-view.fxml");
     }
+    public void resources() {
+        setView("/front/RSstack.fxml");
+    }
 
 
 }

@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controllers.DemandForecastController"
+            stylesheets="@demand-forecast.css">
+
+    <top>
+        <HBox spacing="12" alignment="CENTER_LEFT" styleClass="topbar">
+            <Button text="← Back" onAction="#backToResources" styleClass="ghost-btn"/>
+            <Label text="Demand Forecast Dashboard" styleClass="title"/>
+        </HBox>
+    </top>
+
+    <center>
+        <VBox spacing="16">
+            <padding>
+                <Insets top="20" right="20" bottom="20" left="20"/>
+            </padding>
+
+            <HBox spacing="12" alignment="CENTER_LEFT">
+                <Label text="Resource Type:" styleClass="label"/>
+                <ComboBox fx:id="typeBox" prefWidth="240" onAction="#onTypeChanged"/>
+                <Button text="Refresh" onAction="#refresh" styleClass="primary-btn"/>
+            </HBox>
+
+            <HBox spacing="16">
+                <VBox spacing="6" styleClass="card" prefWidth="260">
+                    <Label text="Predicted Demand (Next Month)" styleClass="card-title"/>
+                    <Label fx:id="predictedLabel" text="-" styleClass="big-number"/>
+                    <Label fx:id="riskLabel" text="-" styleClass="badge"/>
+                </VBox>
+
+                <VBox spacing="6" styleClass="card" prefWidth="260">
+                    <Label text="Available Stock (Type)" styleClass="card-title"/>
+                    <Label fx:id="availableLabel" text="-" styleClass="big-number"/>
+                    <Label text="Sum of available_quantity" styleClass="hint"/>
+                </VBox>
+            </HBox>
+
+            <LineChart fx:id="usageChart" title="Monthly Usage (Accepted Assignments)">
+                <xAxis>
+                    <CategoryAxis label="Month"/>
+                </xAxis>
+                <yAxis>
+                    <NumberAxis label="Total Quantity"/>
+                </yAxis>
+            </LineChart>
+
+            <Label text="Forecast by Type (All Types)" styleClass="section-title"/>
+
+            <TableView fx:id="forecastTable" prefHeight="220">
+                <columns>
+                    <TableColumn fx:id="typeCol" text="Type" prefWidth="180"/>
+                    <TableColumn fx:id="availableCol" text="Available" prefWidth="120"/>
+                    <TableColumn fx:id="predictedCol" text="Predicted" prefWidth="120"/>
+                    <TableColumn fx:id="riskCol" text="Risk" prefWidth="120"/>
+                </columns>
+            </TableView>
+
+        </VBox>
+    </center>
+</BorderPane>

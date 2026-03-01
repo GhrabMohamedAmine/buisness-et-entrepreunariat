@@ -70,7 +70,7 @@
             <text>Communication</text>
         </ToggleButton>
 
-        <ToggleButton fx:id="RSbutton" styleClass="nav-item" toggleGroup="$navGroup">
+        <ToggleButton fx:id="RSbutton" styleClass="nav-item" toggleGroup="$navGroup" onAction="#setResourcesView">
             <graphic>
                 <FontIcon iconLiteral="mdi2c-cube-outline"/>
             </graphic>

@@ -1,0 +1,30 @@
+.topbar {
+    -fx-padding: 14;
+    -fx-background-color: #0f172a;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.title {
+    -fx-text-fill: white;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.secondary-btn {
+    -fx-background-color: #1f2937;
+    -fx-text-fill: white;
+    -fx-padding: 8 14;
+    -fx-background-radius: 8;
+}
+
+.secondary-btn:hover {
+    -fx-background-color: #374151;
+}
+
+.content {
+    -fx-padding: 14;
+}
+
+.info {
+    -fx-text-fill: #334155;
+}

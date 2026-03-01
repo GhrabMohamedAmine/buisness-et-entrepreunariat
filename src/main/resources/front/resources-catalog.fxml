@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controllers.ResourcesCatalogController"
+      spacing="18"
+      stylesheets="@resources-catalog.css"
+      styleClass="root">
+
+    <padding>
+        <Insets top="24" right="24" bottom="24" left="24"/>
+    </padding>
+
+    <!-- Header -->
+    <BorderPane>
+        <left>
+            <VBox spacing="4">
+                <Label text="Resources Catalog" styleClass="header-title"/>
+                <Label text="Select a resource and send your request"
+                       styleClass="header-subtitle"/>
+            </VBox>
+        </left>
+
+        <right>
+            <HBox spacing="10" alignment="CENTER_RIGHT">
+                <Button text="🤖 AI Recommend"
+                        onAction="#openAIRecommend"
+                        styleClass="primary-btn"/>
+                <Button text="Back"
+                        onAction="#goBack"
+                        styleClass="secondary-btn"/>
+            </HBox>
+        </right>
+    </BorderPane>
+    <!-- Filters -->
+    <HBox spacing="12" alignment="CENTER_LEFT" styleClass="filter-bar">
+        <TextField fx:id="searchField" promptText="Search by resource name..." styleClass="search-field"/>
+        <ComboBox fx:id="typeFilter" prefWidth="180" styleClass="filter-combo"/>
+    </HBox>
+
+    <!-- Cards -->
+    <ScrollPane fitToWidth="true" VBox.vgrow="ALWAYS" styleClass="scroll">
+        <content>
+            <FlowPane fx:id="cardsFlow"
+                      hgap="14" vgap="14"
+                      prefWrapLength="980"
+                      styleClass="cards-wrap"/>
+        </content>
+    </ScrollPane>
+
+</VBox>

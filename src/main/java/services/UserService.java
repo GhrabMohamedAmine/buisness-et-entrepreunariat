@@ -1,7 +1,12 @@
 package services;
 
 import entities.User;
+import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
+import javafx.scene.layout.StackPane;
 import utils.database;
+
+import java.io.IOException;
 import java.sql.*;
 import utils.MyDatabase;
 
@@ -215,4 +220,16 @@ public class UserService {
         }
         return users;
     }
+
+    public String getPhoneByClientCode(String clientCode) throws SQLException {
+        String sql = "SELECT telephone FROM utilisateurs WHERE client_code = ?";
+        PreparedStatement ps = connection.prepareStatement(sql);
+        ps.setString(1, clientCode);
+
+        ResultSet rs = ps.executeQuery();
+        if (rs.next()) return rs.getString("telephone");
+        return null;
+    }
+
+
 }

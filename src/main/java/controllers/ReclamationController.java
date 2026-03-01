@@ -607,4 +607,10 @@ public class ReclamationController implements Initializable {
         icon.setIconSize(18);
         return icon;
     }
+
+    public void goBack(ActionEvent actionEvent) {
+        switchScene(actionEvent,"/User/UserTable.fxml");
+        UserTableController.getInstance().handleResources();
+
+    }
 }

@@ -1,5 +1,6 @@
 package services;
 
+import services.IService;
 import entities.Message;
 import entities.ParticipantView;
 import utils.DBConnection;

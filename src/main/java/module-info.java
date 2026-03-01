@@ -35,7 +35,9 @@ module org.example.yedikpromax {
 
     requires org.kordamp.ikonli.fontawesome5;
     requires okhttp3;
-
+    requires javafx.graphics;
+    requires spring.boot.autoconfigure;
+    //requires org.example.yedikpromax;
 
 
     opens org.example.yedikpromax to javafx.fxml;
@@ -45,7 +47,7 @@ module org.example.yedikpromax {
     opens com.example.testp1.controllers to javafx.fxml;
     opens com.example.testp1 to javafx.fxml;
     opens entities to javafx.base;
-//  opens services.ai to com.fasterxml.jackson.databind;
+    opens services.ai to com.fasterxml.jackson.databind;
 
     exports controllers;
     exports Mains;

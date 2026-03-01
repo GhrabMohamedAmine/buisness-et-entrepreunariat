@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<BorderPane xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controllers.PhysicalReturnsController"
+            stylesheets="@physical-returns.css">
+
+    <top>
+        <HBox spacing="10" styleClass="topbar">
+            <Label text="Physical Resources Returns" styleClass="title"/>
+            <Region HBox.hgrow="ALWAYS"/>
+            <Button text="Refresh" onAction="#handleRefresh" styleClass="secondary-btn"/>
+            <Button text="Back" onAction="#goBack" styleClass="secondary-btn"/>
+        </HBox>
+    </top>
+
+    <center>
+        <VBox spacing="10" styleClass="content">
+            <Label fx:id="infoLabel" text="" styleClass="info"/>
+
+            <TableView fx:id="table" VBox.vgrow="ALWAYS">
+                <columns>
+                    <TableColumn fx:id="clientCol" text="Client"/>
+                    <TableColumn fx:id="projectCol" text="Project"/>
+                    <TableColumn fx:id="resourceCol" text="Resource"/>
+                    <TableColumn fx:id="qtyCol" text="Qty"/>
+                    <TableColumn fx:id="assignedCol" text="Assigned"/>
+                    <TableColumn fx:id="endDateCol" text="Project End"/>
+                    <TableColumn fx:id="lateDaysCol" text="Late Days"/>
+                    <TableColumn fx:id="actionCol" text="Action"/>
+                </columns>
+            </TableView>
+        </VBox>
+    </center>
+
+</BorderPane>
