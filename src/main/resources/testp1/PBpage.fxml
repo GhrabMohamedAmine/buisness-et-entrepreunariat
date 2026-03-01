@@ -60,7 +60,7 @@
 
             </VBox>
 
-            <VBox layoutX="64.0" layoutY="308.0" prefHeight="493.0" prefWidth="1086.0" spacing="20">
+            <VBox layoutX="64.0" layoutY="308.0" prefHeight="610.0" prefWidth="1086.0" spacing="20">
                 <HBox alignment="CENTER_LEFT" prefHeight="23.0" prefWidth="1086.0" spacing="25" style="-fx-padding: 0 0 10 0; -fx-border-color: #E7E5E4; -fx-border-width: 0 0 1 0;">
                     <Button fx:id="overviewTab"  onAction="#onOverviewTabClicked" styleClass="tab-active" text="Overview" />
                     <Button fx:id="expensesTab"  onAction="#onExpensesTabClicked" styleClass="tab-inactive" text="Expenses" />
