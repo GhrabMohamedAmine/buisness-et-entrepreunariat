@@ -186,7 +186,7 @@ public class ProjectDetailsController {
             if (task == null || task.getStatus() == null) {
                 continue;
             }
-            String normalized = task.getStatus().trim().toUpperCase(Locale.ROOT) ;
+            String normalized = task.getStatus().trim().toUpperCase(Locale.ROOT);
             if ("DONE".equals(normalized)) {
                 done++;
             }
@@ -395,10 +395,11 @@ public class ProjectDetailsController {
 
                 TaskRowController controller = loader.getController();
                 controller.setTaskData(t);
-                boolean canModifyStatus = canCurrentUserModifyTaskStatus(t);
-                controller.setStatusEditingAllowed(canModifyStatus);
+                boolean canModifyTask = canCurrentUserModifyTask(t);
+                controller.setStatusEditingAllowed(canModifyTask);
+                controller.setTaskActionsAllowed(canModifyTask);
                 controller.setOnStatusToggle(selected -> {
-                    if (!canModifyStatus) {
+                    if (!canModifyTask) {
                         return false;
                     }
                     String newStatus = selected ? "DONE" : "TODO";
@@ -410,7 +411,7 @@ public class ProjectDetailsController {
                     return updated;
                 });
                 controller.setOnStatusChange(newStatus -> {
-                    if (!canModifyStatus) {
+                    if (!canModifyTask) {
                         return false;
                     }
                     boolean updated = taskService.updateTaskStatus(t.getId(), newStatus);
@@ -514,10 +515,11 @@ public class ProjectDetailsController {
 
                 controller.setTaskData(task);
                 controller.setKanbanMode(true);
-                boolean canModifyStatus = canCurrentUserModifyTaskStatus(task);
-                controller.setStatusEditingAllowed(canModifyStatus);
+                boolean canModifyTask = canCurrentUserModifyTask(task);
+                controller.setStatusEditingAllowed(canModifyTask);
+                controller.setTaskActionsAllowed(canModifyTask);
                 controller.setOnStatusToggle(selected -> {
-                    if (!canModifyStatus) {
+                    if (!canModifyTask) {
                         return false;
                     }
                     String newStatus = selected ? TaskValueMapper.STATUS_DONE : TaskValueMapper.STATUS_TODO;
@@ -530,7 +532,7 @@ public class ProjectDetailsController {
                     return updated;
                 });
                 controller.setOnStatusChange(newStatus -> {
-                    if (!canModifyStatus) {
+                    if (!canModifyTask) {
                         return false;
                     }
                     boolean updated = taskService.updateTaskStatus(task.getId(), newStatus);
@@ -803,6 +805,7 @@ public class ProjectDetailsController {
 
     private void openUpdateTaskModal(Task task) {
         if (task == null) return;
+        if (!canCurrentUserModifyTask(task)) return;
         Node mainLayout = tasksContainer.getScene().getRoot();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/UpdateTaskModal.fxml"));
@@ -842,6 +845,7 @@ public class ProjectDetailsController {
 
     private void deleteTask(Task task) {
         if (task == null) return;
+        if (!canCurrentUserModifyTask(task)) return;
         Node mainLayout = tasksContainer.getScene().getRoot();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/DeleteConfirmModal.fxml"));
@@ -916,7 +920,7 @@ public class ProjectDetailsController {
                 try {
                     int taskId = Integer.parseInt(db.getString());
                     Task draggedTask = kanbanTaskById.get(taskId);
-                    if (!canCurrentUserModifyTaskStatus(draggedTask)) {
+                    if (!canCurrentUserModifyTask(draggedTask)) {
                         event.setDropCompleted(false);
                         event.consume();
                         return;
@@ -937,17 +941,19 @@ public class ProjectDetailsController {
         });
     }
 
-    private boolean canCurrentUserModifyTaskStatus(Task task) {
+    private boolean canCurrentUserModifyTask(Task task) {
         if (task == null) {
             return false;
         }
-        int currentUserId = resolveCurrentUserId();
-        return currentUserId > 0 && task.getAssignedTo() == currentUserId;
-    }
-
-    private int resolveCurrentUserId() {
         User currentUser = UserService.getCurrentUser();
-        return currentUser == null ? -1 : currentUser.getId();
+        if (currentUser == null || currentUser.getRole() == null) {
+            return false;
+        }
+        String normalizedRole = currentUser.getRole().trim().toUpperCase(Locale.ROOT);
+        if ("MANAGER".equals(normalizedRole)) {
+            return true;
+        }
+        return task.getAssignedTo() == currentUser.getId();
     }
 
     private void addCardToKanbanColumn(VBox column, Parent row) {

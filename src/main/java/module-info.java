@@ -48,6 +48,7 @@ module NEXUM {
 
     // Game library (FXGL)
     requires com.almasb.fxgl.all;
+    requires jdk.httpserver;
 
     // Open packages for FXML and reflection
     opens controllers to javafx.fxml;

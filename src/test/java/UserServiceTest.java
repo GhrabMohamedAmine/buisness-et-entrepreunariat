@@ -27,27 +27,33 @@ public class UserServiceTest {
     @Order(1)
     @DisplayName("1. Inscription (Création)")
     public void testSignup() throws SQLException {
+        // Utilisation du constructeur complet avec 11 paramètres
+        // Les champs byte[] et String (faceId) sont mis à null (pas d'image ni de faceId pour ce test)
         User newUser = new User(
-                0, "Wayne", "Bruce", TEST_EMAIL, "99999999",
-                "Client", "IT", "Actif", "2024-01-01", "batman.png"
+                0,                           // id (sera généré)
+                "Wayne",                      // nom
+                "Bruce",                      // prénom
+                TEST_EMAIL,                   // email
+                "99999999",                    // téléphone
+                "Client",                      // rôle
+                "IT",                          // département
+                "Actif",                       // statut
+                "2024-01-01",                  // date d'inscription
+                null,                          // imageData (byte[])
+                null                           // faceId
         );
 
-        // 1. Appeler la méthode mise à jour qui ne fait que l'insertion
         userService.signup(newUser, "password123");
 
-        // 2. Vérification immédiate via recupererTous
+        // Vérification via recupererTous
         List<User> users = userService.recupererTous();
         Optional<User> userFound = users.stream()
                 .filter(u -> u.getEmail().equals(TEST_EMAIL))
                 .findFirst();
 
-        // 3. Assertions
         assertTrue(userFound.isPresent(), "L'inscription a échoué (User non trouvé)");
 
-        // Vérifier que l'ID a bien été généré et injecté dans l'objet par getGeneratedKeys
         createdUserId = userFound.get().getId();
-
-        // Vérifier que l'utilisateur n'est PAS connecté automatiquement (currentUser doit être null ou différent)
         assertNull(UserService.getCurrentUser(), "Le user ne devrait pas être connecté automatiquement après le signup");
 
         System.out.println("✅ Inscription réussie en base de données. ID = " + createdUserId);
@@ -61,7 +67,6 @@ public class UserServiceTest {
         boolean success = userService.authenticate(TEST_EMAIL, "password123");
         assertTrue(success, "Login échoué avec le bon mot de passe");
 
-        // Vérification du Current User en mémoire
         User current = UserService.getCurrentUser();
         assertNotNull(current, "La session (currentUser) est vide après login");
         assertEquals(createdUserId, current.getId(), "L'ID du currentUser est incorrect");
@@ -76,9 +81,21 @@ public class UserServiceTest {
     @Order(3)
     @DisplayName("3. Modification du Profil")
     public void testModifierProfil() throws SQLException {
+        // Création d'un utilisateur avec les nouvelles données
+        // On conserve le même email, on change nom, prénom, téléphone, département
+        // imageData = null (pas de changement d'image)
         User userToUpdate = new User(
-                createdUserId, "Kent", "Clark", TEST_EMAIL, "11111111",
-                "Client", "Journalism", "Actif", "2024-01-01", "superman.png"
+                createdUserId,
+                "Kent",                        // nouveau nom
+                "Clark",                       // nouveau prénom
+                TEST_EMAIL,                    // email inchangé
+                "11111111",                     // nouveau téléphone
+                "Client",                       // rôle (inchangé)
+                "Journalism",                    // nouveau département
+                "Actif",                         // statut
+                "2024-01-01",                    // date inchangée
+                null,                            // imageData (pas de changement)
+                null                             // faceId (inchangé)
         );
 
         userService.modifierProfil(userToUpdate);
@@ -86,7 +103,11 @@ public class UserServiceTest {
         // Vérification
         User updatedUser = getUserFromDb(createdUserId);
         assertEquals("Kent", updatedUser.getName(), "Nom non mis à jour");
-        assertEquals("superman.png", updatedUser.getImageLink(), "Image non mise à jour");
+        assertEquals("Clark", updatedUser.getFirstName(), "Prénom non mis à jour");
+        assertEquals("11111111", updatedUser.getPhone(), "Téléphone non mis à jour");
+        assertEquals("Journalism", updatedUser.getDepartment(), "Département non mis à jour");
+        // Vérifier que l'image est toujours null (ou inchangée)
+        assertNull(updatedUser.getImageData(), "L'image devrait être null");
         System.out.println("✅ Modification Profil OK.");
     }
 
@@ -94,19 +115,13 @@ public class UserServiceTest {
     @Order(4)
     @DisplayName("4. Modification du Rôle (Admin)")
     public void testModifierRole() throws SQLException {
-        // Hypothèse : votre méthode s'appelle modifierRole(int id, String newRole)
-        // Si elle s'appelle différemment, ajustez le nom ici.
-        try {
-            // Note : Cette méthode est visible dans vos snippets (UPDATE utilisateurs SET role...)
-            userService.modifierRole(createdUserId, "Admin");
+        // Vérifions d'abord que la méthode existe (elle est présente dans votre UserService)
+        // Si la méthode n'existe pas, ce test échouera (vous pouvez l'adapter)
+        userService.modifierRole(createdUserId, "Admin");
 
-            User updatedUser = getUserFromDb(createdUserId);
-            assertEquals("Admin", updatedUser.getRole(), "Le rôle n'a pas été modifié");
-            System.out.println("✅ Modification Rôle OK.");
-        } catch (Exception e) {
-            // Si la méthode n'existe pas encore dans UserService, ce bloc l'ignorera
-            System.out.println("⚠️ Test Rôle ignoré (Méthode modifierRole introuvable ou erreur SQL)");
-        }
+        User updatedUser = getUserFromDb(createdUserId);
+        assertEquals("Admin", updatedUser.getRole(), "Le rôle n'a pas été modifié");
+        System.out.println("✅ Modification Rôle OK.");
     }
 
     @Test
@@ -117,7 +132,6 @@ public class UserServiceTest {
         assertNotNull(users, "La liste ne doit pas être null");
         assertFalse(users.isEmpty(), "La liste ne doit pas être vide");
 
-        // On vérifie que notre user de test est bien dedans
         boolean present = users.stream().anyMatch(u -> u.getId() == createdUserId);
         assertTrue(present, "L'utilisateur de test est introuvable dans la liste globale");
         System.out.println("✅ Récupération Liste OK (" + users.size() + " utilisateurs trouvés).");
@@ -132,7 +146,6 @@ public class UserServiceTest {
         User deletedUser = getUserFromDb(createdUserId);
         assertNull(deletedUser, "L'utilisateur existe encore après suppression !");
 
-        // Vérification que le currentUser est vidé
         assertNull(UserService.getCurrentUser(), "La session n'a pas été nettoyée après suppression");
         System.out.println("✅ Suppression OK.");
     }

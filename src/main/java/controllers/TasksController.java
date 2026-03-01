@@ -244,7 +244,7 @@ public class TasksController {
         deleteIcon.setOnMouseClicked(e -> deleteTask(task));
 
         doneCheck.setOnAction(e -> {
-            if (!canCurrentUserModifyTaskStatus(task)) {
+            if (!canCurrentUserModifyTask(task)) {
                 doneCheck.setSelected(!doneCheck.isSelected());
                 return;
             }
@@ -258,7 +258,7 @@ public class TasksController {
         });
 
         inProgressIcon.setOnMouseClicked(e -> {
-            if (!canCurrentUserModifyTaskStatus(task)) {
+            if (!canCurrentUserModifyTask(task)) {
                 return;
             }
             String currentStatus = TaskValueMapper.normalizeStatus(task.getStatus());
@@ -270,11 +270,17 @@ public class TasksController {
                 loadTasks(currentSearchQuery());
             }
         });
-        boolean canModifyStatus = canCurrentUserModifyTaskStatus(task);
-        doneCheck.setDisable(!canModifyStatus);
-        inProgressIcon.setDisable(!canModifyStatus);
-        inProgressIcon.setMouseTransparent(!canModifyStatus);
-        inProgressIcon.setOpacity(canModifyStatus ? 1.0 : 0.45);
+        boolean canModifyTask = canCurrentUserModifyTask(task);
+        doneCheck.setDisable(!canModifyTask);
+        inProgressIcon.setDisable(!canModifyTask);
+        inProgressIcon.setMouseTransparent(!canModifyTask);
+        inProgressIcon.setOpacity(canModifyTask ? 1.0 : 0.45);
+        editIcon.setDisable(!canModifyTask);
+        editIcon.setMouseTransparent(!canModifyTask);
+        editIcon.setOpacity(canModifyTask ? 1.0 : 0.45);
+        deleteIcon.setDisable(!canModifyTask);
+        deleteIcon.setMouseTransparent(!canModifyTask);
+        deleteIcon.setOpacity(canModifyTask ? 1.0 : 0.45);
 
         row.getChildren().addAll(doneCheck, inProgressIcon, title, priority, status, dateBox, assignedTo, editIcon, deleteIcon);
         return row;
@@ -471,12 +477,19 @@ public class TasksController {
         return searchField == null ? null : searchField.getText();
     }
 
-    private boolean canCurrentUserModifyTaskStatus(Task task) {
+    private boolean canCurrentUserModifyTask(Task task) {
         if (task == null) {
             return false;
         }
-        int currentUserId = resolveCurrentUserId();
-        return currentUserId > 0 && task.getAssignedTo() == currentUserId;
+        var currentUser = UserService.getCurrentUser();
+        if (currentUser == null || currentUser.getRole() == null) {
+            return false;
+        }
+        String normalizedRole = currentUser.getRole().trim().toUpperCase(Locale.ROOT);
+        if ("MANAGER".equals(normalizedRole)) {
+            return true;
+        }
+        return task.getAssignedTo() == currentUser.getId();
     }
 
     private int resolveCurrentUserId() {

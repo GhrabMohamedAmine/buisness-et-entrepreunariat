@@ -28,6 +28,7 @@ public class TaskRowController {
     private String currentStatus = TaskValueMapper.STATUS_TODO;
     private boolean kanbanMode = false;
     private boolean statusEditingAllowed = true;
+    private boolean taskActionsAllowed = true;
 
     public void setTaskData(Task task) {
         if (task == null) return;
@@ -39,9 +40,9 @@ public class TaskRowController {
                     return;
                 }
                 Dragboard db = taskRowRoot.startDragAndDrop(TransferMode.MOVE);
-            ClipboardContent content = new ClipboardContent();
+                ClipboardContent content = new ClipboardContent();
                 content.putString(String.valueOf(task.getId()));
-            db.setContent(content);
+                db.setContent(content);
                 db.setDragView(taskRowRoot.snapshot(null, null));
                 event.consume();
             });
@@ -84,6 +85,11 @@ public class TaskRowController {
         applyStatusEditingState();
     }
 
+    public void setTaskActionsAllowed(boolean allowed) {
+        this.taskActionsAllowed = allowed;
+        applyActionEditingState();
+    }
+
     private void applyMode() {
         if (taskRowRoot == null) return;
         if (kanbanMode) {
@@ -104,6 +110,7 @@ public class TaskRowController {
             setNodeVisibleManaged(inProgressIcon, true);
         }
         applyStatusEditingState();
+        applyActionEditingState();
     }
 
     private void setNodeVisibleManaged(javafx.scene.Node node, boolean value) {
@@ -146,6 +153,19 @@ public class TaskRowController {
             inProgressIcon.setDisable(!statusEditingAllowed);
             inProgressIcon.setMouseTransparent(!statusEditingAllowed);
             inProgressIcon.setOpacity(statusEditingAllowed ? 1.0 : 0.45);
+        }
+    }
+
+    private void applyActionEditingState() {
+        if (editIcon != null) {
+            editIcon.setDisable(!taskActionsAllowed);
+            editIcon.setMouseTransparent(!taskActionsAllowed);
+            editIcon.setOpacity(taskActionsAllowed ? 1.0 : 0.45);
+        }
+        if (deleteIcon != null) {
+            deleteIcon.setDisable(!taskActionsAllowed);
+            deleteIcon.setMouseTransparent(!taskActionsAllowed);
+            deleteIcon.setOpacity(taskActionsAllowed ? 1.0 : 0.45);
         }
     }
 
