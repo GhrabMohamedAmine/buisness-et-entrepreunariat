@@ -1123,3 +1123,44 @@
 .default-color1.chart-pie { -fx-pie-color: #00C48C; }
 .default-color2.chart-pie { -fx-pie-color: #FFB020; }
 .default-color3.chart-pie { -fx-pie-color: #FF647C; }
+
+/* --- MODERN PILL TABS --- */
+
+.modern-pill-tabs .tab-header-background {
+    -fx-background-color: #ffffff;
+}
+
+/* 2. Add spacing between the tabs and the charts below them */
+.modern-pill-tabs .tab-header-area {
+    -fx-padding: 0 0 15px 0;
+}
+
+/* 3. Style the UNSELECTED tabs (Light gray background, medium gray text) */
+.modern-pill-tabs .tab {
+    -fx-background-radius: 20px;
+    -fx-padding: 8px 24px;
+    -fx-background-color: #ffffff;
+    -fx-cursor: hand;
+    -fx-border-width: 0;
+}
+.modern-pill-tabs .tab .tab-label {
+    -fx-text-fill: #6b7280;
+    -fx-font-weight: normal;
+}
+
+/* 4. Hover effect for unselected tabs (Slightly darker gray) */
+
+/* 5. Style the SELECTED tab (Pure white with a subtle shadow to make it float) */
+.modern-pill-tabs .tab:selected {
+    -fx-background-color: #ffffff;
+    /*-fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 5, 0, 0, 2);*/
+
+}
+
+/* 6. Selected tab text (Dark, bold text for high contrast) */
+.modern-pill-tabs .tab:selected .tab-label {
+    -fx-text-fill: #7F22FE;
+    -fx-font-weight: bold;
+}
+/* 7. Hide the default blue focus ring when clicking */
+

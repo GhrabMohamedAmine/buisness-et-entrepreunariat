@@ -5,44 +5,54 @@
 <?import javafx.scene.chart.CategoryAxis?>
 <?import javafx.scene.chart.NumberAxis?>
 <?import javafx.scene.chart.PieChart?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.VBox?>
 
-<AnchorPane prefHeight="560.0" prefWidth="1080.0" styleClass="content-card" stylesheets="@../styles/nexum.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.controllers.PBOverviewController">
+<AnchorPane prefHeight="400.0" prefWidth="1080.0" styleClass="content-card" stylesheets="@../styles/nexum.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.controllers.PBOverviewController">
     <children>
-        <VBox spacing="16.0" AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="14.0">
-            <children>
-                <HBox alignment="CENTER" spacing="16.0" prefHeight="250.0" minHeight="230.0" VBox.vgrow="NEVER">
-                    <children>
-                        <PieChart fx:id="expensePieChart" title="Expense Distribution ($)" prefHeight="220.0" minHeight="200.0" prefWidth="380.0" minWidth="340.0" HBox.hgrow="ALWAYS" />
-
-                        <VBox spacing="6.0" prefHeight="220.0" minHeight="200.0" prefWidth="560.0" minWidth="460.0" HBox.hgrow="ALWAYS">
+        <TabPane AnchorPane.bottomAnchor="14.0" AnchorPane.leftAnchor="14.0" AnchorPane.rightAnchor="14.0" AnchorPane.topAnchor="14.0" tabClosingPolicy="UNAVAILABLE" styleClass="modern-pill-tabs">
+            <tabs>
+                <Tab text="Expense Distribution">
+                    <content>
+                        <HBox alignment="CENTER" spacing="16.0" style="-fx-padding: 10px;">
                             <children>
-                                <BarChart fx:id="transactionBarChart" title="Expense Amount by Category" prefHeight="190.0" minHeight="170.0" legendVisible="false" VBox.vgrow="ALWAYS">
-                                    <xAxis>
-                                        <CategoryAxis label="Category" side="BOTTOM" />
-                                    </xAxis>
-                                    <yAxis>
-                                        <NumberAxis label="Total Amount ($)" side="LEFT" />
-                                    </yAxis>
-                                </BarChart>
-                                <FlowPane fx:id="barCategoryLegend" hgap="10.0" vgap="6.0" />
-                            </children>
-                        </VBox>
-                    </children>
-                </HBox>
+                                <PieChart fx:id="expensePieChart" title="Expense Distribution ($)" prefWidth="380.0" minWidth="340.0" HBox.hgrow="ALWAYS" />
 
-                <AreaChart fx:id="runwayOverviewChart" prefHeight="290.0" minHeight="260.0" title="Budget Runway Forecast (Calculation Only)" legendVisible="false" VBox.vgrow="ALWAYS">
-                    <xAxis>
-                        <CategoryAxis label="Forecast Month" side="BOTTOM" />
-                    </xAxis>
-                    <yAxis>
-                        <NumberAxis label="Remaining Budget (%)" side="LEFT" autoRanging="false" lowerBound="0.0" upperBound="100.0" tickUnit="20.0" />
-                    </yAxis>
-                </AreaChart>
-            </children>
-        </VBox>
+                                <VBox spacing="6.0" prefWidth="560.0" minWidth="460.0" HBox.hgrow="ALWAYS">
+                                    <children>
+                                        <BarChart fx:id="transactionBarChart" title="Expense Amount by Category" legendVisible="false" VBox.vgrow="ALWAYS">
+                                            <xAxis>
+                                                <CategoryAxis label="Category" side="BOTTOM" />
+                                            </xAxis>
+                                            <yAxis>
+                                                <NumberAxis label="Total Amount ($)" side="LEFT" />
+                                            </yAxis>
+                                        </BarChart>
+                                        <FlowPane fx:id="barCategoryLegend" hgap="10.0" vgap="6.0" />
+                                    </children>
+                                </VBox>
+                            </children>
+                        </HBox>
+                    </content>
+                </Tab>
+
+                <Tab text="Runway Forecast">
+                    <content>
+                        <AreaChart fx:id="runwayOverviewChart" title="Budget Runway Forecast (Calculation Only)" legendVisible="false" style="-fx-padding: 10px;">
+                            <xAxis>
+                                <CategoryAxis label="Forecast Month" side="BOTTOM" />
+                            </xAxis>
+                            <yAxis>
+                                <NumberAxis label="Remaining Budget (%)" side="LEFT" autoRanging="false" lowerBound="0.0" upperBound="100.0" tickUnit="20.0" />
+                            </yAxis>
+                        </AreaChart>
+                    </content>
+                </Tab>
+            </tabs>
+        </TabPane>
     </children>
 </AnchorPane>

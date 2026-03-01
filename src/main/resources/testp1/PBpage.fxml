@@ -69,6 +69,7 @@
 
                 <StackPane  VBox.vgrow="ALWAYS" >
 
+
                     <AnchorPane fx:id="expensesContent" visible="false" managed="false">
                         <fx:include fx:id="transactionTab" source="PBtransactionTab.fxml" />
                     </AnchorPane>
@@ -79,7 +80,9 @@
                         <fx:include source="PBAnalysisTab.fxml" />
                     </AnchorPane>
 
+
                 </StackPane>
+
             </VBox>
         </AnchorPane>
 

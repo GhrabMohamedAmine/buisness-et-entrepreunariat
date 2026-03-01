@@ -46,6 +46,7 @@ module org.example.yedikpromax {
     opens org.example.yedikpromax to javafx.fxml;
     opens services to com.google.gson;
     exports org.example.yedikpromax;
+    exports com.example.testp1.entities;
     opens Mains to javafx.graphics, javafx.fxml;
     opens com.example.testp1.controllers to javafx.fxml;
     opens com.example.testp1 to javafx.fxml;

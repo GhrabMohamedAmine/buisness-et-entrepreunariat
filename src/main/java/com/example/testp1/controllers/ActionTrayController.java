@@ -22,6 +22,8 @@ public class ActionTrayController {
     private boolean isExpanded = false;
     private final double COLLAPSED_WIDTH = 45.0;
     private final double EXPANDED_WIDTH = 175.0;
+    @FXML
+    private FontIcon marketIcon;
 
     @FXML
     public void initialize() {
@@ -124,5 +126,10 @@ public class ActionTrayController {
         if (overviewController != null) {
         overviewController.handleDeleteProfile(); // Triggers "Reset Profil"
         }
+    }
+
+    @FXML
+    public void navigateToMh() {
+        overviewController.navigateToMH();
     }
 }

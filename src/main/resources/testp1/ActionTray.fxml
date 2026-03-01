@@ -20,6 +20,8 @@
 
             <FontIcon fx:id="deleteIcon" iconLiteral="mdi2d-delete" iconSize="22"
                        styleClass="action-icon" onMouseClicked="#onDelete"/>
+            <FontIcon fx:id="marketIcon" iconLiteral="mdi2h-hubspot" styleClass="action-icon"
+                      onMouseClicked="#navigateToMh"/>
         </HBox>
 
         <Button fx:id="triggerBtn" onAction="#toggleTray"

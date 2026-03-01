@@ -63,6 +63,13 @@ public class SidebarController {
         switch(userConnected.getRole().toUpperCase()){
             case "EMPLOYEE"->{
                 hideBTN(FPbutton);
+                hideBTN(TRRbtn);
+                hideBTN(TRMbtn);
+                showBTN(TKbutton);
+                showBTN(PJbutton);
+                showBTN(RSbutton);
+                showBTN(TRbutton);
+
             }
             case "CONSULTANT"->{
                 hideBTN(RSbutton);
@@ -70,6 +77,25 @@ public class SidebarController {
                 hideBTN(TRRbtn);
                 showBTN(FPbutton);
                 showBTN(PJbutton);
+                showBTN(RSbutton);
+            }
+            case "FORMATEUR"->{
+                hideBTN(FPbutton);
+                hideBTN(PJbutton);
+                hideBTN(TKbutton);
+                hideBTN(TRbutton);
+                showBTN(TRMbtn);
+                showBTN(TRRbtn);
+                showBTN(RSbutton);
+
+            }
+            case "MANAGER"->{
+                hideBTN(FPbutton);
+                hideBTN(TRRbtn);
+                hideBTN(TRMbtn);
+                showBTN(TKbutton);
+                showBTN(PJbutton);
+                showBTN(RSbutton);
             }
             default ->{
                 showBTN(RSbutton);
