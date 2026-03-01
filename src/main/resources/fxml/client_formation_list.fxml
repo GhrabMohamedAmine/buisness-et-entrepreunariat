@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controllers.formation_quiz_result.ClientFormationListController"
+      spacing="18"
+      style="-fx-background-color:linear-gradient(to bottom,#f8f9ff,#eef0f6);">
+
+    <padding>
+        <Insets top="25" right="25" bottom="25" left="25"/>
+    </padding>
+
+    <!-- HEADER -->
+    <Label text="Catalogue des formations"
+           style="-fx-font-size:28px; -fx-font-weight:bold; -fx-text-fill:#3b2f6b;"/>
+
+    <Label text="Apprenez, progressez et testez vos compétences."
+           style="-fx-font-size:13px; -fx-text-fill:#6b7280;"/>
+
+    <!-- SEARCH + FILTER -->
+    <HBox spacing="12">
+
+        <TextField fx:id="searchField"
+                   promptText="🔎 Rechercher une formation..."
+                   HBox.hgrow="ALWAYS"
+                   style="
+                        -fx-background-color:white;
+                        -fx-background-radius:10;
+                        -fx-border-color:#d1d5db;
+                        -fx-border-radius:10;
+                        -fx-padding:8 12;
+                   "/>
+
+        <ComboBox fx:id="filterCombo"
+                  prefWidth="180"
+                  style="
+                        -fx-background-color:white;
+                        -fx-background-radius:10;
+                        -fx-border-color:#d1d5db;
+                        -fx-border-radius:10;
+                   "/>
+
+    </HBox>
+
+    <!-- CARDS -->
+    <ScrollPane fitToWidth="true"
+                VBox.vgrow="ALWAYS"
+                hbarPolicy="NEVER"
+                style="-fx-background:transparent; -fx-background-color:transparent;">
+
+        <content>
+            <FlowPane fx:id="cardsFlow"
+                      hgap="18"
+                      vgap="18"
+                      prefWrapLength="1050"
+                      style="-fx-padding:6;"/>
+        </content>
+    </ScrollPane>
+
+</VBox>

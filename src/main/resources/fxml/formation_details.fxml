@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.media.MediaView?>
+<?import javafx.geometry.Insets?>
+
+<ScrollPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controllers.formation_quiz_result.FormationDetailsController"
+            fitToWidth="true"
+            hbarPolicy="NEVER"
+            vbarPolicy="AS_NEEDED"
+            style="-fx-background:#f3f4f8; -fx-background-color:#f3f4f8;">
+
+    <content>
+        <VBox spacing="16"
+              style="-fx-background-color:linear-gradient(to bottom,#f8f9ff,#eef0f6);">
+
+            <padding>
+                <Insets top="22" right="22" bottom="22" left="22"/>
+            </padding>
+
+            <!-- HEADER -->
+            <HBox spacing="14">
+
+                <!-- LEFT TEXT -->
+                <VBox spacing="6" HBox.hgrow="ALWAYS">
+
+                    <Label fx:id="titreLabel"
+                           text="Titre"
+                           style="-fx-font-size:26px; -fx-font-weight:bold; -fx-text-fill:#3b2f6b;"/>
+
+                    <Label fx:id="descLabel"
+                           text="Description"
+                           wrapText="true"
+                           maxWidth="900"
+                           style="-fx-font-size:13px; -fx-text-fill:#6b7280;"/>
+                </VBox>
+
+                <!-- RIGHT BUTTONS PANEL -->
+                <VBox spacing="10"
+                      style="
+                        -fx-background-color:white;
+                        -fx-background-radius:12;
+                        -fx-padding:14;
+                        -fx-effect:dropshadow(gaussian, rgba(0,0,0,0.08), 14, 0.25, 0, 4);
+                      ">
+
+                    <Button fx:id="btnAjouterQuiz"
+                            text="➕ Ajouter Quiz Manuellement"
+                            onAction="#onAjouterQuiz"
+                            style="
+                                -fx-background-color:#6d5dfc;
+                                -fx-text-fill:white;
+                                -fx-font-weight:bold;
+                                -fx-background-radius:8;
+                                -fx-padding:8 16;
+                                -fx-cursor:hand;
+                            "/>
+
+                    <Button fx:id="btnGenerateAI"
+                            text="🤖 Générer Quiz avec IA"
+                            onAction="#onGenerateAIQuiz"
+                            style="
+                                -fx-background-color:#22c55e;
+                                -fx-text-fill:white;
+                                -fx-font-weight:bold;
+                                -fx-background-radius:8;
+                                -fx-padding:8 16;
+                                -fx-cursor:hand;
+                            "/>
+
+                    <Button fx:id="btnBack"
+                            text="Retour"
+                            onAction="#goBack"
+                            style="
+                                -fx-background-color:#374151;
+                                -fx-text-fill:white;
+                                -fx-font-weight:bold;
+                                -fx-background-radius:8;
+                                -fx-padding:8 16;
+                                -fx-cursor:hand;
+                            "/>
+                </VBox>
+            </HBox>
+
+            <!-- VIDEOS TITLE -->
+            <Label text="Vidéos"
+                   style="-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:#4338ca;"/>
+
+            <!-- VIDEO CARDS -->
+            <HBox spacing="14">
+
+                <VBox spacing="8"
+                      style="-fx-background-color:white; -fx-padding:12; -fx-background-radius:12; -fx-effect:dropshadow(gaussian, rgba(0,0,0,0.08), 14, 0.25, 0, 4);">
+                    <Label text="Vidéo 1"
+                           style="-fx-font-weight:bold; -fx-text-fill:#374151;"/>
+                    <MediaView fx:id="mv1" fitWidth="320" fitHeight="180" preserveRatio="true"/>
+                </VBox>
+
+                <VBox spacing="8"
+                      style="-fx-background-color:white; -fx-padding:12; -fx-background-radius:12; -fx-effect:dropshadow(gaussian, rgba(0,0,0,0.08), 14, 0.25, 0, 4);">
+                    <Label text="Vidéo 2"
+                           style="-fx-font-weight:bold; -fx-text-fill:#374151;"/>
+                    <MediaView fx:id="mv2" fitWidth="320" fitHeight="180" preserveRatio="true"/>
+                </VBox>
+
+                <VBox spacing="8"
+                      style="-fx-background-color:white; -fx-padding:12; -fx-background-radius:12; -fx-effect:dropshadow(gaussian, rgba(0,0,0,0.08), 14, 0.25, 0, 4);">
+                    <Label text="Vidéo 3"
+                           style="-fx-font-weight:bold; -fx-text-fill:#374151;"/>
+                    <MediaView fx:id="mv3" fitWidth="320" fitHeight="180" preserveRatio="true"/>
+                </VBox>
+
+            </HBox>
+
+            <!-- QUIZ TITLE -->
+            <Label text="Quiz liés à cette formation"
+                   style="-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:#4338ca;"/>
+
+            <!-- QUIZ CARDS CONTAINER -->
+            <FlowPane fx:id="quizCards"
+                      hgap="12"
+                      vgap="12"
+                      prefWrapLength="900"
+                      style="-fx-padding:6;"/>
+
+        </VBox>
+    </content>
+</ScrollPane>

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controllers.formation_quiz_result.ClientResultsController"
+      spacing="16"
+      style="-fx-background-color:linear-gradient(to bottom,#f8f9ff,#eef0f6);">
+
+    <padding>
+        <Insets top="22" right="22" bottom="22" left="22"/>
+    </padding>
+
+    <!-- TITLES -->
+    <Label text="Mes Résultats"
+           style="-fx-font-size:26px; -fx-font-weight:bold; -fx-text-fill:#3b2f6b;"/>
+
+    <Label text="Historique de vos quiz passés"
+           style="-fx-font-size:13px; -fx-text-fill:#6b7280;"/>
+
+    <!-- RESULTS LIST -->
+    <ScrollPane fitToWidth="true"
+                VBox.vgrow="ALWAYS"
+                hbarPolicy="NEVER"
+                style="-fx-background:transparent; -fx-background-color:transparent;">
+
+        <content>
+            <FlowPane fx:id="cardsFlow"
+                      hgap="16"
+                      vgap="16"
+                      prefWrapLength="980"
+                      style="-fx-padding:8;"/>
+        </content>
+
+    </ScrollPane>
+
+</VBox>
