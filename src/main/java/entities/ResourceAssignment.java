@@ -7,15 +7,15 @@ public class ResourceAssignment {
     private int assignmentId;
     private int resourceId;
 
+    // 🔹 NEW: FK to utilisateur.id
+    private int userId;
+
     // For display (JOIN with resources)
     private String resourceName;
     private String resourceType;
-
-    // ✅ NEW: image path from resources.image_path
     private String resourceImagePath;
 
     private String projectCode;
-    private String clientCode;
 
     private int quantity;
     private Date assignmentDate;
@@ -32,21 +32,21 @@ public class ResourceAssignment {
     public int getResourceId() { return resourceId; }
     public void setResourceId(int resourceId) { this.resourceId = resourceId; }
 
+    // ✅ NEW USER ID
+    public int getUserId() { return userId; }
+    public void setUserId(int userId) { this.userId = userId; }
+
     public String getResourceName() { return resourceName; }
     public void setResourceName(String resourceName) { this.resourceName = resourceName; }
 
     public String getResourceType() { return resourceType; }
     public void setResourceType(String resourceType) { this.resourceType = resourceType; }
 
-    // ✅ NEW
     public String getResourceImagePath() { return resourceImagePath; }
     public void setResourceImagePath(String resourceImagePath) { this.resourceImagePath = resourceImagePath; }
 
     public String getProjectCode() { return projectCode; }
     public void setProjectCode(String projectCode) { this.projectCode = projectCode; }
-
-    public String getClientCode() { return clientCode; }
-    public void setClientCode(String clientCode) { this.clientCode = clientCode; }
 
     public int getQuantity() { return quantity; }
     public void setQuantity(int quantity) { this.quantity = quantity; }
