@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+
+<BorderPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controllers.formation_quiz_result.ClientLayoutController">
+
+    <!-- ===== SIDEBAR ETUDIANT ===== -->
+
+    <center>
+        <StackPane fx:id="contentArea"/>
+    </center>
+
+</BorderPane>

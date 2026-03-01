@@ -1,14 +1,8 @@
 package controllers;
 
-import java.awt.*;
 import java.time.LocalDate;
-
-import entities.Project;
 import entities.Reclamation;
-import entities.User;
-import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.collections.transformation.FilteredList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -18,186 +12,59 @@ import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.Button;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
 import javafx.scene.control.cell.PropertyValueFactory;
-import javafx.scene.image.Image;
 import javafx.scene.layout.HBox;
-import javafx.scene.layout.VBox;
-import javafx.scene.paint.ImagePattern;
-import javafx.scene.shape.Circle;
-import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.kordamp.ikonli.javafx.FontIcon;
-import services.EmailService;
-import services.ProjectService;
 import services.ReclamationService;
 import services.UserService;
 
-import java.io.*;
+import java.io.IOException;
 import java.net.URL;
-import java.nio.file.Files;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.ResourceBundle;
-import java.util.function.Predicate;
 
 public class ReclamationController implements Initializable {
 
-    @FXML private Label topName;
-    @FXML private Circle topAvatar;
-    @FXML private TableView<Reclamation> reclamationTable;
-    @FXML private TableColumn<Reclamation, String> colTitre, colCategorie, colProjet, colStatut, colDate;
-    @FXML private TableColumn<Reclamation, Void> colReponse;
-    @FXML private TextField titreField;
-    @FXML private TextField categorieField;
-    @FXML private TextField projetField;
-    @FXML private VBox statusControl;
-    @FXML private ComboBox<String> statutCombo;
+    @FXML
+    private TableView<Reclamation> reclamationTable;
 
-    // Éléments pour le fichier
-    @FXML private Button btnChoisirFichier;
-    @FXML private Label lblNomFichier;
+    @FXML
+    private TableColumn<Reclamation, String> colTitre, colCategorie, colProjet, colStatut, colDate;
 
-    @FXML private Label titreError;
-    @FXML private Label categorieError;
-    @FXML private Label projetError;
-    @FXML private VBox statusControl2;
+    @FXML
+    private TableColumn<Reclamation, Void> colReponse;
 
-    // Nouveaux éléments pour la recherche et le filtrage
-    @FXML private ToggleButton filterAll;
-    @FXML private ToggleButton filterOpen;
-    @FXML private ToggleButton filterProgress;
-    @FXML private ToggleButton filterResolved;
-    @FXML private ToggleButton filterClosed;
-    @FXML private TextField searchField;
-    @FXML private ComboBox<String> projectCombo;
 
+
+    // Ajout du service
     private ReclamationService reclamationService;
     private ObservableList<Reclamation> reclamationList;
-    private FilteredList<Reclamation> filteredData;
-    private ToggleGroup filterGroup;
-    private ProjectService prpr= new ProjectService();
 
-    // Pour la modification
-    private int idAModifier = 0;
-    private File selectedFile;              // Fichier sélectionné
-    private Reclamation currentReclamation; // Réclamation en cours de modification
-
-    // =========================================================================
-    // Initialisation
-    // =========================================================================
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
-        List<Project> projects = prpr.getAllProjects();
-        List<String> projectNames = new ArrayList<>();
-        for (Project p : projects) {
-            projectNames.add(p.getName());
-        }
-        String role = UserService.getCurrentUser().getRole().toLowerCase();
-        boolean checkerRole = role.equals("admin"); // Correction : comparaison en minuscules
-        System.out.println("Role: "+role+"\ncheckerRole: " + checkerRole);
-
-        // Gestion de l'affichage du statut selon le rôle et le FXML chargé
-        if (statusControl != null) {
-            statusControl.setVisible(checkerRole);
-            statusControl.setManaged(checkerRole);
-        }
-        if (statusControl2 != null) {
-            statusControl2.setVisible(checkerRole);
-            statusControl2.setManaged(checkerRole);
-        }
-
-        // Remplir la comboBox des projets seulement si elle existe (popups)
-        if (projectCombo != null) {
-            projectCombo.getItems().setAll(projectNames);
-        }
-
+        // Initialisation du service
         reclamationService = new ReclamationService();
-        if (topName != null) {
-            loadCurrentUserProfile();
-        }
+
         if (reclamationTable != null) {
             setupTable();
-            loadData();
-            setupDoubleClick();
-
-            // Initialisation du groupe de filtres
-            filterGroup = new ToggleGroup();
-            filterAll.setToggleGroup(filterGroup);
-            filterOpen.setToggleGroup(filterGroup);
-            filterProgress.setToggleGroup(filterGroup);
-            filterResolved.setToggleGroup(filterGroup);
-            filterClosed.setToggleGroup(filterGroup);
-            filterAll.setSelected(true);
-
-            // Écouteurs
-            searchField.textProperty().addListener((obs, oldVal, newVal) -> applyFilters());
-            filterGroup.selectedToggleProperty().addListener((obs, oldVal, newVal) -> applyFilters());
-        }
-    }
-
-    private void loadCurrentUserProfile() {
-        User currentUser = UserService.getCurrentUser();
-        if (currentUser != null) {
-            String fullName = currentUser.getFirstName() + " " + currentUser.getName();
-            topName.setText(fullName);
-            byte[] imageData = currentUser.getImageData();
-            if (imageData != null && imageData.length > 0) {
-                try (ByteArrayInputStream bais = new ByteArrayInputStream(imageData)) {
-                    Image img = new Image(bais, 32, 32, true, true);
-                    if (!img.isError()) {
-                        topAvatar.setFill(new ImagePattern(img));
-                    } else {
-                        topAvatar.setFill(javafx.scene.paint.Color.web("#E0E7FF"));
-                    }
-                } catch (Exception e) {
-                    System.out.println("Erreur chargement image profil : " + e.getMessage());
-                    topAvatar.setFill(javafx.scene.paint.Color.web("#E0E7FF"));
-                }
-            } else {
-                topAvatar.setFill(javafx.scene.paint.Color.web("#E0E7FF"));
-            }
-        }
+            loadData(); // Chargement des données réelles
+        }// Chargement des données réelles
     }
 
     private void loadData() {
+        // Récupération des données depuis la base de données via le service
         reclamationList = reclamationService.getAll();
-        filteredData = new FilteredList<>(reclamationList, p -> true);
-        reclamationTable.setItems(filteredData);
-    }
-
-    private void applyFilters() {
-        String searchText = searchField.getText().toLowerCase().trim();
-        Toggle selected = filterGroup.getSelectedToggle();
-
-        Predicate<Reclamation> statusPredicate = r -> {
-            if (selected == null || selected == filterAll) return true;
-            if (selected == filterOpen) return "En attente".equalsIgnoreCase(r.getStatut());
-            if (selected == filterProgress) return "En cours".equalsIgnoreCase(r.getStatut());
-            if (selected == filterResolved) return "Rèsolu".equalsIgnoreCase(r.getStatut());
-            if (selected == filterClosed) return "Fermer".equalsIgnoreCase(r.getStatut());
-            return true;
-        };
-
-        Predicate<Reclamation> searchPredicate = r -> {
-            if (searchText.isEmpty()) return true;
-            return r.getTitre().toLowerCase().contains(searchText)
-                    || r.getProjet().toLowerCase().contains(searchText)
-                    || r.getCategorie().toLowerCase().contains(searchText);
-        };
-
-        filteredData.setPredicate(statusPredicate.and(searchPredicate));
+        reclamationTable.setItems(reclamationList);
     }
 
     private void setupTable() {
+        // 1. Configuration des colonnes simples (Texte)
         colTitre.setCellValueFactory(new PropertyValueFactory<>("titre"));
         colProjet.setCellValueFactory(new PropertyValueFactory<>("projet"));
         colDate.setCellValueFactory(new PropertyValueFactory<>("date"));
 
-        // Colonne CATÉGORIE avec badge
+        // 2. Configuration de la colonne CATÉGORIE (Badge Gris) - DESIGN CONSERVÉ
         colCategorie.setCellValueFactory(new PropertyValueFactory<>("categorie"));
         colCategorie.setCellFactory(column -> new TableCell<>() {
             @Override
@@ -207,13 +74,13 @@ public class ReclamationController implements Initializable {
                     setGraphic(null);
                 } else {
                     Label badge = new Label(item);
-                    badge.getStyleClass().add("category-pill");
+                    badge.getStyleClass().add("category-pill"); // Défini dans style.css
                     setGraphic(badge);
                 }
             }
         });
 
-        // Colonne STATUT avec badge
+        // 3. Configuration de la colonne STATUT (Badges Colorés) - DESIGN CONSERVÉ
         colStatut.setCellValueFactory(new PropertyValueFactory<>("statut"));
         colStatut.setCellFactory(column -> new TableCell<>() {
             @Override
@@ -223,51 +90,77 @@ public class ReclamationController implements Initializable {
                     setGraphic(null);
                 } else {
                     Label badge = new Label(item);
-                    badge.getStyleClass().addAll("status-pill");
+                    badge.getStyleClass().add("status-pill"); // Forme de base
+
+                    // Application de la classe CSS selon le statut
                     switch (item) {
-                        case "En attente" -> badge.getStyleClass().add("status-open");
-                        case "En cours"   -> badge.getStyleClass().add("status-progress");
-                        case "Rèsolu"     -> badge.getStyleClass().add("status-resolved");
-                        case "Fermer"     -> badge.getStyleClass().add("status-closed");
-                        default           -> badge.getStyleClass().add("status-closed");
+                        case "En attente":
+                            badge.getStyleClass().add("status-open");
+                            break;
+                        case "En cours":
+                            badge.getStyleClass().add("status-progress");
+                            break;
+                        case "Rèsolu":
+                            badge.getStyleClass().add("status-resolved");
+                            break;
+                        case "Fermer":
+                            badge.getStyleClass().add("status-closed");
+                            break;
+                        default:
+                            badge.getStyleClass().add("status-closed");
+                            break;
                     }
                     setGraphic(badge);
                 }
             }
         });
 
-        // Colonne RÉPONSE (boutons)
+        // 4. Configuration de la colonne RÉPONSE (Boutons) - DESIGN CONSERVÉ
         colReponse.setCellFactory(column -> new TableCell<>() {
             private final Button replyBtn = new Button();
             private final Button deleteBtn = new Button();
 
             {
+                // --- Bouton 1 : Voir / Répondre (Violet) ---
                 FontIcon replyIcon = new FontIcon("mdi2m-message-processing-outline");
                 replyIcon.setIconSize(18);
                 replyBtn.setGraphic(replyIcon);
                 replyBtn.getStyleClass().add("btn-response");
-                replyBtn.setTooltip(new Tooltip("Voir / Modifier"));
+                replyBtn.setTooltip(new Tooltip("Voir la réponse"));
+
                 replyBtn.setOnAction(event -> {
                     Reclamation rec = getTableView().getItems().get(getIndex());
                     openModifyPopup(rec);
                 });
 
+                // --- Bouton 2 : Supprimer (Rouge) ---
                 FontIcon deleteIcon = new FontIcon("mdi2t-trash-can-outline");
                 deleteIcon.setIconSize(18);
                 deleteBtn.setGraphic(deleteIcon);
                 deleteBtn.getStyleClass().addAll("action-btn", "action-btn-delete");
                 deleteBtn.setTooltip(new Tooltip("Supprimer"));
+
+                // IMPORTANT: This must be the ONLY setOnAction for deleteBtn
                 deleteBtn.setOnAction(event -> {
+                    // 1. Get the selected item
                     Reclamation rec = getTableView().getItems().get(getIndex());
+
+                    // 2. Confirmation Alert
                     Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
                     alert.setTitle("Confirmation");
                     alert.setHeaderText(null);
                     alert.setContentText("Voulez-vous vraiment supprimer : " + rec.getTitre() + " ?");
+
+                    // 3. Delete if OK is clicked
                     if (alert.showAndWait().get() == ButtonType.OK) {
+                        // Delete from Database
                         reclamationService.delete(rec.getId());
-                        reclamationList.remove(rec);
+                        // Remove from TableView (UI)
+                        getTableView().getItems().remove(rec);
                     }
                 });
+
+                // REMOVED THE DUPLICATE EMPTY CODE THAT WAS HERE
             }
 
             @Override
@@ -284,60 +177,8 @@ public class ReclamationController implements Initializable {
         });
     }
 
-    private void setupDoubleClick() {
-        reclamationTable.setRowFactory(tv -> {
-            TableRow<Reclamation> row = new TableRow<>();
-            row.setOnMouseClicked(event -> {
-                if (event.getClickCount() == 2 && !row.isEmpty()) {
-                    Reclamation rec = row.getItem();
-                    openAttachedFile(rec);
-                }
-            });
-            row.hoverProperty().addListener((obs, oldVal, newVal) -> {
-                if (newVal && !row.isEmpty()) {
-                    row.setTooltip(new Tooltip("Double-cliquer pour ouvrir la pièce jointe (si existante)"));
-                }
-            });
-            return row;
-        });
-    }
-
-    private void openAttachedFile(Reclamation rec) {
-        Reclamation fullRec = reclamationService.getById(rec.getId());
-        if (fullRec == null || fullRec.getFichier() == null || fullRec.getFichier().length == 0) {
-            showAlert("Information", "Aucune pièce jointe pour cette réclamation.");
-            return;
-        }
-
-        try {
-            String suffix = ".tmp";
-            File tempFile = File.createTempFile("reclamation_" + rec.getId() + "_", suffix);
-            tempFile.deleteOnExit();
-
-            try (FileOutputStream fos = new FileOutputStream(tempFile)) {
-                fos.write(fullRec.getFichier());
-            }
-
-            if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().open(tempFile);
-            } else {
-                showAlert("Erreur", "L'ouverture de fichiers n'est pas supportée sur ce système.");
-            }
-        } catch (IOException e) {
-            showAlert("Erreur", "Impossible d'ouvrir le fichier : " + e.getMessage());
-        }
-    }
-
-    // =========================================================================
-    // Navigation
-    // =========================================================================
     public void handleUserManagementNavigation(ActionEvent event) {
         switchScene(event, "/User/UserTable.fxml");
-    }
-
-    public void handleLogout(ActionEvent event) {
-        UserService.logout();
-        switchScene(event, "/Start/1ere.fxml");
     }
 
     private void switchScene(ActionEvent event, String fxmlPath) {
@@ -351,9 +192,11 @@ public class ReclamationController implements Initializable {
         }
     }
 
-    // =========================================================================
-    // Gestion des popups (Ajout / Modification)
-    // =========================================================================
+    public void handleLogout(ActionEvent event) {
+        UserService.logout();
+        switchScene(event, "/Start/1ere.fxml");
+    }
+
     @FXML
     public void addreclamation(ActionEvent event) {
         try {
@@ -363,8 +206,12 @@ public class ReclamationController implements Initializable {
             Stage popupStage = new Stage();
             popupStage.initModality(Modality.APPLICATION_MODAL);
             popupStage.setScene(new Scene(root));
+
+            // Le code s'arrête ici tant que le popup est ouvert
             popupStage.showAndWait();
 
+            // --- C'est ICI qu'il faut rafraîchir ---
+            // Cette ligne s'exécute uniquement quand le popup est fermé
             if (reclamationTable != null) {
                 loadData();
             }
@@ -374,124 +221,34 @@ public class ReclamationController implements Initializable {
         }
     }
 
-    private void openModifyPopup(Reclamation rec) {
-        try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/Reclamation/popUpmodif.fxml"));
-            Parent root = loader.load();
+    @FXML private TextField titreField;
+    @FXML private TextField categorieField;
+    @FXML private TextField projetField;
+    @FXML private ComboBox<String> statutCombo;
+    @FXML private Button submitBtn;
 
-            ReclamationController controller = loader.getController();
-            controller.initData(rec);
+    // NOTE : J'ai supprimé @FXML private TextField dateField; car il n'existe plus dans le FXML
 
-            Stage stage = new Stage();
-            stage.initModality(Modality.APPLICATION_MODAL);
-            stage.setTitle("Modifier Réclamation");
-            stage.setScene(new Scene(root));
-            stage.showAndWait();
-
-            loadData();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    public void initData(Reclamation r) {
-        if (r != null) {
-            this.idAModifier = r.getId();
-            this.currentReclamation = reclamationService.getById(r.getId());
-            titreField.setText(currentReclamation.getTitre());
-            categorieField.setText(currentReclamation.getCategorie());
-
-            statutCombo.setValue(currentReclamation.getStatut());
-            projectCombo.setValue(currentReclamation.getProjet());
-
-            if (currentReclamation.getFichier() != null && currentReclamation.getFichier().length > 0) {
-                lblNomFichier.setText("Fichier existant");
-                FontIcon icon = new FontIcon("mdi2f-file");
-                icon.setIconSize(18);
-                lblNomFichier.setGraphic(icon);
-            } else {
-                lblNomFichier.setText("Aucun fichier");
-                lblNomFichier.setGraphic(null);
-            }
-            selectedFile = null;
-        }
-    }
-
-    // =========================================================================
-    // Sauvegarde (Ajout / Modification)
-    // =========================================================================
     @FXML
     public void saveReclamation(ActionEvent event) {
-        if (!validerSaisie()) return;
-
-        String titre = titreField.getText().trim();
-        String cat = categorieField.getText().trim();
-        String proj = projectCombo.getValue();
+        // 1. Récupération des données saisies
+        String titre = titreField.getText();
+        String cat = categorieField.getText();
+        String proj = projetField.getText();
         String statut = statutCombo.getValue();
-        String date = LocalDate.now().toString();
 
+        // 2. Génération automatique de la date du jour
+        String date = LocalDate.now().toString(); // Donne format "2023-10-27"
+
+        // 3. Création de l'objet
         Reclamation r = new Reclamation(titre, cat, proj, statut, date);
 
-        if (selectedFile != null) {
-            try {
-                byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
-                r.setFichier(fileBytes);
-            } catch (IOException e) {
-                showAlert("Erreur", "Impossible de lire le fichier : " + e.getMessage());
-                return;
-            }
-        }
-
+        // 4. Appel au service (Assurez-vous d'avoir créé la méthode add dans ReclamationService !)
         reclamationService.add(r);
-        closePopup(event);
-    }
 
-    @FXML
-    public void updateReclamation(ActionEvent event) {
-        if (!validerSaisie()) return;
+        System.out.println("Reclamation ajoutée : " + r.getTitre());
 
-        String titre = titreField.getText().trim();
-        String cat = categorieField.getText().trim();
-        String proj = projectCombo.getValue();
-        String statut = statutCombo.getValue();
-        String date = LocalDate.now().toString();
-
-        Reclamation r = new Reclamation(titre, cat, proj, statut, date);
-        r.setId(idAModifier);
-
-        if (selectedFile != null) {
-            try {
-                byte[] fileBytes = Files.readAllBytes(selectedFile.toPath());
-                r.setFichier(fileBytes);
-            } catch (IOException e) {
-                showAlert("Erreur", "Impossible de lire le fichier : " + e.getMessage());
-                return;
-            }
-        } else if (currentReclamation != null) {
-            r.setFichier(currentReclamation.getFichier());
-        }
-
-        String oldStatus = currentReclamation != null ? currentReclamation.getStatut() : "";
-        boolean statusChanged = !oldStatus.equals(statut);
-        boolean shouldNotify = statusChanged && (statut.equals("Rèsolu") || statut.equals("Fermer"));
-
-        reclamationService.update(r);
-
-        if (shouldNotify) {
-            User currentUser = UserService.getCurrentUser();
-            if (currentUser != null && currentUser.getEmail() != null) {
-                EmailService.sendReclamationStatusEmail(
-                        currentUser.getEmail(),
-                        r.getTitre(),
-                        r.getProjet(),
-                        r.getStatut()
-                );
-            } else {
-                System.out.println("Impossible d'envoyer l'email : utilisateur non connecté ou email manquant.");
-            }
-        }
-
+        // 5. Fermer la fenêtre
         closePopup(event);
     }
 
@@ -499,118 +256,65 @@ public class ReclamationController implements Initializable {
     public void closePopup(ActionEvent event) {
         ((Node) event.getSource()).getScene().getWindow().hide();
     }
+    // 1. Variable pour stocker l'ID de la réclamation en cours de modification
+    private int idAModifier = 0;
 
-    // =========================================================================
-    // Gestion du fichier (choix)
-    // =========================================================================
-    @FXML
-    private void choisirFichier() {
-        FileChooser fileChooser = new FileChooser();
-        fileChooser.setTitle("Choisir une pièce jointe");
-        fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Tous les fichiers", "*.*"),
-                new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg", "*.gif"),
-                new FileChooser.ExtensionFilter("PDF", "*.pdf"),
-                new FileChooser.ExtensionFilter("Documents", "*.docx", "*.xlsx", "*.txt")
-        );
-        selectedFile = fileChooser.showOpenDialog(btnChoisirFichier.getScene().getWindow());
-        updateFileDisplay(selectedFile);
-    }
-
-    // =========================================================================
-    // Validation des champs
-    // =========================================================================
-    private void clearErrors() {
-        if (titreError != null) { titreError.setVisible(false); titreError.setManaged(false); }
-        if (categorieError != null) { categorieError.setVisible(false); categorieError.setManaged(false); }
-        if (projetError != null) { projetError.setVisible(false); projetError.setManaged(false); }
-    }
-
-    private void showInlineError(Label label, String text) {
-        if (label != null) {
-            label.setText(text);
-            label.setVisible(true);
-            label.setManaged(true);
+    // 2. Méthode pour pré-remplir les champs (appelée à l'ouverture du popup)
+    public void initData(Reclamation r) {
+        if (r != null) {
+            this.idAModifier = r.getId(); // On garde l'ID en mémoire
+            titreField.setText(r.getTitre());
+            categorieField.setText(r.getCategorie());
+            projetField.setText(r.getProjet());
+            statutCombo.setValue(r.getStatut());
         }
     }
 
-    private boolean validerSaisie() {
-        clearErrors();
-        boolean isValid = true;
-
+    // 3. Méthode appelée par le bouton "Modifier/Valider" du popup
+    @FXML
+    public void updateReclamation(ActionEvent event) {
+        // Récupérer les nouvelles valeurs
         String titre = titreField.getText();
         String cat = categorieField.getText();
-        String projet = projectCombo.getValue();
+        String proj = projetField.getText();
+        String statut = statutCombo.getValue();
+        // On garde la date existante ou on en met une nouvelle, ici je garde l'ancienne logique date
+        String date = java.time.LocalDate.now().toString();
 
-        if (titre == null || titre.trim().isEmpty()) {
-            showInlineError(titreError, "Le titre est obligatoire.");
-            isValid = false;
-        } else if (titre.length() < 3) {
-            showInlineError(titreError, "Le titre est trop court.");
-            isValid = false;
-        }
+        // Créer l'objet avec l'ID sauvegardé
+        Reclamation r = new Reclamation(titre, cat, proj, statut, date);
+        r.setId(idAModifier); // IMPORTANT : remettre l'ID
 
-        if (cat == null || cat.trim().isEmpty()) {
-            showInlineError(categorieError, "La catégorie est requise.");
-            isValid = false;
-        } else if (!cat.matches("^[a-zA-ZÀ-ÿ\\s]+$")) {
-            showInlineError(categorieError, "Lettres uniquement.");
-            isValid = false;
-        }
+        // Appel au service
+        reclamationService.update(r);
 
-        if (projet == null || projet.trim().isEmpty()) {
-            showInlineError(projetError, "Le projet est requis.");
-            isValid = false;
-        } else if (!projet.matches("^[a-zA-Z0-9\\s\\-]+$")) {
-            showInlineError(projetError, "Caractères non autorisés.");
-            isValid = false;
-        }
-
-        return isValid;
+        // Fermer la fenêtre
+        closePopup(event);
     }
+    private void openModifyPopup(Reclamation rec) {
+        try {
+            // 1. Charger le fichier FXML de modification
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/Reclamation/popUpmodif.fxml"));
+            Parent root = loader.load();
 
-    private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle(title);
-        alert.setHeaderText(null);
-        alert.setContentText(message);
-        alert.showAndWait();
-    }
+            // 2. Récupérer le contrôleur de cette nouvelle fenêtre
+            ReclamationController controller = loader.getController();
 
-    private void updateFileDisplay(File file) {
-        if (file != null) {
-            String fileName = file.getName();
-            lblNomFichier.setText(fileName);
-            lblNomFichier.setGraphic(getFileIcon(fileName));
-        } else {
-            lblNomFichier.setText("Aucun fichier");
-            lblNomFichier.setGraphic(null);
+            // 3. Lui passer les données de la ligne sélectionnée
+            controller.initData(rec);
+
+            // 4. Afficher la fenêtre
+            Stage stage = new Stage();
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.setTitle("Modifier Réclamation");
+            stage.setScene(new Scene(root));
+            stage.showAndWait(); // Attendre la fermeture
+
+            // 5. Rafraîchir le tableau principal après modification
+            loadData();
+
+        } catch (IOException e) {
+            e.printStackTrace();
         }
-    }
-
-    private FontIcon getFileIcon(String fileName) {
-        String ext = "";
-        int i = fileName.lastIndexOf('.');
-        if (i > 0) {
-            ext = fileName.substring(i + 1).toLowerCase();
-        }
-        String iconLiteral;
-        switch (ext) {
-            case "pdf": iconLiteral = "mdi2f-file-pdf"; break;
-            case "jpg": case "jpeg": case "png": case "gif": case "bmp": iconLiteral = "mdi2f-file-image"; break;
-            case "doc": case "docx": iconLiteral = "mdi2f-file-word"; break;
-            case "xls": case "xlsx": iconLiteral = "mdi2f-file-excel"; break;
-            case "txt": iconLiteral = "mdi2f-file-document"; break;
-            default: iconLiteral = "mdi2f-file"; break;
-        }
-        FontIcon icon = new FontIcon(iconLiteral);
-        icon.setIconSize(18);
-        return icon;
-    }
-
-    public void goBack(ActionEvent actionEvent) {
-        switchScene(actionEvent,"/User/UserTable.fxml");
-        UserTableController.getInstance().handleResources();
-
     }
 }

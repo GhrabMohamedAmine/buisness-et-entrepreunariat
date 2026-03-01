@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<AnchorPane xmlns="http://javafx.com/javafx"
+            xmlns:fx="http://javafx.com/fxml"
+            fx:controller="controllers.formation_quiz_result.ResultCardController"
+            prefWidth="300"
+            prefHeight="210"
+            fx:id="root"
+            style="
+                -fx-background-color:white;
+                -fx-background-radius:14;
+                -fx-effect:dropshadow(gaussian, rgba(0,0,0,0.12), 18, 0.25, 0, 5);
+            ">
+
+    <children>
+
+        <VBox spacing="12"
+              AnchorPane.topAnchor="16"
+              AnchorPane.leftAnchor="16"
+              AnchorPane.rightAnchor="16"
+              AnchorPane.bottomAnchor="16">
+
+            <!-- Formation title -->
+            <Label fx:id="formationTitle"
+                   text="Titre formation"
+                   wrapText="true"
+                   style="
+                        -fx-font-size:16px;
+                        -fx-font-weight:bold;
+                        -fx-text-fill:#3b2f6b;
+                   "/>
+
+            <Separator/>
+
+            <!-- Score row -->
+            <HBox spacing="10" alignment="CENTER_LEFT">
+
+                <Label text="Score :"
+                       style="-fx-text-fill:#6b7280;"/>
+
+                <Label fx:id="scoreLabel"
+                       style="-fx-font-weight:900; -fx-text-fill:#6d5dfc;"/>
+
+                <Label text="/"
+                       style="-fx-text-fill:#6b7280;"/>
+
+                <Label fx:id="totalLabel"
+                       style="-fx-text-fill:#6b7280;"/>
+            </HBox>
+
+            <!-- Progress -->
+            <ProgressBar fx:id="progressBar"
+                         prefWidth="260"
+                         progress="0.5"
+                         style="-fx-accent:#6d5dfc;"/>
+
+            <!-- Date -->
+            <Label fx:id="dateLabel"
+                   text="Date"
+                   style="-fx-text-fill:#6b7280;"/>
+
+            <Region VBox.vgrow="ALWAYS"/>
+
+            <!-- Status -->
+            <VBox spacing="8">
+
+                <HBox alignment="CENTER_RIGHT">
+                    <Label fx:id="statusLabel"
+                           text="Réussi"
+                           style="
+                             -fx-font-weight:bold;
+                             -fx-padding:4 12;
+                             -fx-background-radius:20;
+                             -fx-text-fill:white;
+                             -fx-background-color:#22c55e;
+                           "/>
+                </HBox>
+
+                <!-- Buttons -->
+                <HBox spacing="8" alignment="CENTER_RIGHT">
+
+                    <Button fx:id="viewBtn"
+                            onAction="#viewCertificate"
+                            text="👁 Voir certificat"
+                            style="
+                                -fx-background-color:white;
+                                -fx-border-color:#6d5dfc;
+                                -fx-border-radius:8;
+                                -fx-background-radius:8;
+                                -fx-text-fill:#6d5dfc;
+                                -fx-font-weight:bold;
+                                -fx-cursor:hand;
+                            "/>
+
+                    <Button fx:id="downloadBtn"
+                            text="⬇ Télécharger PDF"
+                            onAction="#downloadCertificate"
+                            style="
+                                -fx-background-color:#6d5dfc;
+                                -fx-text-fill:white;
+                                -fx-font-weight:bold;
+                                -fx-background-radius:8;
+                                -fx-cursor:hand;
+                            "/>
+
+                </HBox>
+
+            </VBox>
+
+        </VBox>
+
+    </children>
+</AnchorPane>
