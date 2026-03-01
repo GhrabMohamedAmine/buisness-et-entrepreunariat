@@ -7,6 +7,7 @@ import javafx.collections.ObservableList;
 import utils.database;
 
 import java.sql.*;
+import java.io.ByteArrayInputStream;
 
 public class ReclamationService {
 
@@ -16,15 +17,17 @@ public class ReclamationService {
         connection = database.getInstance().getConnection();
     }
 
+    /**
+     * Récupère toutes les réclamations (sans le fichier pour des raisons de performance).
+     */
     public ObservableList<Reclamation> getAll() {
         ObservableList<Reclamation> reclamations = FXCollections.observableArrayList();
-        String query = "SELECT * FROM reclamation";
+        String query = "SELECT idRec, titre, categorie, projet, statut, date, id_user FROM reclamation";
 
         try (Statement statement = connection.createStatement();
              ResultSet rs = statement.executeQuery(query)) {
 
             while (rs.next()) {
-                // 1. Création de l'objet
                 Reclamation r = new Reclamation(
                         rs.getString("titre"),
                         rs.getString("categorie"),
@@ -32,13 +35,8 @@ public class ReclamationService {
                         rs.getString("statut"),
                         rs.getString("date")
                 );
-
-                // 2. CORRECTION ICI : On utilise "idRec"
                 r.setId(rs.getInt("idRec"));
-
-                // Si vous avez besoin de récupérer l'ID user pour l'affichage plus tard :
-                // r.setUserId(rs.getInt("id_user"));
-
+                r.setUserId(rs.getInt("id_user")); // si vous avez ce champ
                 reclamations.add(r);
             }
         } catch (SQLException e) {
@@ -47,10 +45,11 @@ public class ReclamationService {
         return reclamations;
     }
 
+    /**
+     * Supprime une réclamation par son ID.
+     */
     public void delete(int id) {
-        // CORRECTION ICI : WHERE idRec = ?
         String query = "DELETE FROM reclamation WHERE idRec = ?";
-
         try (PreparedStatement pst = connection.prepareStatement(query)) {
             pst.setInt(1, id);
             pst.executeUpdate();
@@ -60,11 +59,11 @@ public class ReclamationService {
         }
     }
 
+    /**
+     * Ajoute une nouvelle réclamation (y compris le fichier s'il est présent).
+     */
     public void add(Reclamation r) {
-        // 1. Récupération de l'utilisateur ICI au lieu du Controller
         User userConnecte = UserService.getCurrentUser();
-
-        // Sécurité : Si personne n'est connecté, on arrête ou on met 0
         int userId = (userConnecte != null) ? userConnecte.getId() : 0;
 
         if (userId == 0) {
@@ -72,7 +71,8 @@ public class ReclamationService {
             return;
         }
 
-        String query = "INSERT INTO reclamation (titre, categorie, projet, statut, date, id_user) VALUES (?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO reclamation (titre, categorie, projet, statut, date, id_user, fichier) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement pst = connection.prepareStatement(query)) {
             pst.setString(1, r.getTitre());
@@ -80,9 +80,14 @@ public class ReclamationService {
             pst.setString(3, r.getProjet());
             pst.setString(4, r.getStatut());
             pst.setString(5, r.getDate());
-
-            // 2. Utilisation de l'ID récupéré localement
             pst.setInt(6, userId);
+
+            byte[] fichier = r.getFichier();
+            if (fichier != null) {
+                pst.setBinaryStream(7, new ByteArrayInputStream(fichier), fichier.length);
+            } else {
+                pst.setNull(7, Types.BLOB);
+            }
 
             pst.executeUpdate();
             System.out.println("Réclamation ajoutée avec succès pour l'user ID: " + userId);
@@ -91,9 +96,12 @@ public class ReclamationService {
         }
     }
 
+    /**
+     * Met à jour une réclamation existante (y compris le fichier).
+     * Le fichier sera remplacé par celui présent dans l'objet (peut être null).
+     */
     public void update(Reclamation r) {
-        // CORRECTION ICI : WHERE idRec = ?
-        String query = "UPDATE reclamation SET titre = ?, categorie = ?, projet = ?, statut = ? WHERE idRec = ?";
+        String query = "UPDATE reclamation SET titre = ?, categorie = ?, projet = ?, statut = ?, fichier = ? WHERE idRec = ?";
 
         try (PreparedStatement pst = connection.prepareStatement(query)) {
             pst.setString(1, r.getTitre());
@@ -101,8 +109,14 @@ public class ReclamationService {
             pst.setString(3, r.getProjet());
             pst.setString(4, r.getStatut());
 
-            // On utilise l'ID de l'objet pour trouver la ligne (idRec)
-            pst.setInt(5, r.getId());
+            byte[] fichier = r.getFichier();
+            if (fichier != null) {
+                pst.setBinaryStream(5, new ByteArrayInputStream(fichier), fichier.length);
+            } else {
+                pst.setNull(5, Types.BLOB);
+            }
+
+            pst.setInt(6, r.getId());
 
             pst.executeUpdate();
             System.out.println("Réclamation modifiée avec succès !");
@@ -110,10 +124,41 @@ public class ReclamationService {
             System.err.println("Erreur de modification : " + e.getMessage());
         }
     }
+
+    /**
+     * Récupère une réclamation par son ID (y compris le fichier).
+     * Utilisé pour l'édition afin de conserver le fichier existant.
+     */
+    public Reclamation getById(int id) {
+        String query = "SELECT * FROM reclamation WHERE idRec = ?";
+        try (PreparedStatement pst = connection.prepareStatement(query)) {
+            pst.setInt(1, id);
+            ResultSet rs = pst.executeQuery();
+            if (rs.next()) {
+                Reclamation r = new Reclamation(
+                        rs.getString("titre"),
+                        rs.getString("categorie"),
+                        rs.getString("projet"),
+                        rs.getString("statut"),
+                        rs.getString("date")
+                );
+                r.setId(rs.getInt("idRec"));
+                r.setUserId(rs.getInt("id_user"));
+                r.setFichier(rs.getBytes("fichier")); // lecture du BLOB
+                return r;
+            }
+        } catch (SQLException e) {
+            System.err.println("Erreur getById : " + e.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Récupère toutes les réclamations d'un utilisateur donné (sans le fichier).
+     */
     public ObservableList<Reclamation> getReclamationsByUserId(int userId) {
         ObservableList<Reclamation> list = FXCollections.observableArrayList();
-        // Assure-toi que le nom de la colonne étrangère est correct (ex: id_user ou user_id)
-        String query = "SELECT * FROM reclamation WHERE id_user = ?";
+        String query = "SELECT idRec, titre, categorie, projet, statut, date FROM reclamation WHERE id_user = ?";
 
         try (PreparedStatement pst = connection.prepareStatement(query)) {
             pst.setInt(1, userId);
@@ -127,8 +172,7 @@ public class ReclamationService {
                         rs.getString("statut"),
                         rs.getString("date")
                 );
-                r.setId(rs.getInt("idRec")); // Très important pour la modif/suppression
-                // r.setUserId(rs.getInt("id_user")); // Optionnel
+                r.setId(rs.getInt("idRec"));
                 list.add(r);
             }
         } catch (SQLException e) {

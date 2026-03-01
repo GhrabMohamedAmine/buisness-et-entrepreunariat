@@ -26,16 +26,8 @@ public class StartController {
         try {
             Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
             Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-
-            Scene scene = new Scene(root);
-
-            // 🔥 APPLY CSS EVERY TIME YOU CHANGE SCENE
-            scene.getStylesheets().add(
-                    getClass().getResource("/css/styles123.css").toExternalForm()
-            );
-
-            stage.setScene(scene);
-             stage.show();
+            stage.setScene(new Scene(root));
+            stage.show();
         } catch (IOException e) {
             System.err.println("Erreur de navigation vers : " + fxmlPath);
             e.printStackTrace();

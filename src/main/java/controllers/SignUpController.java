@@ -1,6 +1,7 @@
 package controllers;
 
 import entities.User;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -15,19 +16,26 @@ import javafx.scene.input.MouseEvent;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import services.CompreFaceService;
 import services.UserService;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.util.ResourceBundle;
 
 public class SignUpController implements Initializable {
-
-    // --- Champs existants ---
+    @FXML private Label firstNameError;
+    @FXML private Label lastNameError;
+    @FXML private Label emailError;
+    @FXML private Label phoneError;
+    @FXML private Label deptError;
     @FXML private TextField firstNameField;
     @FXML private TextField lastNameField;
     @FXML private TextField emailField;
@@ -35,114 +43,186 @@ public class SignUpController implements Initializable {
     @FXML private TextField deptField;
     @FXML private PasswordField passwordField;
     @FXML private ComboBox<String> roleComboBox;
+    @FXML private Circle profileCircle;
 
-    // --- NOUVEAUX CHAMPS POUR L'IMAGE ---
-    @FXML private Circle profileCircle; // Lié au fx:id="profileCircle" dans le FXML
-    private String imagePath; // Pour stocker le chemin (ex: file:/C:/Images/photo.png)
+    // Stockage des données binaires de l'image sélectionnée
+    private byte[] selectedImageData;
 
     private final UserService userService = new UserService();
+    private final CompreFaceService compreFaceService = new CompreFaceService();
 
     @Override
     public void initialize(URL url, ResourceBundle rb) {
-        // Initialisation des rôles
         if (roleComboBox != null) {
             roleComboBox.setItems(FXCollections.observableArrayList(
-                     "Manager", "Ressource Manager", "Employer",
-                    "Formateur", "Chef Projet", "Expert Financier"
+                    "Manager", "Ressource Manager", "Employee",
+                    "Formateur", "Chef Projet", "Consultant"
             ));
         }
     }
 
-    // --- NOUVELLE MÉTHODE : GESTION DE L'UPLOAD ---
+    // --- Gestion de l'upload d'image (conversion en byte[]) ---
     @FXML
     void handleImageUpload(ActionEvent event) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Choisir une photo de profil");
-
-        // Filtre pour ne montrer que les images
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("Images", "*.png", "*.jpg", "*.jpeg")
         );
 
-        // Récupérer la fenêtre actuelle pour afficher le dialogue
         Stage stage = (Stage) ((Node) event.getSource()).getScene().getWindow();
         File selectedFile = fileChooser.showOpenDialog(stage);
 
         if (selectedFile != null) {
-            // 1. Sauvegarder le chemin pour la base de données
-            // toURI().toString() convertit le chemin système (C:\...) en format URL compatible JavaFX (file:/C:/...)
-            imagePath = selectedFile.toURI().toString();
+            try {
+                // Lire le fichier en tableau d'octets
+                selectedImageData = Files.readAllBytes(selectedFile.toPath());
 
-            // 2. Afficher l'aperçu dans le cercle
-            if (profileCircle != null) {
-                profileCircle.setFill(new ImagePattern(new Image(imagePath)));
+                // Mettre à jour l'aperçu
+                if (profileCircle != null) {
+                    Image image = new Image(new ByteArrayInputStream(selectedImageData));
+                    profileCircle.setFill(new ImagePattern(image));
+                }
+            } catch (IOException e) {
+                showAlert("Erreur", "Impossible de lire le fichier image : " + e.getMessage());
             }
         }
     }
 
-    // --- MÉTHODE MISE À JOUR : INSCRIPTION ---
     @FXML
     void handleSignUp(ActionEvent event) {
-        // Récupération des valeurs
+        clearErrors();
+        boolean isValid = true;
+
         String nom = lastNameField.getText();
         String prenom = firstNameField.getText();
         String email = emailField.getText();
         String phone = phoneField.getText();
-        // Valeur par défaut si null
-        String role = (roleComboBox.getValue() != null) ? roleComboBox.getValue() : "Employer";
         String dept = deptField.getText();
         String mdp = passwordField.getText();
+
+        String role = (roleComboBox.getValue() != null) ? roleComboBox.getValue() : "Employer";
         String dateInscription = LocalDate.now().toString();
 
-        // Validation simple
-        if (nom.isEmpty() || prenom.isEmpty() || email.isEmpty() || mdp.isEmpty()) {
-            showAlert("Champs manquants", "Veuillez remplir au moins le nom, prénom, email et mot de passe.");
+        String nameRegex = "^[a-zA-ZÀ-ÿ\\s\\-]+$";
+
+        // Validation Nom
+        if (nom.isEmpty()) {
+            showInlineError(lastNameError, "Le nom est requis.");
+            isValid = false;
+        } else if (!nom.matches(nameRegex)) {
+            showInlineError(lastNameError, "Lettres uniquement.");
+            isValid = false;
+        }
+
+        // Validation Prénom
+        if (prenom.isEmpty()) {
+            showInlineError(firstNameError, "Le prénom est requis.");
+            isValid = false;
+        } else if (!prenom.matches(nameRegex)) {
+            showInlineError(firstNameError, "Lettres uniquement.");
+            isValid = false;
+        }
+
+        // Validation Email
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[a-zA-Z]{2,}$";
+        if (email.isEmpty()) {
+            showInlineError(emailError, "L'email est requis.");
+            isValid = false;
+        } else if (!email.matches(emailRegex)) {
+            showInlineError(emailError, "Format email invalide.");
+            isValid = false;
+        }
+
+        // Validation Téléphone
+        String phoneRegex = "^[0-9\\s+]+$";
+        if (phone.isEmpty()) {
+            showInlineError(phoneError, "Le téléphone est requis.");
+            isValid = false;
+        } else if (!phone.matches(phoneRegex)) {
+            showInlineError(phoneError, "Chiffres et '+' uniquement.");
+            isValid = false;
+        }
+
+        // Validation Département
+        if (dept.isEmpty()) {
+            showInlineError(deptError, "Le département est requis.");
+            isValid = false;
+        } else if (!dept.matches(nameRegex)) {
+            showInlineError(deptError, "Lettres uniquement.");
+            isValid = false;
+        }
+
+        // Validation Mot de passe
+        if (mdp.isEmpty()) {
+            showAlert("Erreur", "Le mot de passe est obligatoire.");
+            isValid = false;
+        }
+
+        if (!isValid) {
             return;
         }
 
-        // Gestion de l'image par défaut si l'utilisateur n'en a pas choisi
-        if (imagePath == null) {
-            imagePath = "";
+        // Si aucune image n'a été sélectionnée, on laisse un tableau vide
+        if (selectedImageData == null) {
+            selectedImageData = new byte[0];
         }
+        System.out.println("Taille de l'image de profil : " + selectedImageData.length + " octets");
+        // Création de l'utilisateur temporaire (sans faceId)
+        User newUser = new User(0, nom, prenom, email, phone, role, dept, "en attente", dateInscription, selectedImageData, null);
 
-        // Création de l'utilisateur avec le NOUVEAU constructeur (incluant imagePath à la fin)
-        User newUser = new User(
-                0,              // ID (auto-incrémenté en DB)
-                nom,
-                prenom,
-                email,
-                phone,
-                role,
-                dept,
-                "Actif",        // Statut par défaut
-                dateInscription,
-                imagePath       // Le lien de l'image
-        );
+        // Ouvrir la fenêtre de capture faciale
+        openFaceCaptureWindow(event, newUser, mdp);
+    }
 
+    private void openFaceCaptureWindow(ActionEvent event, User user, String password) {
         try {
-            // Appel au service pour sauvegarder
-            userService.signupAndLogin(newUser, mdp);
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/CaptureFace/CaptureFace.fxml"));
+            Parent root = loader.load();
+            CaptureFaceController captureController = loader.getController();
 
-            // Succès
-            System.out.println("Succès : Utilisateur " + email + " inscrit avec l'image : " + imagePath);
+            Stage captureStage = new Stage();
+            captureStage.setTitle("Capture faciale");
+            captureStage.setScene(new Scene(root));
+            captureStage.initModality(Modality.APPLICATION_MODAL);
+            captureStage.setOnHidden(e -> captureController.closeWebcam()); // fermer la webcam à la fermeture
 
-            // Redirection vers la suite (ex: SignUp2 ou Dashboard)
-            switchScene(event, "/SignUp/SignUp2.fxml");
+            captureController.setOnCaptureCallback(() -> {
+                byte[] faceImage = captureController.getCapturedImageData();
+                if (faceImage != null) {
+                    // Enregistrer le visage via CompreFace
+                    String faceId = compreFaceService.registerFace(faceImage, user.getEmail());
+                    if (faceId != null) {
+                        user.setFaceId(faceId);
+                        try {
+                            userService.signup(user, password);
+                            Platform.runLater(() -> {
+                                captureStage.close();
+                                switchScene(event, "/SignUp/SignUp2.fxml");
+                            });
+                        } catch (SQLException e) {
+                            e.printStackTrace();
+                            Platform.runLater(() -> showAlert("Erreur", "Échec de la création du compte : " + e.getMessage()));
+                        }
+                    } else {
+                        Platform.runLater(() -> showAlert("Erreur", "Échec de l'enregistrement facial. Veuillez réessayer."));
+                    }
+                } else {
+                    Platform.runLater(() -> showAlert("Erreur", "Aucune image capturée."));
+                }
+            });
 
-        } catch (SQLException e) {
+            captureStage.showAndWait();
+
+        } catch (IOException e) {
             e.printStackTrace();
-            showAlert("Erreur SQL", "Impossible de créer le compte : " + e.getMessage());
-        } catch (Exception e) {
-            e.printStackTrace();
-            showAlert("Erreur", "Une erreur inattendue est survenue.");
+            showAlert("Erreur", "Impossible d'ouvrir la fenêtre de capture.");
         }
     }
 
-    // --- Navigation et Utilitaires ---
-
     @FXML
     void handleBack(ActionEvent event) {
-        switchScene(event, "/Start/1ere.fxml"); // Retour à la page d'accueil ou login
+        switchScene(event, "/Start/1ere.fxml");
     }
 
     private void switchScene(ActionEvent event, String fxmlPath) {
@@ -156,6 +236,7 @@ public class SignUpController implements Initializable {
             e.printStackTrace();
         }
     }
+
     private void switchScen(MouseEvent event, String fxmlPath) {
         try {
             Parent root = FXMLLoader.load(getClass().getResource(fxmlPath));
@@ -182,7 +263,7 @@ public class SignUpController implements Initializable {
     }
 
     public void handleNext2(ActionEvent event) {
-        switchScene(event, "/Profile/Profile1.fxml");
+        switchScene(event, "/SignIn/SignIn.fxml");
     }
 
     public void handleNext(ActionEvent event) {
@@ -190,15 +271,28 @@ public class SignUpController implements Initializable {
     }
 
     public void goToProjects(MouseEvent event) {
-        switchScen(event, "/Profile/Profile1.fxml");
+        switchScen(event, "/SignIn/SignIn.fxml");
     }
 
     public void goToTrainings(MouseEvent event) {
-        switchScen(event, "/Profile/Profile1.fxml");
+        switchScen(event, "/SignIn/SignIn.fxml");
     }
 
-
     public void goToDashboard(MouseEvent event) {
-        switchScen(event, "/Profile/Profile1.fxml");
+        switchScen(event, "/SignIn/SignIn.fxml");
+    }
+
+    private void showInlineError(Label errorLabel, String message) {
+        errorLabel.setText(message);
+        errorLabel.setVisible(true);
+        errorLabel.setManaged(true);
+    }
+
+    private void clearErrors() {
+        if(firstNameError != null) { firstNameError.setVisible(false); firstNameError.setManaged(false); }
+        if(lastNameError != null) { lastNameError.setVisible(false); lastNameError.setManaged(false); }
+        if(emailError != null) { emailError.setVisible(false); emailError.setManaged(false); }
+        if(phoneError != null) { phoneError.setVisible(false); phoneError.setManaged(false); }
+        if(deptError != null) { deptError.setVisible(false); deptError.setManaged(false); }
     }
 }
