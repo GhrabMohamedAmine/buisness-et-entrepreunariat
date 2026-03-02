@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<StackPane prefHeight="550.0" prefWidth="500.0" stylesheets="@style.css" xmlns="http://javafx.com/javafx/17" xmlns:fx="http://javafx.com/fxml/1" fx:controller="controllers.InviteUserController">
+    <children>
+        <VBox spacing="20.0" styleClass="popup-card" maxWidth="450.0" maxHeight="500.0">
+            <padding>
+                <Insets bottom="30.0" left="30.0" right="30.0" top="30.0" />
+            </padding>
+            <children>
+                <Label styleClass="title-label" text="Inviter un nouvel utilisateur" />
+
+                <VBox spacing="8.0">
+                    <Label styleClass="input-label" text="Prénom" />
+                    <TextField fx:id="firstNameField" promptText="Jean" styleClass="login-input" />
+                </VBox>
+
+                <VBox spacing="8.0">
+                    <Label styleClass="input-label" text="Nom" />
+                    <TextField fx:id="lastNameField" promptText="Dupont" styleClass="login-input" />
+                </VBox>
+
+                <VBox spacing="8.0">
+                    <Label styleClass="input-label" text="Email" />
+                    <TextField fx:id="emailField" promptText="jean.dupont@example.com" styleClass="login-input" />
+                </VBox>
+
+                <VBox spacing="8.0">
+                    <Label styleClass="input-label" text="Rôle" />
+                    <ComboBox fx:id="roleCombo" styleClass="login-input" promptText="Sélectionner un rôle" />
+                </VBox>
+
+                <VBox spacing="8.0">
+                    <Label styleClass="input-label" text="Département" />
+                    <TextField fx:id="departmentField" promptText="Informatique" styleClass="login-input" />
+                </VBox>
+
+                <VBox spacing="8.0">
+                    <Label styleClass="input-label" text="Mot de passe temporaire" />
+                    <PasswordField fx:id="passwordField" promptText="••••••••" styleClass="login-input" />
+                </VBox>
+
+                <HBox spacing="10.0" alignment="CENTER_RIGHT">
+                    <Button onAction="#handleCancel" text="Annuler" styleClass="btn-secondary" />
+                    <Button onAction="#handleSave" text="Inviter" styleClass="btn-primary" />
+                </HBox>
+            </children>
+        </VBox>
+    </children>
+</StackPane>

@@ -1,0 +1,47 @@
+/* capture-face.css - Style pour la fenêtre de capture faciale */
+
+.root {
+    -fx-background-color: #f3f4f6;
+    -color-nexum-violet: #7c3aed;
+    -color-nexum-violet-hover: #6d28d9;
+}
+
+.modal-container {
+    -fx-background-color: white;
+    -fx-background-radius: 16;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.1), 20, 0, 0, 10);
+}
+
+.modal-title {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #111827;
+}
+
+/* Style pour l'image de la webcam */
+#webcamView {
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+    -fx-background-color: #f9fafb;
+}
+
+/* Bouton principal (violet) */
+.btn-primary {
+    -fx-background-color: -color-nexum-violet;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 8;
+    -fx-padding: 10 20;
+    -fx-cursor: hand;
+}
+.btn-primary:hover {
+    -fx-background-color: -color-nexum-violet-hover;
+}
+
+/* Label de statut */
+.attachment-label {
+    -fx-text-fill: #6b7280;
+    -fx-font-size: 12px;
+}

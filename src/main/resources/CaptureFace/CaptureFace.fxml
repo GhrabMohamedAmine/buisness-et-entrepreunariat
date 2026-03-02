@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx/17"
+      xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="controllers.CaptureFaceController"
+      spacing="20"
+      alignment="CENTER"
+      styleClass="modal-container"
+      prefWidth="500"
+      prefHeight="400"
+      stylesheets="@style.css"
+>
+
+    <Label styleClass="modal-title" text="Capture faciale" />
+
+    <ImageView fx:id="webcamView"
+               fitWidth="400"
+               fitHeight="300"
+               preserveRatio="false"
+               styleClass="form-input"
+               style="-fx-border-color: #e5e7eb; -fx-border-width: 1;" />
+
+    <Button fx:id="captureBtn"
+            text="Prendre la photo"
+            styleClass="btn-primary"
+            maxWidth="200" />
+
+    <Label fx:id="statusLabel"
+           styleClass="attachment-label"
+           text="Placez votre visage devant la caméra" />
+
+    <padding>
+        <Insets top="20" right="20" bottom="20" left="20" />
+    </padding>
+</VBox>
