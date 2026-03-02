@@ -179,8 +179,11 @@ public class RequestResourceController {
         double totalCost = qty * selected.getUnitcost();
 
         try {
+            int assignmentId;
+
             if (editing == null) {
-                assignmentService.requestResource(
+                // ✅ IMPORTANT: requestResource must return generated ID (assignment_id)
+                assignmentId = assignmentService.requestResource(
                         selected.getId(),
                         projectCode,
                         userId,
@@ -195,6 +198,36 @@ public class RequestResourceController {
                         qty,
                         totalCost
                 );
+                assignmentId = editing.getAssignmentId(); // receipt for edit too (optional)
+            }
+
+            // ✅ Auto-save PDF to Downloads
+            User u = UserService.getCurrentUser();
+
+            String home = System.getProperty("user.home");
+            java.io.File downloads = new java.io.File(home, "Downloads");
+            if (!downloads.exists()) downloads = new java.io.File(home); // fallback
+
+            java.io.File out = new java.io.File(downloads, "resource-request-REQ-" + assignmentId + ".pdf");
+
+            // status shown on PDF (you can fetch real status from DB if you want)
+            String status = (editing == null) ? "SUBMITTED" : "UPDATED";
+
+            utils.RequestPdfGenerator.generateReceipt(
+                    out,
+                    assignmentId,
+                    u,
+                    projectName,
+                    projectCode,
+                    selected,
+                    qty,
+                    totalCost,
+                    status
+            );
+
+            // Optional: open the pdf after saving
+            if (java.awt.Desktop.isDesktopSupported()) {
+                java.awt.Desktop.getDesktop().open(out);
             }
 
             closeWindow();
@@ -202,6 +235,9 @@ public class RequestResourceController {
         } catch (SQLException e) {
             e.printStackTrace();
             showError("Database error: " + e.getMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+            showError("PDF error: " + e.getMessage());
         }
     }
 
