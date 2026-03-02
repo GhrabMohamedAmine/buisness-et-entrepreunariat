@@ -112,9 +112,11 @@
 
                 <configuration>
 
+
                     <mainClass>Mains.MainFX</mainClass>
 
                 </configuration>
+
 
             </plugin>
 
