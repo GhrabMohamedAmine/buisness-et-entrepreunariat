@@ -21,7 +21,7 @@ public class ProjectService {
         List<Project> projects = new ArrayList<>();
         String query = "SELECT p.id, p.name, p.description, p.budget, p.start_date, p.end_date, p.assigned_to, p.created_by, " +
                 "CASE WHEN COUNT(t.id) = 0 THEN 0 " +
-                "ELSE ROUND(100 * SUM(CASE WHEN UPPER(REPLACE(REPLACE(COALESCE(t.status, ''), ' ', '_'), '-', '_')) = 'DONE' THEN 1 ELSE 0 END) / COUNT(t.id), 0) END AS computed_progress " +
+                "ELSE ROUND(100 * SUM(CASE WHEN UPPER(REPLACE(REPLACE(COALESCE(t.status, ''), ' ', ''), '-', '')) = 'DONE' THEN 1 ELSE 0 END) / COUNT(t.id), 0) END AS computed_progress " +
                 "FROM projects p " +
                 "LEFT JOIN tasks t ON t.project_id = p.id " +
                 "GROUP BY p.id, p.name, p.description, p.budget, p.start_date, p.end_date, p.assigned_to, p.created_by";
@@ -54,7 +54,7 @@ public class ProjectService {
         List<Project> projects = new ArrayList<>();
         String query = "SELECT p.id, p.name, p.description, p.budget, p.start_date, p.end_date, p.assigned_to, p.created_by, " +
                 "CASE WHEN COUNT(t.id) = 0 THEN 0 " +
-                "ELSE ROUND(100 * SUM(CASE WHEN UPPER(REPLACE(REPLACE(COALESCE(t.status, ''), ' ', '_'), '-', '_')) = 'DONE' THEN 1 ELSE 0 END) / COUNT(t.id), 0) END AS computed_progress " +
+                "ELSE ROUND(100 * SUM(CASE WHEN UPPER(REPLACE(REPLACE(COALESCE(t.status, ''), ' ', ''), '-', '')) = 'DONE' THEN 1 ELSE 0 END) / COUNT(t.id), 0) END AS computed_progress " +
                 "FROM projects p " +
                 "LEFT JOIN tasks t ON t.project_id = p.id " +
                 "WHERE p.assigned_to = ? " +

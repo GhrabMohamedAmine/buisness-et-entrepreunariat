@@ -186,7 +186,7 @@ public class ProjectDetailsController {
             if (task == null || task.getStatus() == null) {
                 continue;
             }
-            String normalized = task.getStatus().trim().toUpperCase(Locale.ROOT).replace(' ', '_').replace('-', '_');
+            String normalized = task.getStatus().trim().toUpperCase(Locale.ROOT);
             if ("DONE".equals(normalized)) {
                 done++;
             }
@@ -317,7 +317,7 @@ public class ProjectDetailsController {
 
     private String normalizeStatus(String status) {
         if (status == null) return "TODO";
-        return status.trim().toUpperCase().replace(' ', '_').replace('-', '_');
+        return status.trim().toUpperCase();
     }
 
     private String normalizeActivityType(String type) {
@@ -395,12 +395,11 @@ public class ProjectDetailsController {
 
                 TaskRowController controller = loader.getController();
                 controller.setTaskData(t);
-                boolean canModifyStatus = canCurrentUserModifyTaskStatus(t);
-                boolean canModifyTaskActions = canCurrentUserModifyTask(t);
-                controller.setStatusEditingAllowed(canModifyStatus);
-                controller.setTaskActionsAllowed(canModifyTaskActions);
+                boolean canModifyTask = canCurrentUserModifyTask(t);
+                controller.setStatusEditingAllowed(canModifyTask);
+                controller.setTaskActionsAllowed(canModifyTask);
                 controller.setOnStatusToggle(selected -> {
-                    if (!canModifyStatus) {
+                    if (!canModifyTask) {
                         return false;
                     }
                     String newStatus = selected ? "DONE" : "TODO";
@@ -412,7 +411,7 @@ public class ProjectDetailsController {
                     return updated;
                 });
                 controller.setOnStatusChange(newStatus -> {
-                    if (!canModifyStatus) {
+                    if (!canModifyTask) {
                         return false;
                     }
                     boolean updated = taskService.updateTaskStatus(t.getId(), newStatus);
@@ -516,12 +515,11 @@ public class ProjectDetailsController {
 
                 controller.setTaskData(task);
                 controller.setKanbanMode(true);
-                boolean canModifyStatus = canCurrentUserModifyTaskStatus(task);
-                boolean canModifyTaskActions = canCurrentUserModifyTask(task);
-                controller.setStatusEditingAllowed(canModifyStatus);
-                controller.setTaskActionsAllowed(canModifyTaskActions);
+                boolean canModifyTask = canCurrentUserModifyTask(task);
+                controller.setStatusEditingAllowed(canModifyTask);
+                controller.setTaskActionsAllowed(canModifyTask);
                 controller.setOnStatusToggle(selected -> {
-                    if (!canModifyStatus) {
+                    if (!canModifyTask) {
                         return false;
                     }
                     String newStatus = selected ? TaskValueMapper.STATUS_DONE : TaskValueMapper.STATUS_TODO;
@@ -534,7 +532,7 @@ public class ProjectDetailsController {
                     return updated;
                 });
                 controller.setOnStatusChange(newStatus -> {
-                    if (!canModifyStatus) {
+                    if (!canModifyTask) {
                         return false;
                     }
                     boolean updated = taskService.updateTaskStatus(task.getId(), newStatus);
@@ -922,7 +920,7 @@ public class ProjectDetailsController {
                 try {
                     int taskId = Integer.parseInt(db.getString());
                     Task draggedTask = kanbanTaskById.get(taskId);
-                    if (!canCurrentUserModifyTaskStatus(draggedTask)) {
+                    if (!canCurrentUserModifyTask(draggedTask)) {
                         event.setDropCompleted(false);
                         event.consume();
                         return;
@@ -953,24 +951,9 @@ public class ProjectDetailsController {
         }
         String normalizedRole = currentUser.getRole().trim().toUpperCase(Locale.ROOT);
         if ("MANAGER".equals(normalizedRole)) {
-            return task.getCreatedby() == currentUser.getId();
+            return true;
         }
-        return task.getCreatedby() == currentUser.getId();
-    }
-
-    private boolean canCurrentUserModifyTaskStatus(Task task) {
-        if (task == null) {
-            return false;
-        }
-        User currentUser = UserService.getCurrentUser();
-        if (currentUser == null || currentUser.getRole() == null) {
-            return false;
-        }
-        String normalizedRole = currentUser.getRole().trim().toUpperCase(Locale.ROOT);
-        if ("MANAGER".equals(normalizedRole)) {
-            return task.getCreatedby() == currentUser.getId() && task.getAssignedTo() <= 0;
-        }
-        return task.getAssignedTo() == currentUser.getId() || task.getCreatedby() == currentUser.getId();
+        return task.getAssignedTo() == currentUser.getId();
     }
 
     private void addCardToKanbanColumn(VBox column, Parent row) {

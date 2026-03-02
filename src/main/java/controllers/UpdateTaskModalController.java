@@ -40,7 +40,6 @@ public class UpdateTaskModalController {
     private final TaskService taskService = new TaskService();
     private final services.ProjectService projectService = new services.ProjectService();
     private final List<User> allUsers = new ArrayList<>();
-    private boolean managerAssignedTaskRestricted = false;
 
     @FXML
     public void initialize() {
@@ -91,7 +90,6 @@ public class UpdateTaskModalController {
             }
         }
         enforceAssignmentPolicyByRole();
-        applyManagerAssignedTaskRestrictions();
     }
 
     public boolean isSaved() {
@@ -106,30 +104,18 @@ public class UpdateTaskModalController {
             return;
         }
 
-        if (managerAssignedTaskRestricted) {
-            title = currentTask.getTitle();
-            desc = currentTask.getDescription();
-        }
-
         int assigneeId = userCombo.getValue().getId();
         if (!isCurrentUserManager()) {
             assigneeId = currentTask.getAssignedTo();
         }
 
-        String statusToSave = managerAssignedTaskRestricted
-                ? TaskValueMapper.normalizeStatus(currentTask.getStatus())
-                : TaskValueMapper.normalizeStatus(statusCombo.getValue());
-        String dueDateToSave = managerAssignedTaskRestricted
-                ? currentTask.getDueDate()
-                : dueDatePicker.getValue().toString();
-
         Task updated = new Task(
                 title,
                 desc,
-                statusToSave,
+                TaskValueMapper.normalizeStatus(statusCombo.getValue()),
                 TaskValueMapper.normalizePriority(priorityCombo.getValue()),
                 currentTask.getStartDate(),
-                dueDateToSave,
+                dueDatePicker.getValue().toString(),
                 currentTask.getProjectId(),
                 assigneeId,
                 currentTask.getCreatedby()
@@ -157,36 +143,36 @@ public class UpdateTaskModalController {
         boolean valid = true;
         boolean manager = isCurrentUserManager();
 
-        if (!managerAssignedTaskRestricted && title.isBlank()) {
+        if (title.isBlank()) {
             setError(titleErrorLabel, "Task name is required.");
             valid = false;
-        } else if (!managerAssignedTaskRestricted && !InputValidationUtils.hasMeaningfulText(title)) {
+        } else if (!InputValidationUtils.hasMeaningfulText(title)) {
             setError(titleErrorLabel, "Task name must include letters or numbers.");
             valid = false;
-        } else if (!managerAssignedTaskRestricted && title.length() < 3) {
+        } else if (title.length() < 3) {
             setError(titleErrorLabel, "Minimum 3 characters.");
             valid = false;
-        } else if (!managerAssignedTaskRestricted && title.length() > 120) {
+        } else if (title.length() > 120) {
             setError(titleErrorLabel, "Maximum 120 characters.");
             valid = false;
         }
 
-        if (!managerAssignedTaskRestricted && !desc.isBlank() && !InputValidationUtils.hasMeaningfulText(desc)) {
+        if (!desc.isBlank() && !InputValidationUtils.hasMeaningfulText(desc)) {
             setError(descErrorLabel, "Description must include letters or numbers.");
             valid = false;
         }
 
-        if (!managerAssignedTaskRestricted && desc.length() > 1000) {
+        if (desc.length() > 1000) {
             setError(descErrorLabel, "Maximum 1000 characters.");
             valid = false;
         }
 
-        if (!managerAssignedTaskRestricted && dueDatePicker.getValue() == null) {
+        if (dueDatePicker.getValue() == null) {
             setError(dueDateErrorLabel, "Due date is required.");
             valid = false;
         }
 
-        if (!managerAssignedTaskRestricted && statusCombo.getValue() == null) {
+        if (statusCombo.getValue() == null) {
             setError(statusErrorLabel, "Status is required.");
             valid = false;
         }
@@ -254,20 +240,5 @@ public class UpdateTaskModalController {
         return currentUser != null
                 && currentUser.getRole() != null
                 && "MANAGER".equals(currentUser.getRole().trim().toUpperCase(Locale.ROOT));
-    }
-
-    private void applyManagerAssignedTaskRestrictions() {
-        managerAssignedTaskRestricted = isCurrentUserManager()
-                && currentTask != null
-                && currentTask.getAssignedTo() > 0;
-
-        titleField.setDisable(managerAssignedTaskRestricted);
-        descField.setDisable(managerAssignedTaskRestricted);
-        dueDatePicker.setDisable(managerAssignedTaskRestricted);
-        statusCombo.setDisable(managerAssignedTaskRestricted);
-
-        if (managerAssignedTaskRestricted) {
-            statusCombo.setPromptText("Manager cannot change status after assignment");
-        }
     }
 }

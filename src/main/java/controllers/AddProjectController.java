@@ -92,7 +92,6 @@ public class AddProjectController {
                 onProjectCreated.run();
             }
 
-            // 4. Close the window
             closeoverlay();
 
         } catch (Exception e) {
@@ -105,9 +104,7 @@ public class AddProjectController {
     private void handleCancel() {
         closeoverlay();
     }
-    public void setParentController(HelloController parentController) {
-        this.onProjectCreated = parentController::loadData;
-    }
+
 
     public void setOnProjectCreated(Runnable onProjectCreated) {
         this.onProjectCreated = onProjectCreated;

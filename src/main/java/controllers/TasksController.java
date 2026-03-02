@@ -244,7 +244,7 @@ public class TasksController {
         deleteIcon.setOnMouseClicked(e -> deleteTask(task));
 
         doneCheck.setOnAction(e -> {
-            if (!canCurrentUserModifyTaskStatus(task)) {
+            if (!canCurrentUserModifyTask(task)) {
                 doneCheck.setSelected(!doneCheck.isSelected());
                 return;
             }
@@ -258,7 +258,7 @@ public class TasksController {
         });
 
         inProgressIcon.setOnMouseClicked(e -> {
-            if (!canCurrentUserModifyTaskStatus(task)) {
+            if (!canCurrentUserModifyTask(task)) {
                 return;
             }
             String currentStatus = TaskValueMapper.normalizeStatus(task.getStatus());
@@ -270,18 +270,17 @@ public class TasksController {
                 loadTasks(currentSearchQuery());
             }
         });
-        boolean canModifyStatus = canCurrentUserModifyTaskStatus(task);
-        boolean canModifyTaskActions = canCurrentUserModifyTask(task);
-        doneCheck.setDisable(!canModifyStatus);
-        inProgressIcon.setDisable(!canModifyStatus);
-        inProgressIcon.setMouseTransparent(!canModifyStatus);
-        inProgressIcon.setOpacity(canModifyStatus ? 1.0 : 0.45);
-        editIcon.setDisable(!canModifyTaskActions);
-        editIcon.setMouseTransparent(!canModifyTaskActions);
-        editIcon.setOpacity(canModifyTaskActions ? 1.0 : 0.45);
-        deleteIcon.setDisable(!canModifyTaskActions);
-        deleteIcon.setMouseTransparent(!canModifyTaskActions);
-        deleteIcon.setOpacity(canModifyTaskActions ? 1.0 : 0.45);
+        boolean canModifyTask = canCurrentUserModifyTask(task);
+        doneCheck.setDisable(!canModifyTask);
+        inProgressIcon.setDisable(!canModifyTask);
+        inProgressIcon.setMouseTransparent(!canModifyTask);
+        inProgressIcon.setOpacity(canModifyTask ? 1.0 : 0.45);
+        editIcon.setDisable(!canModifyTask);
+        editIcon.setMouseTransparent(!canModifyTask);
+        editIcon.setOpacity(canModifyTask ? 1.0 : 0.45);
+        deleteIcon.setDisable(!canModifyTask);
+        deleteIcon.setMouseTransparent(!canModifyTask);
+        deleteIcon.setOpacity(canModifyTask ? 1.0 : 0.45);
 
         row.getChildren().addAll(doneCheck, inProgressIcon, title, priority, status, dateBox, assignedTo, editIcon, deleteIcon);
         return row;
@@ -356,7 +355,6 @@ public class TasksController {
 
     private void openUpdateTaskModal(Task task) {
         if (task == null) return;
-        if (!canCurrentUserModifyTask(task)) return;
         Node mainLayout = tasksGroupsContainer.getScene().getRoot();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/UpdateTaskModal.fxml"));
@@ -433,7 +431,6 @@ public class TasksController {
 
     private void deleteTask(Task task) {
         if (task == null) return;
-        if (!canCurrentUserModifyTask(task)) return;
         Node mainLayout = tasksGroupsContainer.getScene().getRoot();
         try {
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/tezfx/view/DeleteConfirmModal.fxml"));
@@ -490,24 +487,9 @@ public class TasksController {
         }
         String normalizedRole = currentUser.getRole().trim().toUpperCase(Locale.ROOT);
         if ("MANAGER".equals(normalizedRole)) {
-            return task.getCreatedby() == currentUser.getId();
+            return true;
         }
-        return task.getCreatedby() == currentUser.getId();
-    }
-
-    private boolean canCurrentUserModifyTaskStatus(Task task) {
-        if (task == null) {
-            return false;
-        }
-        var currentUser = UserService.getCurrentUser();
-        if (currentUser == null || currentUser.getRole() == null) {
-            return false;
-        }
-        String normalizedRole = currentUser.getRole().trim().toUpperCase(Locale.ROOT);
-        if ("MANAGER".equals(normalizedRole)) {
-            return task.getCreatedby() == currentUser.getId() && task.getAssignedTo() <= 0;
-        }
-        return task.getAssignedTo() == currentUser.getId() || task.getCreatedby() == currentUser.getId();
+        return task.getAssignedTo() == currentUser.getId();
     }
 
     private int resolveCurrentUserId() {

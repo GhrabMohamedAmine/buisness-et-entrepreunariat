@@ -40,9 +40,9 @@ public class TaskRowController {
                     return;
                 }
                 Dragboard db = taskRowRoot.startDragAndDrop(TransferMode.MOVE);
-            ClipboardContent content = new ClipboardContent();
+                ClipboardContent content = new ClipboardContent();
                 content.putString(String.valueOf(task.getId()));
-            db.setContent(content);
+                db.setContent(content);
                 db.setDragView(taskRowRoot.snapshot(null, null));
                 event.consume();
             });
