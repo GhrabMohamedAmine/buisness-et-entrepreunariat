@@ -32,6 +32,8 @@ module org.example.yedikpromax {
     requires com.google.zxing.javase;
     requires org.kordamp.ikonli.feather;
     requires javafx.media;
+    requires org.apache.pdfbox;
+
 
     requires org.kordamp.ikonli.fontawesome5;
     requires okhttp3;

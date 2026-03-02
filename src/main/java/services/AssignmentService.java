@@ -311,7 +311,8 @@ public class AssignmentService {
     }
 
     // ================= REQUEST RESOURCE =================
-    public void requestResource(int resourceId, String projectCode, int userId, int quantity, double totalCost) throws SQLException {
+    // ================= REQUEST RESOURCE =================
+    public int requestResource(int resourceId, String projectCode, int userId, int quantity, double totalCost) throws SQLException {
 
         enforceUserAllocationPolicy(resourceId, userId);
 
@@ -339,22 +340,29 @@ public class AssignmentService {
             }
 
             LocalDate endDate = prj.getEndDateByName(prj.getNameById(Integer.parseInt(projectCode)));
-            System.out.println(endDate);
 
             String insert =
                     "INSERT INTO resource_assignment " +
                             "(resource_id, project_code, user_id, quantity, assignment_date, return_date, total_cost, status) " +
                             "VALUES (?, ?, ?, ?, CURDATE(), ?, ?, ?)";
 
-            try (PreparedStatement ps = cnx.prepareStatement(insert)) {
+            int generatedId;
+
+            try (PreparedStatement ps = cnx.prepareStatement(insert, Statement.RETURN_GENERATED_KEYS)) {
                 ps.setInt(1, resourceId);
                 ps.setString(2, projectCode);
                 ps.setInt(3, userId);
                 ps.setInt(4, quantity);
-                ps.setDate(5, java.sql.Date.valueOf(endDate)); // you were using endDate in return_date slot
+                ps.setDate(5, endDate == null ? null : java.sql.Date.valueOf(endDate)); // expected return/end date
                 ps.setDouble(6, totalCost);
                 ps.setString(7, statusToSet);
+
                 ps.executeUpdate();
+
+                try (ResultSet keys = ps.getGeneratedKeys()) {
+                    if (!keys.next()) throw new SQLException("Failed to get generated assignment_id.");
+                    generatedId = keys.getInt(1);
+                }
             }
 
             if ("ACCEPTED".equalsIgnoreCase(statusToSet)) {
@@ -367,6 +375,7 @@ public class AssignmentService {
             }
 
             cnx.commit();
+            return generatedId;
 
         } catch (SQLException e) {
             cnx.rollback();
