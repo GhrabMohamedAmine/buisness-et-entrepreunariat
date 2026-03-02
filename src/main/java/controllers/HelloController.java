@@ -53,6 +53,8 @@ public class HelloController {
     @FXML private Label upcomingDeadlinesKpiLabel;
     @FXML private Label overdueUndoneKpiLabel;
     @FXML private VBox tasksListContainer;
+    @FXML private VBox taskCard;
+    @FXML Label Username;
 
 
     private final ProjectService projectService = new ProjectService();
@@ -62,13 +64,31 @@ public class HelloController {
             "purple", "blue", "green", "orange"
     };
 
+    public void hideTasksList() {
+        User user = UserService.getCurrentUser();
+        System.out.println(user.toString());
+        switch(user.getRole().toUpperCase()){
+            case "FORMATEUR" , "CONSULTANT"->{
+                taskCard.setVisible(false);
+                taskCard.setManaged(false);
+            }
+            default -> {
+                taskCard.setVisible(true);
+                taskCard.setManaged(true);
+            }
+        }
+    }
+
+
     @FXML
     public void initialize() {
-
+        User user = UserService.getCurrentUser();
         loadData();
+        Username.setText(user.getFullName());
         boolean manager = isCurrentUserManager();
         addButton.setVisible(manager);
         addButton.setManaged(manager);
+        hideTasksList();
     }
     @FXML
     private void openAddProjectPopup() {

@@ -26,7 +26,10 @@
     <!-- Welcome -->
     <HBox spacing="20" alignment="CENTER_LEFT">
         <VBox spacing="5">
-            <Label text="Welcome back, Alex " styleClass="title"/>
+            <HBox>
+                <Label text="Welcome back, " styleClass="title"/>
+                <Label fx:id="Username" styleClass="title"/>
+            </HBox>
             <Label text="Here's what's happening with your projects today."
                    styleClass="subtitle"/>
         </VBox>
@@ -116,7 +119,7 @@
         </VBox>
 
         <!-- Tasks -->
-        <VBox spacing="15" prefWidth="420" minWidth="420" maxWidth="420" styleClass="task-card">
+        <VBox spacing="15" prefWidth="420" minWidth="420" maxWidth="420" styleClass="task-card" fx:id="taskCard">
             <HBox alignment="CENTER_LEFT">
                 <Label text="Your Tasks" styleClass="card-title" />
                 <Region HBox.hgrow="ALWAYS" />

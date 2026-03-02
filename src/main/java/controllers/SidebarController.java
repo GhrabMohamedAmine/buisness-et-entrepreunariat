@@ -75,8 +75,11 @@ public class SidebarController {
                 hideBTN(RSbutton);
                 hideBTN(TRbutton);
                 hideBTN(TRRbtn);
+                hideBTN(TRMbtn);
+                hideBTN(TKbutton);
                 showBTN(FPbutton);
-                showBTN(PJbutton);
+                hideBTN(PJbutton);
+
                 showBTN(RSbutton);
             }
             case "FORMATEUR"->{
@@ -93,6 +96,7 @@ public class SidebarController {
                 hideBTN(FPbutton);
                 hideBTN(TRRbtn);
                 hideBTN(TRMbtn);
+                hideBTN(TRRbtn);
                 showBTN(TKbutton);
                 showBTN(PJbutton);
                 showBTN(RSbutton);
