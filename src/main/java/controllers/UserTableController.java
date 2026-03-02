@@ -13,6 +13,7 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
@@ -30,10 +31,13 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.net.URL;
 import java.sql.SQLException;
-import java.util.List;
-import java.util.Optional;
-import java.util.ResourceBundle;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.util.*;
+import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class UserTableController implements Initializable {
 
@@ -51,6 +55,13 @@ public class UserTableController implements Initializable {
     @FXML private ToggleButton allToggle;
     @FXML private ToggleButton activeToggle;
     @FXML private ToggleButton pendingToggle;
+
+    // Graphiques
+    @FXML private PieChart rolePieChart;
+    @FXML private PieChart statusPieChart;
+    @FXML private BarChart<String, Number> membershipBarChart;
+    @FXML private CategoryAxis xAxis;
+    @FXML private NumberAxis yAxis;
 
     @FXML private TableColumn<User, User> colUser;
     @FXML private TableColumn<User, String> colEmail, colPhone, colRole, colDept, colStatus, colJoined;
@@ -302,6 +313,8 @@ public class UserTableController implements Initializable {
         try {
             userService.modifierRole(user.getId(), newRole);
             user.setRole(newRole);
+            // Mise à jour du graphique des rôles
+            updateRoleChart();
             System.out.println("Rôle mis à jour : " + newRole);
         } catch (SQLException e) {
             e.printStackTrace();
@@ -337,8 +350,11 @@ public class UserTableController implements Initializable {
             try {
                 userService.supprimer(user.getId());
                 userList.remove(user);
-                updateCounts(); // Mettre à jour les compteurs après suppression
-                applyFilters(); // Réappliquer les filtres
+                updateCounts();
+                updateRoleChart();
+                updateStatusChart();
+                updateMembershipChart();
+                applyFilters();
             } catch (SQLException e) {
                 e.printStackTrace();
                 showAlert("Erreur", "Impossible de supprimer l'utilisateur : " + e.getMessage());
@@ -352,7 +368,10 @@ public class UserTableController implements Initializable {
             userList.clear();
             userList.addAll(users);
             updateCounts();
-            applyFilters(); // Réappliquer les filtres après chargement
+            updateRoleChart();
+            updateStatusChart();
+            updateMembershipChart();
+            applyFilters();
         } catch (SQLException e) {
             System.err.println("Erreur chargement utilisateurs : " + e.getMessage());
             e.printStackTrace();
@@ -377,6 +396,62 @@ public class UserTableController implements Initializable {
         totalUsersCount.setText(String.valueOf(total));
         activeUsersCount.setText(String.valueOf(active));
         pendingUsersCount.setText(String.valueOf(pending));
+    }
+
+    // Méthodes de mise à jour des graphiques
+    private void updateRoleChart() {
+        Map<String, Long> roleCounts = userList.stream()
+                .collect(Collectors.groupingBy(User::getRole, Collectors.counting()));
+
+        ObservableList<PieChart.Data> pieData = FXCollections.observableArrayList();
+        roleCounts.forEach((role, count) -> pieData.add(new PieChart.Data(role + " (" + count + ")", count)));
+        rolePieChart.setData(pieData);
+    }
+
+    private void updateStatusChart() {
+        Map<String, Long> statusCounts = userList.stream()
+                .collect(Collectors.groupingBy(User::getStatus, Collectors.counting()));
+
+        ObservableList<PieChart.Data> pieData = FXCollections.observableArrayList();
+        statusCounts.forEach((status, count) -> pieData.add(new PieChart.Data(status + " (" + count + ")", count)));
+        statusPieChart.setData(pieData);
+    }
+
+    private void updateMembershipChart() {
+        Map<String, Long> monthlyCounts = userList.stream()
+                .map(User::getJoinedDate)
+                .filter(Objects::nonNull)
+                .map(this::extractMonthYear)
+                .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+        // Tri chronologique des mois
+        List<String> sortedMonths = monthlyCounts.keySet().stream()
+                .sorted(Comparator.comparing(this::parseMonthYear))
+                .collect(Collectors.toList());
+
+        XYChart.Series<String, Number> series = new XYChart.Series<>();
+        for (String month : sortedMonths) {
+            series.getData().add(new XYChart.Data<>(month, monthlyCounts.get(month)));
+        }
+
+        membershipBarChart.getData().clear();
+        membershipBarChart.getData().add(series);
+    }
+
+    // Extrait le mois et l'année d'une date (format attendu : yyyy-MM-dd)
+    private String extractMonthYear(String joinedDate) {
+        if (joinedDate == null || joinedDate.length() < 7) return "Inconnu";
+        // Suppose un format "yyyy-MM-dd" – prend les 7 premiers caractères
+        return joinedDate.substring(0, 7);
+    }
+
+    // Convertit une chaîne "yyyy-MM" en LocalDate pour le tri
+    private LocalDate parseMonthYear(String monthYear) {
+        try {
+            return LocalDate.parse(monthYear + "-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
+        } catch (DateTimeParseException e) {
+            return LocalDate.MIN; // Place les valeurs invalides au début
+        }
     }
 
     private void applyFilters() {

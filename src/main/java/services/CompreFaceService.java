@@ -14,7 +14,7 @@ import java.util.UUID;
 
 public class CompreFaceService {
 
-    private static final String API_KEY = "8d0ee048-6e06-4249-9099-24e533506d34";
+    private static final String API_KEY = "889efb90-fc0b-4e4b-a9e8-da6af873b283";
     private static final String BASE_URL = "http://localhost:8000/api/v1/recognition";
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();

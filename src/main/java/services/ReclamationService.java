@@ -17,6 +17,13 @@ public class ReclamationService {
         connection = database.getInstance().getConnection();
     }
 
+    // Récupère l'identifiant du chat de l'administrateur (vous pouvez le mettre en dur ou via variable d'environnement)
+    private String getAdminChatId() {
+        // Remplacez par le chat_id que vous avez récupéré
+        return "6393475265";
+        // Alternative : return System.getenv("ADMIN_CHAT_ID");
+    }
+
     /**
      * Récupère toutes les réclamations (sans le fichier pour des raisons de performance).
      */
@@ -36,7 +43,7 @@ public class ReclamationService {
                         rs.getString("date")
                 );
                 r.setId(rs.getInt("idRec"));
-                r.setUserId(rs.getInt("id_user")); // si vous avez ce champ
+                r.setUserId(rs.getInt("id_user"));
                 reclamations.add(r);
             }
         } catch (SQLException e) {
@@ -61,6 +68,7 @@ public class ReclamationService {
 
     /**
      * Ajoute une nouvelle réclamation (y compris le fichier s'il est présent).
+     * Envoie une notification Telegram à l'administrateur.
      */
     public void add(Reclamation r) {
         User userConnecte = UserService.getCurrentUser();
@@ -91,6 +99,24 @@ public class ReclamationService {
 
             pst.executeUpdate();
             System.out.println("Réclamation ajoutée avec succès pour l'user ID: " + userId);
+
+            // === Notification Telegram ===
+            String adminChatId = getAdminChatId();
+            if (adminChatId != null && !adminChatId.isEmpty()) {
+                String message = String.format(
+                        "📌 *Nouvelle réclamation à traiter* :\n" +
+                                "Titre : %s\nCatégorie : %s\nProjet : %s\nDate : %s\nUtilisateur : %s %s",
+                        r.getTitre(), r.getCategorie(), r.getProjet(), r.getDate(),
+                        userConnecte.getFirstName(), userConnecte.getName()
+                );
+                boolean sent = telegramservices.sendMessage(adminChatId, message);
+                if (!sent) {
+                    System.err.println("Échec de l'envoi de la notification Telegram.");
+                }
+            } else {
+                System.err.println("Aucun chat ID admin configuré.");
+            }
+
         } catch (SQLException e) {
             System.err.println("Erreur d'ajout : " + e.getMessage());
         }

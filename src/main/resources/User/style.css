@@ -187,3 +187,36 @@
     -fx-background-radius: 8;
     -fx-padding: 8 16;
 }
+/* Chart cards */
+.chart-card {
+    -fx-background-color: white;
+    -fx-background-radius: 12;
+    -fx-border-color: #E5E7EB;
+    -fx-border-radius: 12;
+    -fx-padding: 15;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.05), 10, 0, 0, 0);
+}
+
+/* Personnalisation des couleurs des diagrammes circulaires */
+.default-color0.chart-pie { -fx-pie-color: #7C3AED; } /* Violet */
+.default-color1.chart-pie { -fx-pie-color: #10B981; } /* Vert */
+.default-color2.chart-pie { -fx-pie-color: #F59E0B; } /* Orange */
+.default-color3.chart-pie { -fx-pie-color: #EF4444; } /* Rouge */
+.default-color4.chart-pie { -fx-pie-color: #3B82F6; } /* Bleu */
+.default-color5.chart-pie { -fx-pie-color: #EC4899; } /* Rose */
+.default-color6.chart-pie { -fx-pie-color: #8B5CF6; } /* Violet clair */
+.default-color7.chart-pie { -fx-pie-color: #14B8A6; } /* Turquoise */
+
+/* Couleur des barres du diagramme en barres */
+.default-color0.chart-bar {
+    -fx-bar-fill: #7C3AED;
+}
+
+/* Optionnel : fond du graphique */
+.chart {
+    -fx-background-color: transparent;
+}
+
+.chart-plot-background {
+    -fx-background-color: transparent;
+}
