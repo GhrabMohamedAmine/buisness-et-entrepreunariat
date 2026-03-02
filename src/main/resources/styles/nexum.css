@@ -294,6 +294,12 @@
     -fx-alignment: TOP_LEFT;
 }
 
+.stat-card-compact {
+    -fx-min-width: 190px;
+    -fx-pref-width: 200px;
+    -fx-padding: 16px;
+}
+
 /* 2. Typography */
 .stat-title {
     -fx-text-fill: #6B7280; /* Cool Grey for "Total Budget" */

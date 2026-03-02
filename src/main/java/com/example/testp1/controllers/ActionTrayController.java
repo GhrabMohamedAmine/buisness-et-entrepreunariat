@@ -18,10 +18,11 @@ public class ActionTrayController {
     @FXML private FontIcon addIcon;
     @FXML private FontIcon editIcon;
     @FXML private FontIcon deleteIcon;
+    @FXML private FontIcon cashflowIcon;
 
     private boolean isExpanded = false;
     private final double COLLAPSED_WIDTH = 45.0;
-    private final double EXPANDED_WIDTH = 175.0;
+    private final double EXPANDED_WIDTH = 220.0;
 
     @FXML
     public void initialize() {
@@ -29,6 +30,7 @@ public class ActionTrayController {
         setupIconInteraction(addIcon);
         setupIconInteraction(editIcon);
         setupIconInteraction(deleteIcon);
+        setupIconInteraction(cashflowIcon);
     }
 
     /**
@@ -123,6 +125,12 @@ public class ActionTrayController {
     @FXML private void onDelete() {
         if (overviewController != null) {
         overviewController.handleDeleteProfile(); // Triggers "Reset Profil"
+        }
+    }
+
+    @FXML private void onOpenCashflowCharts() {
+        if (overviewController != null) {
+            overviewController.openCashflowCharts();
         }
     }
 }

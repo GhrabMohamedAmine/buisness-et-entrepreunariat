@@ -4,10 +4,12 @@ import com.example.testp1.*;
 import com.example.testp1.entities.Article;
 import com.example.testp1.entities.BudgetProfil;
 import com.example.testp1.entities.ProjectBudget;
+import com.example.testp1.entities.Transaction;
 import com.example.testp1.model.ProjectDAO;
 import com.example.testp1.services.ServiceBudgetProfil;
 import com.example.testp1.services.ServiceMarketingHub;
 import com.example.testp1.services.ServiceProjectBudget;
+import com.example.testp1.services.ServiceTransaction;
 import javafx.application.Platform;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -19,7 +21,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 
 import java.sql.SQLException;
+import java.time.YearMonth;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class OverviewController {
 
@@ -28,6 +34,7 @@ public class OverviewController {
     @FXML private StatCard cardExpense;
     @FXML private StatCard cardRemaining;
     @FXML private StatCard cardUtil;
+    @FXML private StatCard cardRisk;
     @FXML
     private GridPane budgetGrid;
     private final ServiceProjectBudget budgetService = new ServiceProjectBudget();
@@ -154,6 +161,10 @@ public class OverviewController {
         FinanceController.getInstance().navigateToMH();
     }
 
+    public void openCashflowCharts() {
+        FinanceController.getInstance().loadView("CashflowDashboard.fxml");
+    }
+
     public void syncNewsFeed() {
         System.out.println("[DEBUG] syncNewsFeed triggered...");
 
@@ -228,10 +239,112 @@ public class OverviewController {
                 cardUtil.setStatData("Utilization",
                         String.format("%.1f%%", util),
                         "", "mdi2p-percent-outline", utilColor);
+
+                RiskKpi riskKpi = calculateCashFlowRiskKpi();
+                cardRisk.setStatData(
+                        "Cash-Flow Risk",
+                        riskKpi.valueText,
+                        "",
+                        "mdi2a-alert-octagon-outline",
+                        riskKpi.theme
+                );
             }
         } catch (SQLException e) {
             System.err.println("Dashboard Header Update Failed: " + e.getMessage());
             e.printStackTrace();
+        }
+    }
+
+    private RiskKpi calculateCashFlowRiskKpi() throws SQLException {
+        List<ProjectBudget> budgets = budgetService.getAll();
+        ServiceTransaction transactionService = new ServiceTransaction();
+
+        List<Transaction> allTransactions = new ArrayList<>();
+        for (ProjectBudget budget : budgets) {
+            if (budget == null) {
+                continue;
+            }
+            allTransactions.addAll(transactionService.getTransactionsByBudget(budget.getId()));
+        }
+
+        if (allTransactions.isEmpty()) {
+            return new RiskKpi("N/A", "blue");
+        }
+
+        Map<YearMonth, Double> monthlyTotals = new HashMap<>();
+        Map<String, Double> categoryTotals = new HashMap<>();
+
+        for (Transaction t : allTransactions) {
+            if (t == null || t.getDateStamp() == null) {
+                continue;
+            }
+
+            double cost = Math.max(0.0, t.getCost());
+            monthlyTotals.merge(YearMonth.from(t.getDateStamp()), cost, Double::sum);
+
+            String category = t.getExpenseCategory();
+            if (category == null || category.isBlank()) {
+                category = "Other";
+            }
+            categoryTotals.merge(category, cost, Double::sum);
+        }
+
+        double totalAmount = categoryTotals.values().stream().mapToDouble(Double::doubleValue).sum();
+        if (totalAmount <= 0.0 || monthlyTotals.isEmpty()) {
+            return new RiskKpi("N/A", "blue");
+        }
+
+        List<Double> monthlyValues = new ArrayList<>(monthlyTotals.values());
+        monthlyValues.sort(Double::compareTo);
+        double mean = monthlyValues.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
+        double variance = monthlyValues.stream()
+                .mapToDouble(v -> (v - mean) * (v - mean))
+                .average()
+                .orElse(0.0);
+        double stdDev = Math.sqrt(variance);
+        double volatilityRatio = mean <= 0 ? 0.0 : stdDev / mean; // 0..inf
+
+        double concentrationRatio = categoryTotals.values().stream()
+                .mapToDouble(Double::doubleValue)
+                .max()
+                .orElse(0.0) / totalAmount; // 0..1
+
+        List<YearMonth> months = new ArrayList<>(monthlyTotals.keySet());
+        months.sort(YearMonth::compareTo);
+        double spikeRatio = 1.0;
+        if (months.size() >= 2) {
+            double latest = monthlyTotals.get(months.get(months.size() - 1));
+            double prevAvg = 0.0;
+            for (int i = 0; i < months.size() - 1; i++) {
+                prevAvg += monthlyTotals.get(months.get(i));
+            }
+            prevAvg /= (months.size() - 1);
+            if (prevAvg > 0) {
+                spikeRatio = latest / prevAvg;
+            }
+        }
+
+        double txPerMonth = (double) allTransactions.size() / Math.max(1, months.size());
+
+        double volatilityComponent = 30.0 * Math.min(1.0, volatilityRatio / 1.5);
+        double concentrationComponent = 25.0 * concentrationRatio;
+        double spikeComponent = 25.0 * Math.min(1.0, Math.max(0.0, spikeRatio - 1.0));
+        double frequencyComponent = 20.0 * Math.min(1.0, txPerMonth / 25.0);
+
+        int score = (int) Math.round(volatilityComponent + concentrationComponent + spikeComponent + frequencyComponent);
+        score = Math.max(0, Math.min(100, score));
+
+        String theme = score >= 70 ? "red" : (score >= 45 ? "purple" : "green");
+        return new RiskKpi(score + "/100", theme);
+    }
+
+    private static class RiskKpi {
+        private final String valueText;
+        private final String theme;
+
+        private RiskKpi(String valueText, String theme) {
+            this.valueText = valueText;
+            this.theme = theme;
         }
     }
 
