@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<?import java.net.URL?>
+<VBox spacing="20"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controllers.ProjectsController">
+    <stylesheets>
+        <URL value="@../../styles/project-css.css"/>
+        <URL value="@../../styles/buttons.css"/>
+        <URL value="@../../styles/stylesheet.css"/>
+
+    </stylesheets>
+    <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+
+    <HBox spacing="15" alignment="CENTER_LEFT">
+        <VBox spacing="5">
+            <Label text="Projects" styleClass="title" style="-fx-font-size: 24px;"/>
+            <Label text="Manage and track your team's projects" styleClass="subtitle"/>
+        </VBox>
+        <Region HBox.hgrow="ALWAYS" />
+        <TextField fx:id="searchField" promptText="Search projects..." prefWidth="250" styleClass="search-field"/>
+        <Button onAction="#onCalendarIconClicked" styleClass="btn-secondary">
+            <graphic><FontIcon iconLiteral="mdi2c-calendar-month-outline" iconSize="16"/></graphic>
+            <tooltip><Tooltip text="Calendar"/></tooltip>
+        </Button>
+        <Button text="Filter" styleClass="btn-secondary">
+            <graphic><FontIcon iconLiteral="mdi2f-filter-outline" iconSize="16"/></graphic>
+        </Button>
+        <Button fx:id="Addbutton" text="New Project" styleClass="btn-primary" onAction="#openAddProjectPopup">
+            <graphic><FontIcon iconLiteral="mdi2p-plus" iconSize="16" styleClass="white-icon"/></graphic>
+        </Button>
+    </HBox>
+
+    <ScrollPane fx:id="scrollPane" fitToWidth="true" style="-fx-background-color: transparent; -fx-background: transparent;">
+        <content>
+            <FlowPane fx:id="projectsGrid">
+
+            </FlowPane>
+        </content>
+    </ScrollPane>
+</VBox>

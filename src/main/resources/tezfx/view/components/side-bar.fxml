@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.image.Image?>
+
+<VBox spacing="6" fx:controller="controllers.SidebarController" xmlns="http://javafx.com/javafx/17.0.12"
+      xmlns:fx="http://javafx.com/fxml/1"
+      prefWidth="260"
+      styleClass="sidebar-root">
+
+    <!-- LOGO -->
+    <HBox spacing="10" alignment="CENTER_LEFT" >
+        <padding>
+            <Insets top="20" right="20" bottom="20" left="0"/>
+        </padding>
+        <ImageView fx:id="logoImage"
+                   fitHeight="32.0"
+                   fitWidth="32.0"
+                   pickOnBounds="true"
+                   preserveRatio="true">
+            <image>
+                <Image url="@../../images/logo.png" />
+            </image>
+        </ImageView>
+        <Label text="Nexum" styleClass="logo-text"/>
+    </HBox>
+
+
+    <!-- NAV ITEMS -->
+
+        <fx:define>
+            <ToggleGroup fx:id="navGroup" />
+        </fx:define>
+        <ToggleButton styleClass="nav-item" toggleGroup="$navGroup" selected="true" onAction="#onDashboardClicked" >
+            <graphic>
+                <FontIcon iconLiteral="mdi2v-view-dashboard-outline"/>
+            </graphic>
+            <text>Dashboard</text>
+        </ToggleButton>
+
+        <ToggleButton fx:id="PJbutton" styleClass="nav-item" onAction="#onProjectsClicked" toggleGroup="$navGroup">
+            <graphic>
+                <FontIcon iconLiteral="mdi2f-folder-outline"/>
+            </graphic>
+            <text>Projects</text>
+        </ToggleButton>
+
+        <ToggleButton fx:id="TKbutton" styleClass="nav-item" toggleGroup="$navGroup" onAction="#onTasksClicked">
+            <graphic>
+                <FontIcon iconLiteral="mdi2c-checkbox-marked-outline"/>
+            </graphic>
+            <text>Tasks</text>
+        </ToggleButton>
+
+
+
+        <ToggleButton fx:id="CMButton" styleClass="nav-item" toggleGroup="$navGroup" onAction="#onCommunicationClicked">
+            <graphic>
+                <FontIcon iconLiteral="mdi2c-chat-outline"/>
+            </graphic>
+            <text>Communication</text>
+        </ToggleButton>
+
+        <ToggleButton fx:id="RSbutton" styleClass="nav-item" toggleGroup="$navGroup" onAction="#setResourcesView">
+            <graphic>
+                <FontIcon iconLiteral="mdi2c-cube-outline"/>
+            </graphic>
+            <text>Resources</text>
+        </ToggleButton>
+
+        <ToggleButton fx:id="FPbutton" styleClass="nav-item" toggleGroup="$navGroup" onAction="#onFinancialClicked">
+            <graphic>
+                <FontIcon iconLiteral="mdi2c-currency-usd"/>
+            </graphic>
+            <text>Financial Analysis</text>
+        </ToggleButton>
+
+
+        <ToggleButton fx:id="TRbutton" styleClass="nav-item" toggleGroup="$navGroup" onAction="#onTrainingClicked">
+            <graphic>
+                <FontIcon iconLiteral="mdi2s-school-outline"/>
+            </graphic>
+            <text>Trainings</text>
+        </ToggleButton>
+
+        <ToggleButton fx:id="TRRbtn" styleClass="nav-item" toggleGroup="$navGroup" onAction="#onResultClicked">
+            <graphic>
+                <FontIcon iconLiteral="mdi2p-playlist-check" />
+
+            </graphic>
+            <text>Results</text>
+        </ToggleButton>
+
+        <ToggleButton fx:id="TRMbtn" styleClass="nav-item" toggleGroup="$navGroup" onAction="#onTrainingManClicked">
+            <graphic>
+                <FontIcon iconLiteral="mdi2s-school-outline"/>
+            </graphic>
+            <text>Training Managment</text>
+        </ToggleButton>
+
+
+
+    <!-- PUSH LOGOUT TO BOTTOM -->
+    <Region VBox.vgrow="ALWAYS"/>
+
+
+    <Button onAction="#handleLogout" fx:id="LOGOUT" styleClass="logout-item">
+        <graphic>
+            <FontIcon iconLiteral="mdi2l-logout"/>
+        </graphic>
+        <text>Log out</text>
+    </Button>
+</VBox>

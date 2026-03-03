@@ -1,0 +1,166 @@
+.root {
+    -fx-font-family: "Segoe UI", "Inter", "Arial";
+    -fx-background-color: #f4f6fb;
+}
+
+/* ================= HEADER ================= */
+
+.title {
+    -fx-font-size: 28px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #1f2937;
+}
+
+.subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #6b7280;
+}
+
+/* ================= PRIMARY BUTTON ================= */
+
+.primary-btn {
+    -fx-background-color: linear-gradient(to right, #8b5cf6, #7c3aed);
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-padding: 10 22;
+    -fx-background-radius: 12;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(139,92,246,0.35), 12, 0, 0, 4);
+}
+
+.primary-btn:hover {
+    -fx-background-color: linear-gradient(to right, #7c3aed, #6d28d9);
+}
+
+/* Secondary button (Manage Requests) */
+.secondary-btn {
+    -fx-background-color: white;
+    -fx-text-fill: #7c3aed;
+    -fx-border-color: #7c3aed;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 10 18;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+}
+
+.secondary-btn:hover {
+    -fx-background-color: #f3f0ff;
+}
+
+/* ================= STAT CARDS ================= */
+
+.card {
+    -fx-background-color: white;
+    -fx-padding: 20;
+    -fx-background-radius: 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 18, 0, 0, 6);
+    -fx-min-width: 170;
+}
+
+.card-title {
+    -fx-text-fill: #6b7280;
+    -fx-font-size: 13px;
+    -fx-font-weight: 700;
+}
+
+.stat-value {
+    -fx-font-size: 24px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #7c3aed;
+}
+
+/* ================= FILTER BAR ================= */
+
+.filter-bar {
+    -fx-background-color: white;
+    -fx-padding: 14 18;
+    -fx-background-radius: 18;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 14, 0, 0, 4);
+}
+
+.filter-btn {
+    -fx-background-color: #f3f4f6;
+    -fx-text-fill: #4b5563;
+    -fx-font-size: 14px;
+    -fx-font-weight: 700;
+    -fx-padding: 8 20;
+    -fx-background-radius: 999;
+    -fx-cursor: hand;
+}
+
+.filter-btn:selected {
+    -fx-background-color: linear-gradient(to right, #8b5cf6, #7c3aed);
+    -fx-text-fill: white;
+}
+
+.search-field {
+    -fx-background-color: #f9fafb;
+    -fx-border-color: #e5e7eb;
+    -fx-border-radius: 999;
+    -fx-background-radius: 999;
+    -fx-padding: 8 18;
+}
+
+/* ================= TABLE ================= */
+
+.table-view {
+    -fx-background-color: white;
+    -fx-background-radius: 18;
+    -fx-padding: 10;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 16, 0, 0, 5);
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #f3f4f6;
+    -fx-background-radius: 18 18 0 0;
+}
+
+.table-view .column-header {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent transparent #e5e7eb transparent;
+}
+
+.table-view .column-header .label {
+    -fx-text-fill: #6b7280;
+    -fx-font-weight: 700;
+}
+
+/* Row hover effect */
+.table-row-cell:hover {
+    -fx-background-color: #f9f5ff;
+}
+
+/* Selected row */
+.table-row-cell:selected {
+    -fx-background-color: #ede9fe;
+}
+
+/* ================= ACTION ICON BUTTONS ================= */
+
+.icon-btn {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 6;
+    -fx-background-radius: 8;
+}
+
+.icon-btn:hover {
+    -fx-background-color: #ede9fe;
+}
+
+/* Ikonli icon inside button */
+.icon-btn .ikonli-font-icon {
+    -fx-icon-size: 16px;
+    -fx-icon-color: #6d28d9;
+}
+
+/* Delete icon red hover */
+.delete-btn .ikonli-font-icon {
+    -fx-icon-color: #dc2626;
+}
+
+.delete-btn:hover {
+    -fx-background-color: #fee2e2;
+}

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.ProgressBar?>
+<?import javafx.scene.control.ScrollPane?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
+<?import javafx.scene.layout.VBox?>
+
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<AnchorPane prefHeight="500.0" prefWidth="750.0" styleClass="root" stylesheets="@../styles/nexum.css" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.controllers.FinancialHealthController">
+    <children>
+
+        <ScrollPane fitToWidth="true" styleClass="custom-scroll" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <content>
+
+                <VBox spacing="20.0" style="-fx-padding: 30px;">
+
+                    <HBox alignment="CENTER_LEFT" spacing="8.0">
+                        <Label fx:id="backButtonLabel" styleClass="splash-body-label" text="Financial Overview" style="-fx-cursor: hand;" onMouseClicked="#handleBackAction" />
+                        <FontIcon iconColor="#78716C" iconLiteral="mdi2c-chevron-right" iconSize="16" />
+                        <Label styleClass="section-title" text="System Diagnostics" />
+                    </HBox>
+
+                    <VBox spacing="24.0" styleClass="project-budget-card" style="-fx-padding: 35px;">
+
+                        <Label styleClass="project-title-large" text="Company Budget Health" />
+
+                        <VBox spacing="8.0">
+                            <Label styleClass="stat-title" text="GLOBAL BUDGET UTILIZATION" />
+                            <HBox alignment="CENTER_LEFT" spacing="15.0">
+                                <ProgressBar fx:id="utilizationBar" prefHeight="14.0" prefWidth="500.0" progress="0.0" styleClass="budget-progress-bar" />
+                                <Label fx:id="utilizationLabel" styleClass="stat-val-black" text="0%" />
+                            </HBox>
+                        </VBox>
+
+                        <VBox spacing="10.0" styleClass="news-card-container">
+                            <HBox alignment="CENTER_LEFT" spacing="8.0">
+                                <Label styleClass="input-label" text="Structural Insight" />
+                            </HBox>
+                            <Label fx:id="insightMessageLabel" styleClass="feature-card-body" text="Analyzing financial structure..." wrapText="true" />
+                        </VBox>
+
+                        <GridPane hgap="40.0" vgap="25.0">
+                            <columnConstraints>
+                                <ColumnConstraints minWidth="180.0" />
+                                <ColumnConstraints minWidth="200.0" />
+                            </columnConstraints>
+                            <rowConstraints>
+                                <RowConstraints minHeight="40.0" />
+                                <RowConstraints minHeight="40.0" />
+                                <RowConstraints minHeight="40.0" />
+                            </rowConstraints>
+
+                            <VBox spacing="8.0" GridPane.columnIndex="0" GridPane.rowIndex="0">
+                                <Label styleClass="stat-title" text="OVERALL RISK LEVEL" />
+                                <HBox alignment="CENTER_LEFT">
+                                    <Label fx:id="riskLevelLabel" styleClass="status-badge-OT" text="LOADING..." />
+                                </HBox>
+                            </VBox>
+
+                            <VBox spacing="8.0" GridPane.columnIndex="1" GridPane.rowIndex="0">
+                                <Label styleClass="stat-title" text="CONCENTRATION INDEX (HHI)" />
+                                <Label fx:id="hhiScoreLabel" styleClass="stat-val-black" text="0.00" />
+                            </VBox>
+
+                            <VBox spacing="8.0" GridPane.columnIndex="0" GridPane.rowIndex="1" GridPane.columnSpan="2">
+                                <Label styleClass="stat-title" text="RECOMMENDED ACTION" />
+                                <Label fx:id="actionableAdviceLabel" styleClass="text-data-label" text="Analyzing recommended actions..." wrapText="true" style="-fx-text-fill: #EF4444; -fx-line-spacing: 4px;" />
+                            </VBox>
+
+                            <VBox fx:id="deepDiveContainer" spacing="20.0" styleClass="project-budget-card" GridPane.columnIndex="0" GridPane.rowIndex="2" GridPane.columnSpan="2" style="-fx-padding: 24px;">
+
+                                <HBox alignment="CENTER_LEFT" spacing="12.0">
+                                    <Label styleClass="input-label" text="Transaction Variance Analysis" />
+                                    <Label fx:id="ddProjectBadge" styleClass="status-badge-OB" text="TARGET PROJECT" />
+                                </HBox>
+
+                                <GridPane hgap="30.0" vgap="15.0">
+                                    <columnConstraints>
+                                        <ColumnConstraints percentWidth="50.0" />
+                                        <ColumnConstraints percentWidth="50.0" />
+                                    </columnConstraints>
+                                    <rowConstraints>
+                                        <RowConstraints minHeight="40.0" />
+                                    </rowConstraints>
+
+                                    <VBox spacing="6.0" GridPane.columnIndex="0">
+                                        <Label styleClass="stat-title" text="PRIMARY FINANCIAL DRAIN" />
+                                        <Label fx:id="ddCategoryLabel" styleClass="stat-val-black" text="N/A" />
+                                        <Label fx:id="ddCategoryStatsLabel" styleClass="text-sub-info" text="0.00 (0%)" />
+                                    </VBox>
+
+                                    <VBox spacing="6.0" GridPane.columnIndex="1">
+                                        <Label styleClass="stat-title" text="CRITICAL ANOMALY DETECTED" />
+                                        <Label fx:id="ddAnomalyCostLabel" styleClass="stat-val-black" text="0.00" style="-fx-text-fill: #EF4444;" />
+                                        <Label fx:id="ddAnomalyRefLabel" styleClass="text-sub-info" text="Ref: N/A | Date: N/A" />
+                                    </VBox>
+                                </GridPane>
+
+                                <VBox spacing="8.0" styleClass="intervention-card">
+                                    <Label styleClass="intervention-title" text="REQUIRED INTERVENTION" />
+                                    <Label fx:id="ddInterventionLabel" styleClass="intervention-body" text="Awaiting data..." wrapText="true" />
+                                </VBox>
+
+                            </VBox>
+                        </GridPane>
+
+                    </VBox>
+                </VBox>
+            </content>
+        </ScrollPane>
+    </children>
+</AnchorPane>

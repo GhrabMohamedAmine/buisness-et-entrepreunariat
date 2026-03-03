@@ -1,0 +1,97 @@
+/* ===== CALL WINDOW ===== */
+
+.call-root {
+    -fx-background-color: #ffffff;
+}
+
+/* Header */
+.call-header {
+    -fx-padding: 14 16;
+    -fx-alignment: CENTER_LEFT;
+    -fx-border-color: transparent transparent #e5e7eb transparent;
+    -fx-border-width: 0 0 1 0;
+    -fx-background-color: #ffffff;
+}
+
+.call-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: 800;
+}
+
+.call-subtitle {
+    -fx-font-size: 11px;
+    -fx-text-fill: #9aa0a6;
+    -fx-font-weight: 600;
+}
+
+/* Web container */
+.call-body {
+    -fx-padding: 12;
+    -fx-background-color: #ffffff;
+}
+
+/* Top action buttons */
+.call-action {
+    -fx-background-color: transparent;
+    -fx-padding: 8 10;
+    -fx-background-radius: 12;
+    -fx-cursor: hand;
+}
+
+.call-action:hover {
+    -fx-background-color: rgba(124,58,237,0.10);
+}
+
+/* Small hang button */
+.call-hang {
+    -fx-background-color: rgba(239,68,68,0.12);
+    -fx-padding: 8 10;
+    -fx-background-radius: 12;
+    -fx-cursor: hand;
+}
+
+.call-hang:hover {
+    -fx-background-color: rgba(239,68,68,0.18);
+}
+
+/* Bottom controls bar */
+.call-controls {
+    -fx-padding: 12 16 16 16;
+    -fx-alignment: CENTER;
+    -fx-background-color: #ffffff;
+}
+
+/* Round control buttons */
+.call-ctl {
+    -fx-background-color: rgba(124,58,237,0.10);
+    -fx-padding: 10 12;
+    -fx-background-radius: 999;
+    -fx-cursor: hand;
+}
+
+.call-ctl:hover {
+    -fx-background-color: rgba(124,58,237,0.16);
+}
+
+/* Big red hangup */
+.call-hang-big {
+    -fx-background-color: #ef4444;
+    -fx-padding: 12 14;
+    -fx-background-radius: 999;
+    -fx-cursor: hand;
+}
+
+.call-hang-big:hover {
+    -fx-background-color: #dc2626;
+}
+
+/* Icons */
+.call-icon {
+    -fx-icon-size: 18px;
+    -fx-icon-color: #7c3aed;
+}
+
+.call-icon-hang {
+    -fx-icon-size: 18px;
+    -fx-icon-color: white;
+}

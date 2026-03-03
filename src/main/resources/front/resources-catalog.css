@@ -1,0 +1,277 @@
+/* ================= ROOT ================= */
+
+.root {
+    -fx-font-family: "Segoe UI", "Inter", "Arial";
+    -fx-background-color: #f5f6fa;
+}
+
+/* ================= HEADER ================= */
+
+.header-title {
+    -fx-font-size: 26px;
+    -fx-font-weight: 800;
+    -fx-text-fill: #1f2937;
+}
+
+.header-subtitle {
+    -fx-font-size: 14px;
+    -fx-text-fill: #6b7280;
+}
+
+/* ================= BUTTONS ================= */
+
+/* Primary button (AI Recommend) */
+.primary-btn {
+    -fx-background-color: linear-gradient(to right, #8b5cf6, #7c3aed);
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: bold;
+    -fx-padding: 6 14;
+    -fx-background-radius: 12;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(139,92,246,0.35), 10, 0, 0, 3);
+}
+.primary-btn:hover {
+    -fx-background-color: linear-gradient(to right, #7c3aed, #6d28d9);
+}
+.primary-btn:disabled {
+    -fx-opacity: 0.6;
+    -fx-effect: none;
+}
+
+/* Back button */
+.secondary-btn {
+    -fx-background-color: white;
+    -fx-text-fill: #6d28d9;
+    -fx-border-color: #ede9fe;
+    -fx-border-radius: 12;
+    -fx-background-radius: 12;
+    -fx-padding: 8 16;
+    -fx-font-weight: 700;
+    -fx-cursor: hand;
+}
+.secondary-btn:hover {
+    -fx-background-color: #ede9fe;
+}
+
+/* ================= FILTER BAR ================= */
+
+.filter-bar {
+    -fx-background-color: white;
+    -fx-padding: 12 12;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: #eef2ff;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.05), 10, 0, 0, 3);
+}
+
+/* Search field */
+.search-field {
+    -fx-background-color: #f9fafb;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 1;
+    -fx-padding: 10 12;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-pref-width: 420;
+    -fx-prompt-text-fill: #9ca3af;
+}
+.search-field:focused {
+    -fx-background-color: white;
+    -fx-border-color: #a78bfa;
+    -fx-effect: dropshadow(gaussian, rgba(167,139,250,0.35), 10, 0, 0, 3);
+}
+
+/* ComboBox (type filter) */
+.filter-combo {
+    -fx-background-color: #f9fafb;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-border-color: #e5e7eb;
+    -fx-border-width: 1;
+    -fx-padding: 4 6;
+    -fx-font-weight: 700;
+}
+.filter-combo:focused {
+    -fx-background-color: white;
+    -fx-border-color: #a78bfa;
+    -fx-effect: dropshadow(gaussian, rgba(167,139,250,0.35), 10, 0, 0, 3);
+}
+.filter-combo .list-cell {
+    -fx-padding: 8 10;
+    -fx-font-size: 13px;
+}
+
+/* ================= SCROLL ================= */
+
+.scroll {
+    -fx-background-color: transparent;
+}
+.scroll .viewport {
+    -fx-background-color: transparent;
+}
+
+.cards-wrap {
+    -fx-padding: 4 0 16 0;
+}
+
+/* ================= CATALOG CARD ================= */
+
+.catalog-card {
+    -fx-background-color: white;
+    -fx-background-radius: 18;
+    -fx-border-radius: 18;
+    -fx-border-color: #eef2ff;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 14, 0, 0, 5);
+}
+
+.catalog-card:hover {
+    -fx-translate-y: -2;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.14), 18, 0, 0, 7);
+}
+
+/* image */
+.catalog-thumb {
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: #eef2ff;
+    -fx-border-width: 1;
+}
+.thumb-empty {
+    -fx-opacity: 0.75;
+}
+
+/* title + badge */
+.catalog-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #111827;
+}
+.catalog-badge {
+    -fx-background-color: #ede9fe;
+    -fx-text-fill: #6d28d9;
+    -fx-padding: 4 10;
+    -fx-background-radius: 999;
+    -fx-font-size: 11px;
+    -fx-font-weight: 800;
+}
+
+/* info */
+.catalog-info {
+    -fx-padding: 2 0 0 0;
+}
+.catalog-line {
+    -fx-font-size: 13px;
+    -fx-text-fill: #6b7280;
+    -fx-font-weight: 600;
+}
+
+/* availability colors */
+.av-ok { -fx-text-fill: #065f46; }
+.av-low { -fx-text-fill: #9a3412; }
+.av-zero { -fx-text-fill: #991b1b; }
+
+/* request button */
+.catalog-request-btn {
+    -fx-background-color: linear-gradient(to right, #8b5cf6, #7c3aed);
+    -fx-text-fill: white;
+    -fx-font-size: 13px;
+    -fx-font-weight: 800;
+    -fx-padding: 8 16;
+    -fx-background-radius: 12;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(gaussian, rgba(139,92,246,0.30), 10, 0, 0, 3);
+}
+.catalog-request-btn:hover {
+    -fx-background-color: linear-gradient(to right, #7c3aed, #6d28d9);
+}
+.catalog-request-btn:disabled {
+    -fx-opacity: 0.55;
+    -fx-effect: none;
+}
+
+/* ================= EMPTY STATE ================= */
+
+.empty-state {
+    -fx-background-color: white;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: #eef2ff;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06), 12, 0, 0, 4);
+}
+
+.empty-title {
+    -fx-font-size: 15px;
+    -fx-font-weight: 900;
+    -fx-text-fill: #111827;
+}
+
+.empty-sub {
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #6b7280;
+}
+
+/* ================= (OPTIONAL) OLD TABLE STYLES ================= */
+/* You can keep these; they won't affect your card view unless you use a TableView again */
+
+.table-view {
+    -fx-background-color: white;
+    -fx-background-radius: 18;
+    -fx-border-radius: 18;
+    -fx-padding: 10;
+    -fx-border-color: #eef2ff;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 14, 0, 0, 5);
+}
+
+.table-view .column-header-background {
+    -fx-background-color: #f9fafb;
+    -fx-background-radius: 18 18 0 0;
+}
+
+.table-view .column-header,
+.table-view .filler {
+    -fx-size: 44px;
+    -fx-border-color: transparent;
+    -fx-background-color: transparent;
+}
+
+.table-view .column-header .label {
+    -fx-font-weight: 800;
+    -fx-text-fill: #111827;
+    -fx-font-size: 13px;
+}
+
+.table-row-cell {
+    -fx-background-color: white;
+    -fx-border-color: transparent transparent #f3f4f6 transparent;
+}
+
+.table-row-cell:filled:hover {
+    -fx-background-color: #f9fafb;
+}
+
+.table-row-cell:filled:selected {
+    -fx-background-color: #ede9fe;
+}
+
+.table-cell {
+    -fx-padding: 10 8 10 8;
+    -fx-text-fill: #374151;
+    -fx-font-size: 13px;
+    -fx-font-weight: 600;
+}
+
+.table-view .scroll-bar:vertical {
+    -fx-background-color: transparent;
+}
+.table-view .scroll-bar:vertical .thumb {
+    -fx-background-color: #d1d5db;
+    -fx-background-radius: 10;
+}

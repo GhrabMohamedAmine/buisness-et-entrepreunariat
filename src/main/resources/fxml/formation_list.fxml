@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.layout.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.geometry.Insets?>
+
+<VBox xmlns="http://javafx.com/javafx"
+      xmlns:fx="http://javafx.com/fxml"
+      fx:controller="controllers.formation_quiz_result.FormationListController"
+      spacing="14"
+      style="-fx-background-color: linear-gradient(to bottom, #f8fafc, #eef2f7);">
+
+    <padding>
+        <Insets top="22" right="22" bottom="22" left="22"/>
+    </padding>
+
+    <!-- HEADER -->
+    <HBox alignment="CENTER_LEFT" spacing="10"
+          style="-fx-padding: 10 0 12 0; -fx-border-color: transparent transparent #e2e8f0 transparent; -fx-border-width: 0 0 1 0;">
+
+        <VBox HBox.hgrow="ALWAYS" spacing="2">
+            <Label text="Formations"
+                   style="-fx-font-size: 26px; -fx-font-weight: bold; -fx-text-fill: #0f172a;"/>
+
+            <Label text="Consultez, modifiez et gérez les quiz liés à chaque formation."
+                   wrapText="true"
+                   style="-fx-font-size: 13px; -fx-text-fill: #64748b;"/>
+        </VBox>
+
+        <!-- ADD BUTTON -->
+        <Button fx:id="addFormationBtn"
+                text="+ Ajouter formation"
+                onAction="#openAddFormation"
+                style="
+                    -fx-background-color: #16a34a;
+                    -fx-text-fill: white;
+                    -fx-font-weight: bold;
+                    -fx-background-radius: 8;
+                    -fx-padding: 8 16;
+                    -fx-cursor: hand;
+                "/>
+    </HBox>
+
+    <!-- LIST -->
+    <ScrollPane fitToWidth="true"
+                VBox.vgrow="ALWAYS"
+                hbarPolicy="NEVER"
+                style="-fx-background-color: transparent;">
+
+        <content>
+            <FlowPane fx:id="cardsFlow"
+                      hgap="14"
+                      vgap="14"
+                      prefWrapLength="980"
+                      style="-fx-padding: 10; -fx-background-color: transparent;"/>
+        </content>
+    </ScrollPane>
+
+</VBox>

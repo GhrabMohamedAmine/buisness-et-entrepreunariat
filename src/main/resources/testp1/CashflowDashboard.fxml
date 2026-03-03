@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.chart.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<AnchorPane prefHeight="886.0" prefWidth="1213.0" stylesheets="@../styles/nexum.css"
+            xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1"
+            fx:controller="com.example.testp1.controllers.CashflowDashboardController">
+
+    <children>
+        <VBox spacing="18.0" AnchorPane.topAnchor="38.0" AnchorPane.leftAnchor="64.0" AnchorPane.rightAnchor="64.0" AnchorPane.bottomAnchor="30.0">
+            <HBox alignment="CENTER_LEFT" spacing="14.0">
+                <Label onMouseClicked="#onBackToOverview" styleClass="splash-body-label" text="Financial Overview" />
+                <FontIcon iconColor="#78716C" iconLiteral="mdi2c-chevron-right" iconSize="16" />
+                <Label fx:id="breadcrumbProjectName" styleClass="section-title" text="Cashflow Advanced Dashboard" />
+
+            </HBox>
+
+            <HBox spacing="16.0" VBox.vgrow="ALWAYS">
+                <PieChart fx:id="categoryPieChart" title="Expense Distribution by Category" HBox.hgrow="ALWAYS" />
+
+                <LineChart fx:id="monthlyExpenseChart" title="Monthly Expense Trend" HBox.hgrow="ALWAYS">
+                    <xAxis>
+                        <CategoryAxis label="Month" />
+                    </xAxis>
+                    <yAxis>
+                        <NumberAxis label="Amount ($)" />
+                    </yAxis>
+                </LineChart>
+            </HBox>
+
+            <BarChart fx:id="projectBurnChart" title="Project Burn Rate (%)" VBox.vgrow="ALWAYS" legendVisible="false">
+                <xAxis>
+                    <CategoryAxis label="Project" />
+                </xAxis>
+                <yAxis>
+                    <NumberAxis label="Utilization %" autoRanging="false" lowerBound="0" upperBound="100" tickUnit="20" />
+                </yAxis>
+                <padding>
+                    <Insets top="8.0" right="8.0" bottom="8.0" left="8.0" />
+                </padding>
+            </BarChart>
+        </VBox>
+    </children>
+</AnchorPane>

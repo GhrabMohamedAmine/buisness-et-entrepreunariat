@@ -1,0 +1,185 @@
+/* =========================================================
+   PAGE
+   ========================================================= */
+
+.root{
+    -fx-background-color: linear-gradient(to bottom,#f4f7fb,#e9eef5);
+    -fx-font-family:  "Inter";
+}
+
+
+/* =========================================================
+   QUIZ CARD (MAIN CONTAINER)
+   ========================================================= */
+
+.client-quiz-card{
+    -fx-background-color: white;
+    -fx-background-radius: 20;
+    -fx-border-radius: 20;
+    -fx-border-color: #e3e8f0;
+    -fx-padding: 26;
+    -fx-spacing: 16;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.06),30,0,0,12);
+}
+
+/* subtle elevation */
+.client-quiz-card:hover{
+    -fx-effect: dropshadow(gaussian, rgba(37,99,235,0.18),40,0,0,18);
+}
+
+
+/* =========================================================
+   HEADER
+   ========================================================= */
+
+.quiz-title{
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #0f172a;
+}
+
+.quiz-subtitle{
+    -fx-font-size: 12px;
+    -fx-text-fill: #64748b;
+}
+
+
+/* =========================================================
+   QUESTION
+   ========================================================= */
+
+.client-question{
+    -fx-font-size: 18px;
+    -fx-font-weight: 700;
+    -fx-text-fill: #0f172a;
+    -fx-wrap-text: true;
+    -fx-padding: 6 0 10 0;
+}
+
+
+/* =========================================================
+   IMAGE
+   ========================================================= */
+
+.client-image-box{
+    -fx-background-color: #f1f5f9;
+    -fx-background-radius: 16;
+    -fx-border-radius: 16;
+    -fx-border-color: #e2e8f0;
+    -fx-padding: 6;
+}
+
+.image-overlay{
+    -fx-background-radius: 16;
+    -fx-background-color: linear-gradient(to top, rgba(0,0,0,0.10), transparent);
+}
+
+
+/* =========================================================
+   ANSWER CONTAINER
+   ========================================================= */
+
+.answer-container{
+    -fx-alignment: center-left;
+    -fx-spacing: 12;
+}
+
+
+/* =========================================================
+   LETTER (A B C circle)
+   ========================================================= */
+
+.answer-letter{
+    -fx-min-width: 36;
+    -fx-min-height: 36;
+    -fx-max-width: 36;
+    -fx-max-height: 36;
+    -fx-background-color: #eef2ff;
+    -fx-text-fill: #4f46e5;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-alignment: center;
+    -fx-background-radius: 50;
+    -fx-border-radius: 50;
+    -fx-border-color: #dbe3ff;
+}
+
+
+/* =========================================================
+   ANSWER BUTTON (CHOICE)
+   ========================================================= */
+
+.answer-btn{
+    -fx-background-color: #f8fafc;
+    -fx-border-color: #e2e8f0;
+    -fx-border-width: 1.2;
+    -fx-background-radius: 14;
+    -fx-border-radius: 14;
+    -fx-padding: 14 16;
+    -fx-font-size: 14px;
+    -fx-text-fill: #1e293b;
+    -fx-alignment: CENTER_LEFT;
+    -fx-cursor: hand;
+}
+
+/* hover effect */
+.answer-btn:hover{
+    -fx-background-color: #eef2ff;
+    -fx-border-color: #6366f1;
+}
+
+/* click press */
+.answer-btn:pressed{
+    -fx-background-color: #e0e7ff;
+}
+
+
+/* =========================================================
+   SELECTED ANSWER (IMPORTANT)
+   ========================================================= */
+
+.selected-answer{
+    -fx-background-color: linear-gradient(to right,#4f46e5,#2563eb);
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+    -fx-effect: dropshadow(gaussian, rgba(79,70,229,0.45),18,0,0,6);
+}
+
+
+/* =========================================================
+   RADIO-LIKE FEEDBACK (THIS FIXES UX)
+   ========================================================= */
+
+.selected-answer {
+    -fx-background-color: white;
+    -fx-text-fill: #2563eb;
+    -fx-border-color: #2563eb;
+}
+
+
+.answer-letter{
+    -fx-background-color: white;
+    -fx-text-fill: #2563eb;
+    -fx-border-color: #2563eb;
+}
+
+
+/* =========================================================
+   TRANSITIONS
+   ========================================================= */
+
+.button{
+    -fx-background-insets: 0;
+}
+
+label .correct {
+    -fx-background-color: #4CAF50; /* Green */
+    -fx-text-fill: white;
+    -fx-text-weight: bold;
+}
+
+label .wrong {
+    -fx-background-color: #F44336; /* Red */
+    -fx-text-fill: white;
+    -fx-text-weight: bold;
+}
