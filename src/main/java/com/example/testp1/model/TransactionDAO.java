@@ -211,4 +211,24 @@ public class TransactionDAO {
         }
         return null;
     }
+
+    public List<Double> getTransactionCostsForBudget(int projectBudgetId) {
+        List<Double> costs = new ArrayList<>();
+        // Selecting ONLY the cost column from the 'transaction' table
+        String req = "SELECT cost FROM transaction WHERE project_budget_id=?";
+
+        try (PreparedStatement ps = connection.prepareStatement(req)) {
+            ps.setInt(1, projectBudgetId);
+
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    costs.add(rs.getDouble("cost"));
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL Error (getTransactionCostsForBudget): " + e.getMessage());
+        }
+
+        return costs;
+    }
 }

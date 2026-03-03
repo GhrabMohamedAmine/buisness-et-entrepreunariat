@@ -1123,3 +1123,42 @@
 .default-color1.chart-pie { -fx-pie-color: #00C48C; }
 .default-color2.chart-pie { -fx-pie-color: #FFB020; }
 .default-color3.chart-pie { -fx-pie-color: #FF647C; }
+
+.progress-success .bar {
+    -fx-background-color: #10B981; /* Matches your status-badge-on-track green */
+}
+
+.progress-warning .bar {
+    -fx-background-color: #F59E0B; /* Matches your status-badge-at-risk amber */
+}
+
+.progress-danger .bar {
+    -fx-background-color: #EF4444; /* Matches your status-badge-over red */
+}
+
+
+
+.intervention-card {
+    -fx-background-color: #FEF2F2; /* Light red/pink background */
+    -fx-border-color: #FECACA;     /* Soft red border */
+    -fx-border-width: 1px;
+    -fx-border-radius: 12px;
+    -fx-background-radius: 12px;
+    -fx-padding: 16px 20px;
+}
+
+/* The red header text inside the box */
+.intervention-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: 800; /* Extra bold */
+    -fx-text-fill: #991B1B; /* Dark red */
+    -fx-text-transform: uppercase;
+}
+
+/* The actionable advice text */
+.intervention-body {
+    -fx-font-size: 14px;
+    -fx-font-weight: 600;
+    -fx-text-fill: #7F1D1D; /* Deep red */
+    -fx-line-spacing: 4px;
+}

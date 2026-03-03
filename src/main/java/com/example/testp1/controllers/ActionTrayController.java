@@ -5,6 +5,7 @@ import javafx.fxml.FXML;
 import javafx.scene.Cursor;
 import javafx.scene.control.Button;
 import javafx.scene.layout.HBox;
+import javafx.stage.FileChooser;
 import org.kordamp.ikonli.javafx.FontIcon;
 import javafx.util.Duration;
 
@@ -124,5 +125,9 @@ public class ActionTrayController {
         if (overviewController != null) {
         overviewController.handleDeleteProfile(); // Triggers "Reset Profil"
         }
+    }
+
+    @FXML private void healthsection() {
+        FinanceController.getInstance().navigatetoBH();
     }
 }

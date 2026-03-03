@@ -20,6 +20,9 @@
 
             <FontIcon fx:id="deleteIcon" iconLiteral="mdi2d-delete" iconSize="22"
                        styleClass="action-icon" onMouseClicked="#onDelete"/>
+
+            <FontIcon fx:id="Bhealth" iconLiteral="mdi2f-finance" iconSize="22"
+                      styleClass="action-icon" onMouseClicked="#healthsection"/>
         </HBox>
 
         <Button fx:id="triggerBtn" onAction="#toggleTray"

@@ -45,6 +45,10 @@ public class FinanceController {
         loadView("MarketHub.fxml");
     }
 
+    public void navigatetoBH(){
+        loadView("FinancialHealth.fxml");
+    }
+
     /**
      * Swaps the content of the main StackPane.
      * @param fxmlPath The path to the FXML file to load.
