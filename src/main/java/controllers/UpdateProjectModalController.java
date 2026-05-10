@@ -11,6 +11,7 @@ import javafx.collections.ListChangeListener;
 import org.controlsfx.control.CheckComboBox;
 import entities.Project;
 import entities.User;
+import services.CurrentUserService;
 import services.ProjectService;
 import services.UserService;
 
@@ -35,6 +36,7 @@ public class UpdateProjectModalController {
     private boolean saved;
     private final ProjectService projectService = new ProjectService();
     private final UserService userService = new UserService();
+    private final CurrentUserService currentUserService = new CurrentUserService();
 
     @FXML
     public void initialize() {
@@ -94,6 +96,10 @@ public class UpdateProjectModalController {
 
     @FXML
     private void onSave() {
+        if (!currentUserService.isCurrentUserManager()) {
+            close();
+            return;
+        }
         String name = nameField.getText() == null ? "" : nameField.getText().trim();
         String desc = descField.getText() == null ? "" : descField.getText().trim();
         LocalDate startDate = startDatePicker.getValue();

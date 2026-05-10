@@ -17,7 +17,7 @@ import java.util.function.Function;
 
 public class TaskRowController {
     // Add assignedUser here
-    @FXML private Label taskTitle, taskDesc, priorityLabel, statusLabel, dueDateLabel, assignedUser;
+    @FXML private Label taskTitle, taskDesc, priorityLabel, statusLabel, dueDateLabel, assignedUser, kanbanAssignedUser;
     @FXML private CheckBox doneCheck;
     @FXML private FontIcon inProgressIcon, editIcon, deleteIcon;
     @FXML private HBox taskRowRoot;
@@ -61,6 +61,12 @@ public class TaskRowController {
                     assigneeName == null || assigneeName.isBlank() ? "Unassigned" : assigneeName
             );
         }
+        if (kanbanAssignedUser != null) {
+            String assigneeName = task.getAssignedToName();
+            kanbanAssignedUser.setText(
+                    assigneeName == null || assigneeName.isBlank() ? "Assigned to Unassigned" : "Assigned to " + assigneeName
+            );
+        }
 
 
         String normalizedStatus = TaskValueMapper.normalizeStatus(task.getStatus());
@@ -95,6 +101,7 @@ public class TaskRowController {
         if (kanbanMode) {
             taskRowRoot.setSpacing(10);
             setNodeVisibleManaged(taskDesc, false);
+            setNodeVisibleManaged(kanbanAssignedUser, true);
             setNodeVisibleManaged(assignedUser, false);
             setNodeVisibleManaged(dueDateLabel, false);
             setNodeVisibleManaged(editIcon, false);
@@ -103,6 +110,7 @@ public class TaskRowController {
         } else {
             taskRowRoot.setSpacing(20);
             setNodeVisibleManaged(taskDesc, true);
+            setNodeVisibleManaged(kanbanAssignedUser, false);
             setNodeVisibleManaged(assignedUser, true);
             setNodeVisibleManaged(dueDateLabel, true);
             setNodeVisibleManaged(editIcon, true);

@@ -24,9 +24,9 @@ import javafx.stage.StageStyle;
 import org.kordamp.ikonli.javafx.FontIcon;
 import entities.Project;
 import entities.Task;
+import services.CurrentUserService;
 import services.ProjectService;
 import services.TaskService;
-import services.UserService;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -43,6 +43,7 @@ public class TasksController {
 
     private final ProjectService projectService = new ProjectService();
     private final TaskService taskService = new TaskService();
+    private final CurrentUserService currentUserService = new CurrentUserService();
     private static final DateTimeFormatter DUE_DATE_INPUT = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter DUE_DATE_OUTPUT = DateTimeFormatter.ofPattern("dd MMM", Locale.ENGLISH);
     private String selectedStatusFilter = TaskValueMapper.FILTER_ALL;
@@ -60,6 +61,11 @@ public class TasksController {
     @FXML
     private void onCreateTask() {
         openAddTaskModal(null);
+    }
+
+    @FXML
+    private void onOpenKanban() {
+        MainController.setView("tasks-kanban.fxml");
     }
 
     @FXML
@@ -108,7 +114,7 @@ public class TasksController {
         tasksGroupsContainer.getChildren().clear();
 
         String normalizedQuery = normalizeSearch(query);
-        List<Project> projects = getVisibleProjectsForCurrentUser();
+        List<Project> projects = projectService.getAllProjects();
         int colorIndex = 0;
 
         for (Project project : projects) {
@@ -136,14 +142,6 @@ public class TasksController {
             }
 
             tasksGroupsContainer.getChildren().add(createProjectBlock(project, projectTasks, colorIndex++));
-        }
-
-        if (tasksGroupsContainer.getChildren().isEmpty()) {
-            Label empty = new Label(isCurrentUserEmployee()
-                    ? "No tasks found for your assigned projects."
-                    : "No tasks found.");
-            empty.getStyleClass().add("task-time");
-            tasksGroupsContainer.getChildren().add(empty);
         }
     }
 
@@ -244,7 +242,7 @@ public class TasksController {
         deleteIcon.setOnMouseClicked(e -> deleteTask(task));
 
         doneCheck.setOnAction(e -> {
-            if (!canCurrentUserModifyTask(task)) {
+            if (!canCurrentUserModifyTaskStatus(task)) {
                 doneCheck.setSelected(!doneCheck.isSelected());
                 return;
             }
@@ -258,7 +256,7 @@ public class TasksController {
         });
 
         inProgressIcon.setOnMouseClicked(e -> {
-            if (!canCurrentUserModifyTask(task)) {
+            if (!canCurrentUserModifyTaskStatus(task)) {
                 return;
             }
             String currentStatus = TaskValueMapper.normalizeStatus(task.getStatus());
@@ -270,17 +268,11 @@ public class TasksController {
                 loadTasks(currentSearchQuery());
             }
         });
-        boolean canModifyTask = canCurrentUserModifyTask(task);
-        doneCheck.setDisable(!canModifyTask);
-        inProgressIcon.setDisable(!canModifyTask);
-        inProgressIcon.setMouseTransparent(!canModifyTask);
-        inProgressIcon.setOpacity(canModifyTask ? 1.0 : 0.45);
-        editIcon.setDisable(!canModifyTask);
-        editIcon.setMouseTransparent(!canModifyTask);
-        editIcon.setOpacity(canModifyTask ? 1.0 : 0.45);
-        deleteIcon.setDisable(!canModifyTask);
-        deleteIcon.setMouseTransparent(!canModifyTask);
-        deleteIcon.setOpacity(canModifyTask ? 1.0 : 0.45);
+        boolean canModifyStatus = canCurrentUserModifyTaskStatus(task);
+        doneCheck.setDisable(!canModifyStatus);
+        inProgressIcon.setDisable(!canModifyStatus);
+        inProgressIcon.setMouseTransparent(!canModifyStatus);
+        inProgressIcon.setOpacity(canModifyStatus ? 1.0 : 0.45);
 
         row.getChildren().addAll(doneCheck, inProgressIcon, title, priority, status, dateBox, assignedTo, editIcon, deleteIcon);
         return row;
@@ -477,42 +469,11 @@ public class TasksController {
         return searchField == null ? null : searchField.getText();
     }
 
-    private boolean canCurrentUserModifyTask(Task task) {
+    private boolean canCurrentUserModifyTaskStatus(Task task) {
         if (task == null) {
             return false;
         }
-        var currentUser = UserService.getCurrentUser();
-        if (currentUser == null || currentUser.getRole() == null) {
-            return false;
-        }
-        String normalizedRole = currentUser.getRole().trim().toUpperCase(Locale.ROOT);
-        if ("MANAGER".equals(normalizedRole)) {
-            return true;
-        }
-        return task.getAssignedTo() == currentUser.getId();
-    }
-
-    private int resolveCurrentUserId() {
-        var currentUser = UserService.getCurrentUser();
-        return currentUser == null ? -1 : currentUser.getId();
-    }
-
-    private List<Project> getVisibleProjectsForCurrentUser() {
-        var currentUser = UserService.getCurrentUser();
-        if (currentUser == null || currentUser.getRole() == null) {
-            return projectService.getAllProjects();
-        }
-        String normalizedRole = currentUser.getRole().trim().toUpperCase(Locale.ROOT);
-        if ("EMPLOYEE".equals(normalizedRole)) {
-            return projectService.getProjectsForUser(currentUser.getId());
-        }
-        return projectService.getAllProjects();
-    }
-
-    private boolean isCurrentUserEmployee() {
-        var currentUser = UserService.getCurrentUser();
-        return currentUser != null
-                && currentUser.getRole() != null
-                && "EMPLOYEE".equals(currentUser.getRole().trim().toUpperCase(Locale.ROOT));
+        int assigneeId = task.getAssignedTo();
+        return assigneeId > 0 && assigneeId == currentUserService.getCurrentUserId();
     }
 }

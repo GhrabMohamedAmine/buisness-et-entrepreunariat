@@ -19,6 +19,7 @@
 
     <VBox spacing="2" HBox.hgrow="ALWAYS">
         <Label fx:id="taskTitle" style="-fx-font-weight: bold; -fx-font-size: 14;" text="Homepage Hero Section" />
+        <Label fx:id="kanbanAssignedUser" managed="false" style="-fx-font-size: 12;" styleClass="text-muted" text="Assigned to John Doe" visible="false" />
         <Label fx:id="taskDesc" style="-fx-font-size: 12;" styleClass="text-muted" text="Design the main header..." />
     </VBox>
 

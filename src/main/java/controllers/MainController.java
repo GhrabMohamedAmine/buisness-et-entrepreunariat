@@ -5,6 +5,7 @@ import javafx.application.Platform;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Parent;
 import Mains.ViewLoader;
+import entities.User;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -15,6 +16,7 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.BorderPane;
+import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.ImagePattern;
 import javafx.scene.shape.Circle;
@@ -28,10 +30,14 @@ import java.io.InputStream;
 
 import static controllers.ProfileController.DEFAULT_COLOR;
 
+import services.CurrentUserService;
 
 public class MainController {
     @FXML private StackPane contentArea;
+    @FXML private Label currentUserNameLabel;
+    @FXML private Label currentUserRoleLabel;
     private static StackPane staticContentArea;
+    private final CurrentUserService currentUserService = new CurrentUserService();
     @FXML
     private BorderPane mainView;
     @FXML
@@ -121,6 +127,29 @@ public class MainController {
         // ✅ Your CSS after theme
 
         staticContentArea = contentArea;
+        User currentUser = currentUserService.getCurrentUser();
+        if (currentUserNameLabel != null) {
+            currentUserNameLabel.setText(currentUser.getFullName());
+        }
+        if (currentUserRoleLabel != null) {
+            currentUserRoleLabel.setText(formatRole(currentUser.getRole()));
+        }
+    }
+
+    private String formatRole(String role) {
+        if (role == null || role.isBlank()) {
+            return "";
+        }
+        String cleaned = role.replace("ROLE_", "").replace('_', ' ').trim().toLowerCase();
+        StringBuilder formatted = new StringBuilder();
+        for (String part : cleaned.split("\\s+")) {
+            if (part.isBlank()) continue;
+            if (!formatted.isEmpty()) {
+                formatted.append(' ');
+            }
+            formatted.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
+        }
+        return formatted.toString();
         //currentuser = service.getCurrentUser();
         System.out.println("Current user: " + currentuser.toString());
         setUserinfo();

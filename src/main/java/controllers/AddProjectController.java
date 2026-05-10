@@ -12,6 +12,7 @@ import javafx.stage.Window;
 import org.controlsfx.control.CheckComboBox;
 import entities.Project;
 import entities.User;
+import services.CurrentUserService;
 import services.ProjectService;
 import services.UserService;
 import javafx.util.StringConverter;
@@ -42,6 +43,7 @@ public class AddProjectController {
     private final ProjectService projectService = new ProjectService();
     private final UserService userService = new UserService();
     private final TaskService taskService = new TaskService();
+    private final CurrentUserService currentUserService = new CurrentUserService();
     private final AiTaskGeneratorService aiTaskGeneratorService = new AiTaskGeneratorService();
 
     @FXML
@@ -64,6 +66,10 @@ public class AddProjectController {
 
     @FXML
     private void handleCreate() {
+        if (!currentUserService.isCurrentUserManager()) {
+            closeoverlay();
+            return;
+        }
         String name = nameField.getText() == null ? "" : nameField.getText().trim();
         String desc = descField.getText() == null ? "" : descField.getText().trim();
         LocalDate startDate = startDatePicker.getValue();
@@ -79,7 +85,7 @@ public class AddProjectController {
             String startStr = startDate.toString();
             String dueStr = dueDate.toString();
 
-            Project newProject = new Project(name, desc, progress, 0.0, startStr, dueStr, selectedUsers.get(0).getId(), 1);
+            Project newProject = new Project(name, desc, progress, 0.0, startStr, dueStr, selectedUsers.get(0).getId(), currentUserService.getCurrentUserId());
 
             // 3. Save and Refresh
             int projectId = projectService.ReturnPrID(newProject);
@@ -230,7 +236,7 @@ public class AddProjectController {
                             project.getEndDate(),
                             projectId,
                             0,
-                            1
+                            currentUserService.getCurrentUserId()
                     );
                     taskService.addTask(task);
                     createdCount++;
