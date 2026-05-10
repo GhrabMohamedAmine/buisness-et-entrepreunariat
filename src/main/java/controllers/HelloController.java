@@ -9,6 +9,7 @@ import javafx.scene.Scene;
 import entities.Project;
 import entities.Task;
 import entities.User;
+import services.CurrentUserService;
 import services.ProjectService;
 import services.TaskService;
 import javafx.fxml.FXML;
@@ -36,7 +37,6 @@ import java.time.format.DateTimeFormatter;
 
 public class HelloController {
     private static final int RECENT_PROJECTS_LIMIT = 5;
-    private static final int CURRENT_USER_ID = 1;
     private static final int MAX_VISIBLE_ASSIGNEE_AVATARS = 4;
     private static final DateTimeFormatter DATE_INPUT = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter DATE_OUTPUT = DateTimeFormatter.ofPattern("dd MMM yyyy");
@@ -48,9 +48,12 @@ public class HelloController {
     @FXML private Label upcomingDeadlinesKpiLabel;
     @FXML private Label overdueUndoneKpiLabel;
     @FXML private VBox tasksListContainer;
+    @FXML private Label welcomeLabel;
+    @FXML private Button newProjectButton;
 
     private final ProjectService projectService = new ProjectService();
     private final TaskService taskService = new TaskService();
+    private final CurrentUserService currentUserService = new CurrentUserService();
     private Map<Integer, List<User>> assigneesByProject = Map.of();
     private static final String[] AVATAR_COLOR_CLASSES = {
             "purple", "blue", "green", "orange"
@@ -58,10 +61,18 @@ public class HelloController {
 
     @FXML
     public void initialize() {
+        User currentUser = currentUserService.getCurrentUser();
+        if (welcomeLabel != null) {
+            welcomeLabel.setText("Welcome back, " + currentUser.getFullName());
+        }
+        setNodeVisibleManaged(newProjectButton, currentUser.isManager());
         loadData();
     }
     @FXML
     private void openAddProjectPopup() {
+        if (!currentUserService.isCurrentUserManager()) {
+            return;
+        }
         if (recentProjectsContainer == null || recentProjectsContainer.getScene() == null) {
             return;
         }
@@ -110,7 +121,7 @@ public class HelloController {
             Parent root = loader.load();
 
             AddTaskController controller = loader.getController();
-            controller.setAssignedUserId(CURRENT_USER_ID);
+            controller.setAssignedUserId(currentUserService.getCurrentUserId());
             controller.setSubtitleText("Create a personal task assigned to you");
 
             Stage popupStage = new Stage();
@@ -247,7 +258,9 @@ public class HelloController {
             return;
         }
         tasksListContainer.getChildren().clear();
-        List<Task> tasks = taskService.getTasksByAssignedUser(CURRENT_USER_ID);
+        List<Task> tasks = currentUserService.isCurrentUserManager()
+                ? taskService.getTasksAssignedToUserOrUnassigned(currentUserService.getCurrentUserId())
+                : taskService.getTasksByAssignedUser(currentUserService.getCurrentUserId());
         if (tasks.isEmpty()) {
             Label emptyLabel = new Label("No tasks assigned.");
             emptyLabel.getStyleClass().add("task-time");
@@ -290,6 +303,10 @@ public class HelloController {
         status.getStyleClass().add(TaskValueMapper.statusPillStyleClass(normalizedStatus));
 
         statusCheck.setOnAction(e -> {
+            if (!canCurrentUserModifyTaskStatus(task)) {
+                statusCheck.setSelected(!statusCheck.isSelected());
+                return;
+            }
             String newStatus = statusCheck.isSelected() ? TaskValueMapper.STATUS_DONE : TaskValueMapper.STATUS_TODO;
             boolean updated = taskService.updateTaskStatus(task.getId(), newStatus);
             if (!updated) {
@@ -300,6 +317,9 @@ public class HelloController {
         });
 
         inProgressIcon.setOnMouseClicked(e -> {
+            if (!canCurrentUserModifyTaskStatus(task)) {
+                return;
+            }
             if (TaskValueMapper.STATUS_IN_PROGRESS.equals(TaskValueMapper.normalizeStatus(task.getStatus()))) {
                 return;
             }
@@ -309,8 +329,22 @@ public class HelloController {
             }
         });
 
+        boolean canModifyStatus = canCurrentUserModifyTaskStatus(task);
+        statusCheck.setDisable(!canModifyStatus);
+        inProgressIcon.setDisable(!canModifyStatus);
+        inProgressIcon.setMouseTransparent(!canModifyStatus);
+        inProgressIcon.setOpacity(canModifyStatus ? 1.0 : 0.45);
+
         row.getChildren().addAll(statusCheck, inProgressIcon, titleLabel, priority, status);
         return row;
+    }
+
+    private boolean canCurrentUserModifyTaskStatus(Task task) {
+        if (task == null) {
+            return false;
+        }
+        int assigneeId = task.getAssignedTo();
+        return assigneeId > 0 && assigneeId == currentUserService.getCurrentUserId();
     }
 
     private void updateInProgressIconStyle(FontIcon inProgressIcon, String normalizedStatus) {
@@ -357,5 +391,11 @@ public class HelloController {
         } catch (Exception e) {
             return dateStr;
         }
+    }
+
+    private void setNodeVisibleManaged(Node node, boolean visible) {
+        if (node == null) return;
+        node.setVisible(visible);
+        node.setManaged(visible);
     }
 }

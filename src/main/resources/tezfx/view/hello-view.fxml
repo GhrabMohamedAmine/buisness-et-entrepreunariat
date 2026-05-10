@@ -42,8 +42,8 @@
                   </ImageView>
 
                   <VBox alignment="CENTER_LEFT">
-                     <Label text="Alex Morgan" style="-fx-font-weight: bold;"/>
-                     <Label text="Product Manager" styleClass="subtext"/>
+                     <Label fx:id="currentUserNameLabel" text="User" style="-fx-font-weight: bold;"/>
+                     <Label fx:id="currentUserRoleLabel" text="Role" styleClass="subtext"/>
                   </VBox>
                </HBox>
             </HBox>

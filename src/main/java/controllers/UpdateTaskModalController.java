@@ -10,6 +10,7 @@ import javafx.stage.Stage;
 import javafx.util.StringConverter;
 import entities.Task;
 import entities.User;
+import services.CurrentUserService;
 import services.TaskService;
 import services.UserService;
 
@@ -35,8 +36,10 @@ public class UpdateTaskModalController {
 
     private Task currentTask;
     private boolean saved;
+    private boolean statusEditingAllowed;
     private final UserService userService = new UserService();
     private final TaskService taskService = new TaskService();
+    private final CurrentUserService currentUserService = new CurrentUserService();
     private final services.ProjectService projectService = new services.ProjectService();
     private final List<User> allUsers = new ArrayList<>();
 
@@ -80,6 +83,8 @@ public class UpdateTaskModalController {
         }
         statusCombo.setValue(TaskValueMapper.toStatusLabel(task.getStatus()));
         priorityCombo.setValue(TaskValueMapper.normalizePriority(task.getPriority()));
+        statusEditingAllowed = canCurrentUserModifyTaskStatus(task);
+        statusCombo.setDisable(!statusEditingAllowed);
 
         loadAssignableUsersForProject(task.getProjectId());
         for (User user : userCombo.getItems()) {
@@ -114,6 +119,9 @@ public class UpdateTaskModalController {
                 currentTask.getCreatedby()
         );
         updated.setId(currentTask.getId());
+        if (!statusEditingAllowed) {
+            updated.setStatus(currentTask.getStatus());
+        }
 
         if (taskService.updateTask(updated)) {
             saved = true;
@@ -211,7 +219,24 @@ public class UpdateTaskModalController {
         List<User> allowedUsers = allUsers.stream()
                 .filter(user -> assignedUserIds.contains(user.getId()))
                 .toList();
+        if (!currentUserService.isCurrentUserManager()) {
+            int currentUserId = currentUserService.getCurrentUserId();
+            allowedUsers = allowedUsers.stream()
+                    .filter(user -> user.getId() == currentUserId)
+                    .toList();
+            userCombo.setDisable(true);
+        } else {
+            userCombo.setDisable(false);
+        }
         userCombo.getItems().setAll(allowedUsers);
         userCombo.setPromptText(allowedUsers.isEmpty() ? "No members assigned to this project" : "Select team member...");
+    }
+
+    private boolean canCurrentUserModifyTaskStatus(Task task) {
+        if (task == null) {
+            return false;
+        }
+        int assigneeId = task.getAssignedTo();
+        return assigneeId > 0 && assigneeId == currentUserService.getCurrentUserId();
     }
 }

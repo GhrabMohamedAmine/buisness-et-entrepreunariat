@@ -11,6 +11,7 @@ import javafx.util.StringConverter;
 import entities.Project;
 import entities.Task;
 import entities.User;
+import services.CurrentUserService;
 import services.ProjectService;
 import services.TaskService;
 import services.UserService;
@@ -44,6 +45,7 @@ public class AddTaskController {
     private final ProjectService projectService = new ProjectService();
     private final UserService userService = new UserService();
     private final TaskService taskService = new TaskService();
+    private final CurrentUserService currentUserService = new CurrentUserService();
     private final List<User> allUsers = new ArrayList<>();
 
     @FXML
@@ -153,7 +155,7 @@ public class AddTaskController {
                 dueDatePicker.getValue().toString(),
                 resolvedProjectId,
                 selectedUser.getId(), // assignee
-                1 // creator (replace with logged-in user id when auth/session is added)
+                currentUserService.getCurrentUserId()
         );
 
         taskService.addTask(task);
@@ -203,6 +205,10 @@ public class AddTaskController {
 
         if (selectedUser == null) {
             setError(userErrorLabel, "Assigned user is required.");
+            valid = false;
+        } else if (!currentUserService.isCurrentUserManager()
+                && selectedUser.getId() != currentUserService.getCurrentUserId()) {
+            setError(userErrorLabel, "Only managers can assign tasks to another user.");
             valid = false;
         }
 
@@ -270,6 +276,13 @@ public class AddTaskController {
                 .filter(user -> assignedUserIds.contains(user.getId()))
                 .toList();
 
+        if (!currentUserService.isCurrentUserManager()) {
+            int currentUserId = currentUserService.getCurrentUserId();
+            allowedUsers = allowedUsers.stream()
+                    .filter(user -> user.getId() == currentUserId)
+                    .toList();
+        }
+
         User currentSelection = userCombo.getValue();
         userCombo.getItems().setAll(allowedUsers);
         if (currentSelection != null && allowedUsers.stream().anyMatch(user -> user.getId() == currentSelection.getId())) {
@@ -281,7 +294,16 @@ public class AddTaskController {
 
         if (fixedAssignedUserId > 0) {
             applyFixedAssignedUser();
+        } else if (!currentUserService.isCurrentUserManager()) {
+            applyFixedAssignedUser(currentUserService.getCurrentUserId());
         }
+    }
+
+    private void applyFixedAssignedUser(int userId) {
+        int previousFixedAssignedUserId = fixedAssignedUserId;
+        fixedAssignedUserId = userId;
+        applyFixedAssignedUser();
+        fixedAssignedUserId = previousFixedAssignedUserId;
     }
 
     private int resolveEffectiveProjectId() {

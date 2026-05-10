@@ -306,6 +306,41 @@ public class TaskService {
         return tasks;
     }
 
+    public List<Task> getTasksAssignedToUserOrUnassigned(int userId) {
+        List<Task> tasks = new ArrayList<>();
+        String query = "SELECT t.*, CONCAT(u.prenom, ' ', u.nom) as user_name " +
+                "FROM tasks t " +
+                "LEFT JOIN utilisateurs u ON t.assigned_to = u.id " +
+                "WHERE t.assigned_to = ? OR t.assigned_to IS NULL OR t.assigned_to <= 0 " +
+                "ORDER BY t.due_date IS NULL, t.due_date ASC, t.id DESC";
+
+        try (Connection conn = MyDatabase.getConnection();
+             PreparedStatement pstmt = conn.prepareStatement(query)) {
+            pstmt.setInt(1, userId);
+            ResultSet rs = pstmt.executeQuery();
+
+            while (rs.next()) {
+                Task task = new Task(
+                        rs.getString("title"),
+                        rs.getString("description"),
+                        rs.getString("status"),
+                        rs.getString("priority"),
+                        rs.getString("start_date"),
+                        rs.getString("due_date"),
+                        rs.getInt("project_id"),
+                        rs.getInt("assigned_to"),
+                        rs.getInt("created_by")
+                );
+                task.setId(rs.getInt("id"));
+                task.setAssignedToName(rs.getString("user_name"));
+                tasks.add(task);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return tasks;
+    }
+
     public boolean updateTask(Task task) {
         String query = "UPDATE tasks SET title = ?, description = ?, status = ?, priority = ?, due_date = ?, assigned_to = ? WHERE id = ?";
         try (Connection conn = MyDatabase.getConnection();

@@ -24,6 +24,7 @@ import javafx.stage.StageStyle;
 import org.kordamp.ikonli.javafx.FontIcon;
 import entities.Project;
 import entities.Task;
+import services.CurrentUserService;
 import services.ProjectService;
 import services.TaskService;
 
@@ -35,7 +36,6 @@ import java.util.Locale;
 import java.util.List;
 
 public class TasksController {
-    private static final int CURRENT_USER_ID = 1;
     @FXML private VBox tasksGroupsContainer;
     @FXML private TextField searchField;
     @FXML private Button filterButton;
@@ -43,6 +43,7 @@ public class TasksController {
 
     private final ProjectService projectService = new ProjectService();
     private final TaskService taskService = new TaskService();
+    private final CurrentUserService currentUserService = new CurrentUserService();
     private static final DateTimeFormatter DUE_DATE_INPUT = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter DUE_DATE_OUTPUT = DateTimeFormatter.ofPattern("dd MMM", Locale.ENGLISH);
     private String selectedStatusFilter = TaskValueMapper.FILTER_ALL;
@@ -60,6 +61,11 @@ public class TasksController {
     @FXML
     private void onCreateTask() {
         openAddTaskModal(null);
+    }
+
+    @FXML
+    private void onOpenKanban() {
+        MainController.setView("tasks-kanban.fxml");
     }
 
     @FXML
@@ -468,6 +474,6 @@ public class TasksController {
             return false;
         }
         int assigneeId = task.getAssignedTo();
-        return assigneeId <= 0 || assigneeId == CURRENT_USER_ID;
+        return assigneeId > 0 && assigneeId == currentUserService.getCurrentUserId();
     }
 }

@@ -7,6 +7,7 @@ import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.effect.BoxBlur;
 import javafx.scene.effect.ColorAdjust;
+import javafx.scene.control.Button;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.FlowPane;
@@ -16,6 +17,7 @@ import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import entities.Project;
 import entities.User;
+import services.CurrentUserService;
 import services.ProjectService;
 
 import java.io.IOException;
@@ -32,13 +34,17 @@ public class ProjectsController {
 
     @FXML
     private TextField searchField;
+    @FXML
+    private Button newProjectButton;
 
     private final ProjectService projectService = new ProjectService();
+    private final CurrentUserService currentUserService = new CurrentUserService();
 
     @FXML
     public void initialize() {
         projectsGrid.setHgap(20);
         projectsGrid.setVgap(20);
+        setNodeVisibleManaged(newProjectButton, currentUserService.isCurrentUserManager());
         loadData();
         if (searchField != null) {
             searchField.textProperty().addListener((obs, oldValue, newValue) -> loadData(newValue));
@@ -87,6 +93,9 @@ public class ProjectsController {
 
     @FXML
     private void openAddProjectPopup() {
+        if (!currentUserService.isCurrentUserManager()) {
+            return;
+        }
         if (projectsGrid == null || projectsGrid.getScene() == null) {
             return;
         }
@@ -127,5 +136,11 @@ public class ProjectsController {
     @FXML
     private void onCalendarIconClicked() {
         MainController.setView("calendar.fxml");
+    }
+
+    private void setNodeVisibleManaged(Node node, boolean visible) {
+        if (node == null) return;
+        node.setVisible(visible);
+        node.setManaged(visible);
     }
 }

@@ -32,12 +32,14 @@ import entities.Project;
 import entities.Task;
 import entities.User;
 import services.ActivityService;
+import services.CurrentUserService;
 import services.ProjectHealthService;
 import services.ProjectService;
 import services.ProjectReportService;
 import services.TaskService;
 import services.UserService;
 import javafx.scene.paint.Color;
+import org.kordamp.ikonli.javafx.FontIcon;
 
 import javafx.scene.control.Button;
 import java.io.IOException;
@@ -52,7 +54,6 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class ProjectDetailsController {
-    private static final int CURRENT_USER_ID = 1;
     private static final String[] AVATAR_COLOR_CLASSES = {"purple", "blue", "green", "orange"};
     private static final DateTimeFormatter ACTIVITY_DATE_INPUT = DateTimeFormatter.ISO_LOCAL_DATE;
     private static final DateTimeFormatter ACTIVITY_DATE_OUTPUT = DateTimeFormatter.ofPattern("dd MMM", Locale.ENGLISH);
@@ -81,10 +82,12 @@ public class ProjectDetailsController {
     @FXML private VBox recentActivityContainer;
     @FXML private Project currentProject;
     @FXML private Button tasksBtn, overviewTab, kanbanTab;
+    @FXML private FontIcon editProjectIcon, deleteProjectIcon;
 
     private final ProjectService projectService = new ProjectService();
     private final TaskService taskService = new TaskService();
     private final UserService userService = new UserService();
+    private final CurrentUserService currentUserService = new CurrentUserService();
     private final ActivityService activityService = new ActivityService();
     private final ProjectHealthService projectHealthService = new ProjectHealthService();
     private final ProjectReportService projectReportService = new ProjectReportService();
@@ -102,6 +105,9 @@ public class ProjectDetailsController {
 
     @FXML
     private void initialize() {
+        boolean manager = currentUserService.isCurrentUserManager();
+        setNodeVisibleManaged(editProjectIcon, manager);
+        setNodeVisibleManaged(deleteProjectIcon, manager);
         setupDropTarget(todoColumn, TaskValueMapper.STATUS_TODO);
         setupDropTarget(inProgressColumn, TaskValueMapper.STATUS_IN_PROGRESS);
         setupDropTarget(doneColumn, TaskValueMapper.STATUS_DONE);
@@ -701,6 +707,9 @@ public class ProjectDetailsController {
 
     @FXML
     private void handleDeleteProject(MouseEvent event) {
+        if (!currentUserService.isCurrentUserManager()) {
+            return;
+        }
         if (currentProject == null) {
             return;
         }
@@ -752,6 +761,9 @@ public class ProjectDetailsController {
 
     @FXML
     private void handleEditProject(MouseEvent event) {
+        if (!currentUserService.isCurrentUserManager()) {
+            return;
+        }
         if (currentProject == null) {
             return;
         }
@@ -935,7 +947,13 @@ public class ProjectDetailsController {
             return false;
         }
         int assigneeId = task.getAssignedTo();
-        return assigneeId <= 0 || assigneeId == CURRENT_USER_ID;
+        return assigneeId > 0 && assigneeId == currentUserService.getCurrentUserId();
+    }
+
+    private void setNodeVisibleManaged(Node node, boolean visible) {
+        if (node == null) return;
+        node.setVisible(visible);
+        node.setManaged(visible);
     }
 
     private void addCardToKanbanColumn(VBox column, Parent row) {

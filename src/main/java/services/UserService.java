@@ -13,12 +13,12 @@ import java.util.List;
 public class UserService {
     public List<User> getAllUsers() {
         List<User> users = new ArrayList<>();
-        String query = "SELECT id, nom , prenom FROM utilisateurs";
+        String query = "SELECT id, nom, prenom, role FROM utilisateurs";
         try (Connection conn = MyDatabase.getConnection();
              Statement stmt = conn.createStatement();
              ResultSet rs = stmt.executeQuery(query)) {
             while (rs.next()) {
-                users.add(new User(rs.getInt("id"), rs.getString("nom"), rs.getString("prenom")));
+                users.add(new User(rs.getInt("id"), rs.getString("nom"), rs.getString("prenom"), rs.getString("role")));
             }
         } catch (SQLException e) {
             e.printStackTrace();

@@ -18,7 +18,7 @@
     <!-- Welcome -->
     <HBox spacing="20" alignment="CENTER_LEFT">
         <VBox spacing="5">
-            <Label text="Welcome back, Alex " styleClass="title"/>
+            <Label fx:id="welcomeLabel" text="Welcome back" styleClass="title"/>
             <Label text="Here's what's happening with your projects today."
                    styleClass="subtitle"/>
         </VBox>
@@ -28,7 +28,7 @@
         <HBox spacing="10" alignment="CENTER_RIGHT">
 
 
-            <Button text="New Project" styleClass="btn-primary" onAction="#openAddProjectPopup">
+            <Button fx:id="newProjectButton" text="New Project" styleClass="btn-primary" onAction="#openAddProjectPopup">
                 <graphic>
                     <FontIcon iconLiteral="mdi2p-plus" iconSize="16" styleClass="white-icon"/>
                 </graphic>
