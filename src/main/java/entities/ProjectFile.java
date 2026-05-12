@@ -11,12 +11,9 @@ public class ProjectFile {
     private final long bytes;
     private final String secureUrl;
     private final String createdAt;
-    private final int createdByUserId;
-    private final Integer updatedByUserId;
 
     public ProjectFile(int id, int projectId, int uploadedBy, String originalName, String publicId,
-                       String resourceType, String format, long bytes, String secureUrl, String createdAt,
-                       int createdByUserId, Integer updatedByUserId) {
+                       String resourceType, String format, long bytes, String secureUrl, String createdAt) {
         this.id = id;
         this.projectId = projectId;
         this.uploadedBy = uploadedBy;
@@ -27,14 +24,11 @@ public class ProjectFile {
         this.bytes = bytes;
         this.secureUrl = secureUrl;
         this.createdAt = createdAt;
-        this.createdByUserId = createdByUserId;
-        this.updatedByUserId = updatedByUserId;
     }
 
     public ProjectFile(int projectId, int uploadedBy, String originalName, String publicId,
-                       String resourceType, String format, long bytes, String secureUrl, String createdAt,
-                       int createdByUserId, Integer updatedByUserId) {
-        this(0, projectId, uploadedBy, originalName, publicId, resourceType, format, bytes, secureUrl, createdAt, createdByUserId, updatedByUserId);
+                       String resourceType, String format, long bytes, String secureUrl, String createdAt) {
+        this(0, projectId, uploadedBy, originalName, publicId, resourceType, format, bytes, secureUrl, createdAt);
     }
 
     public int getId() { return id; }
@@ -49,6 +43,4 @@ public class ProjectFile {
     public String getSecureUrl() { return secureUrl; }
     public String getCreatedAt() { return createdAt; }
     public String getUploadedAt() { return createdAt; }
-    public int getCreatedByUserId() { return createdByUserId; }
-    public Integer getUpdatedByUserId() { return updatedByUserId; }
 }
