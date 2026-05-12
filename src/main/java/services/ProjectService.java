@@ -50,7 +50,7 @@ public class ProjectService {
     }
 
     public int ReturnPrID(Project project) {
-        String query = "INSERT INTO projects (name, description, progress, budget, start_date, end_date, assigned_to, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO projects (name, description, progress, budget, start_date, end_date, assigned_to, created_by, created_by_user_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
         try (Connection conn = MyDatabase.getConnection();
              PreparedStatement rid = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
@@ -75,6 +75,7 @@ public class ProjectService {
 
             rid.setInt(7, project.getAssignedTo());
             rid.setInt(8, project.getCreatedby());
+            rid.setInt(9, project.getCreatedby());
             rid.executeUpdate();
             ResultSet keys = rid.getGeneratedKeys();
             if (keys.next()) {

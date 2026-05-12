@@ -158,8 +158,11 @@ public class AddTaskController {
                 currentUserService.getCurrentUserId()
         );
 
-        taskService.addTask(task);
-        closeWindow();
+        if (taskService.addTask(task)) {
+            closeWindow();
+        } else {
+            setError(projectErrorLabel, "Task could not be saved. Check the database configuration.");
+        }
     }
     private void closeWindow() {
         Stage stage = (Stage) titleField.getScene().getWindow();
