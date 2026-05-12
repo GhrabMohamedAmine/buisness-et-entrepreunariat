@@ -5,9 +5,9 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class database {
-    private final String URL = "jdbc:mysql://localhost:3306/nexum?useSSL=false&serverTimezone=UTC";
+    private final String URL = "jdbc:mysql://localhost:8889/nexum3?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
     private final String USER = "root";
-    private final String PASSWORD = ""; // change if needed (sometimes "")
+    private final String PASSWORD = "root"; // change if needed (sometimes "")
 
     private Connection connection;
     private static database instance;
