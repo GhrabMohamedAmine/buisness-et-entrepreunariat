@@ -16,7 +16,7 @@ import static controllers.TaskValueMapper.normalizeStatus;
 
 public class TaskService {
     public boolean addTask(Task task) {
-        String query = "INSERT INTO tasks (title, description, status, priority, start_date, due_date, project_id, assigned_to, created_by, created_by_user_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+        String query = "INSERT INTO tasks (title, description, status, priority, start_date, due_date, project_id, assigned_to, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
         try (Connection conn = MyDatabase.getConnection();
              PreparedStatement adt = conn.prepareStatement(query, Statement.RETURN_GENERATED_KEYS)) {
@@ -34,8 +34,6 @@ public class TaskService {
                 adt.setNull(8, Types.INTEGER);
             }
             adt.setInt(9, task.getCreatedby());
-            adt.setInt(10, task.getCreatedby());
-
             adt.executeUpdate();
             int taskId = -1;
             ResultSet keys = adt.getGeneratedKeys();

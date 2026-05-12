@@ -91,9 +91,7 @@ public class CloudinaryFileUploadService {
                 stringValue(json, "format", null),
                 longValue(json, "bytes", size),
                 stringValue(json, "secure_url", ""),
-                stringValue(json, "created_at", ""),
-                uploadedByUserId,
-                null
+                stringValue(json, "created_at", "")
         );
         saveUploadedFile(uploadedFile);
         return uploadedFile;
@@ -102,7 +100,7 @@ public class CloudinaryFileUploadService {
     public List<ProjectFile> getProjectFiles(int projectId) {
         ensureProjectFilesTable();
         List<ProjectFile> files = new ArrayList<>();
-        String query = "SELECT id, project_id, uploaded_by, original_name, public_id, resource_type, format, bytes, secure_url, created_at, created_by_user_id, updated_by_user_id " +
+        String query = "SELECT id, project_id, uploaded_by, original_name, public_id, resource_type, format, bytes, secure_url, created_at " +
                 "FROM " + tableName() + " WHERE project_id = ? ORDER BY id DESC";
         try (Connection conn = MyDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
@@ -119,9 +117,7 @@ public class CloudinaryFileUploadService {
                         rs.getString("format"),
                         rs.getLong("bytes"),
                         rs.getString("secure_url"),
-                        rs.getString("created_at"),
-                        rs.getInt("created_by_user_id"),
-                        nullableInt(rs, "updated_by_user_id")
+                        rs.getString("created_at")
                 ));
             }
         } catch (SQLException e) {
@@ -133,8 +129,8 @@ public class CloudinaryFileUploadService {
     private void saveUploadedFile(ProjectFile uploadedFile) {
         ensureProjectFilesTable();
         String query = "INSERT INTO " + tableName() + " " +
-                "(project_id, uploaded_by, original_name, public_id, resource_type, format, bytes, secure_url, created_at, created_by_user_id, updated_by_user_id) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "(project_id, uploaded_by, original_name, public_id, resource_type, format, bytes, secure_url, created_at) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = MyDatabase.getConnection();
              PreparedStatement stmt = conn.prepareStatement(query)) {
             stmt.setInt(1, uploadedFile.getProjectId());
@@ -146,12 +142,6 @@ public class CloudinaryFileUploadService {
             stmt.setLong(7, uploadedFile.getBytes());
             stmt.setString(8, uploadedFile.getSecureUrl());
             stmt.setTimestamp(9, parseCreatedAt(uploadedFile.getCreatedAt()));
-            stmt.setInt(10, uploadedFile.getCreatedByUserId());
-            if (uploadedFile.getUpdatedByUserId() == null) {
-                stmt.setNull(11, java.sql.Types.INTEGER);
-            } else {
-                stmt.setInt(11, uploadedFile.getUpdatedByUserId());
-            }
             stmt.executeUpdate();
         } catch (SQLException e) {
             e.printStackTrace();
@@ -170,12 +160,8 @@ public class CloudinaryFileUploadService {
                 "bytes INT NULL, " +
                 "secure_url VARCHAR(1000) NOT NULL, " +
                 "created_at DATETIME NOT NULL, " +
-                "created_by_user_id INT NOT NULL, " +
-                "updated_by_user_id INT NULL, " +
                 "INDEX idx_project_file_project_id (project_id), " +
-                "INDEX idx_project_file_uploaded_by (uploaded_by), " +
-                "INDEX idx_project_file_created_by_user_id (created_by_user_id), " +
-                "INDEX idx_project_file_updated_by_user_id (updated_by_user_id)" +
+                "INDEX idx_project_file_uploaded_by (uploaded_by)" +
                 ")";
         try (Connection conn = MyDatabase.getConnection();
              Statement stmt = conn.createStatement()) {
@@ -214,11 +200,6 @@ public class CloudinaryFileUploadService {
             }
         }
         return Timestamp.from(Instant.now());
-    }
-
-    private Integer nullableInt(ResultSet rs, String column) throws SQLException {
-        int value = rs.getInt(column);
-        return rs.wasNull() ? null : value;
     }
 
     private byte[] buildMultipartBody(List<Part> parts, String boundary) throws IOException {
