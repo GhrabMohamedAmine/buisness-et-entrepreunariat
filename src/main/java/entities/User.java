@@ -21,6 +21,11 @@ public class User {
         this.name.set(name);
         this.firstName.set(firstName);
     }
+
+    public User(int id, String name, String firstName, String role) {
+        this(id, name, firstName);
+        this.role.set(role);
+    }
     // Constructeur complet avec faceId
     public User(int id, String name, String firstName, String email, String phone,
                 String role, String department, String status, String joinedDate,
@@ -50,6 +55,10 @@ public class User {
     public String getJoinedDate() { return joinedDate.get(); }
     public byte[] getImageData() { return imageData.get(); }
     public String getFaceId() { return faceId.get(); }
+    public boolean isManager() {
+        String currentRole = getRole();
+        return currentRole != null && currentRole.trim().equalsIgnoreCase("MANAGER");
+    }
 
     // Property getters (utiles pour les bindings JavaFX)
     public IntegerProperty idProperty() { return id; }

@@ -34,6 +34,7 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Locale;
 import java.util.List;
+import entities.User;
 
 public class TasksController {
     @FXML private VBox tasksGroupsContainer;
@@ -114,7 +115,7 @@ public class TasksController {
         tasksGroupsContainer.getChildren().clear();
 
         String normalizedQuery = normalizeSearch(query);
-        List<Project> projects = projectService.getAllProjects();
+        List<Project> projects = getAvailableProjectsForCurrentUser();
         int colorIndex = 0;
 
         for (Project project : projects) {
@@ -240,6 +241,14 @@ public class TasksController {
         deleteIcon.setIconSize(18);
         deleteIcon.getStyleClass().add("btn-icon-danger");
         deleteIcon.setOnMouseClicked(e -> deleteTask(task));
+
+        boolean canModifyTaskActions = canCurrentUserModifyTaskActions(task);
+        editIcon.setDisable(!canModifyTaskActions);
+        editIcon.setMouseTransparent(!canModifyTaskActions);
+        editIcon.setOpacity(canModifyTaskActions ? 1.0 : 0.45);
+        deleteIcon.setDisable(!canModifyTaskActions);
+        deleteIcon.setMouseTransparent(!canModifyTaskActions);
+        deleteIcon.setOpacity(canModifyTaskActions ? 1.0 : 0.45);
 
         doneCheck.setOnAction(e -> {
             if (!canCurrentUserModifyTaskStatus(task)) {
@@ -475,5 +484,29 @@ public class TasksController {
         }
         int assigneeId = task.getAssignedTo();
         return assigneeId > 0 && assigneeId == currentUserService.getCurrentUserId();
+    }
+
+    private boolean canCurrentUserModifyTaskActions(Task task) {
+        if (task == null) {
+            return false;
+        }
+        if (currentUserService.isCurrentUserManager()) {
+            return true;
+        }
+        return task.getCreatedby() == currentUserService.getCurrentUserId();
+    }
+
+    private List<Project> getAvailableProjectsForCurrentUser() {
+        User currentUser = currentUserService.getCurrentUser();
+        if (currentUser == null || currentUser.getRole() == null) {
+            return projectService.getAllProjects();
+        }
+
+        String role = currentUser.getRole().trim().toUpperCase(Locale.ROOT);
+        if ("EMPLOYEE".equals(role)) {
+            return projectService.getProjectsForUser(currentUser.getId());
+        }
+
+        return projectService.getAllProjects();
     }
 }

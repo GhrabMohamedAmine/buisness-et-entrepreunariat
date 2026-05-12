@@ -89,7 +89,7 @@ public class AddTaskController {
     }
 
     private void loadProjects() {
-        List<Project> projects = projectService.getAllProjects();
+        List<Project> projects = getVisibleProjectsForCurrentUser();
         projectCombo.getItems().setAll(projects);
         projectCombo.setConverter(new StringConverter<>() {
             @Override

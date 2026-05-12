@@ -2,6 +2,7 @@ package controllers;
 
 import entities.Project;
 import entities.Task;
+import entities.User;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
@@ -20,6 +21,7 @@ import services.TaskService;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class TasksKanbanController {
@@ -66,7 +68,7 @@ public class TasksKanbanController {
         doneColumn.getChildren().clear();
         taskById.clear();
 
-        for (Project project : projectService.getAllProjects()) {
+        for (Project project : getAvailableProjectsForCurrentUser()) {
             List<Task> tasks = taskService.getTasksByProject(project.getId());
             for (Task task : tasks) {
                 if (!shouldShowTask(task)) {
@@ -170,6 +172,20 @@ public class TasksKanbanController {
         }
         int assigneeId = task.getAssignedTo();
         return assigneeId > 0 && assigneeId == currentUserService.getCurrentUserId();
+    }
+
+    private List<Project> getAvailableProjectsForCurrentUser() {
+        User currentUser = currentUserService.getCurrentUser();
+        if (currentUser == null || currentUser.getRole() == null) {
+            return projectService.getAllProjects();
+        }
+
+        String role = currentUser.getRole().trim().toUpperCase(Locale.ROOT);
+        if ("EMPLOYEE".equals(role)) {
+            return projectService.getProjectsForUser(currentUser.getId());
+        }
+
+        return projectService.getAllProjects();
     }
 
     private void addEmptyColumnPlaceholder(VBox column, String text) {

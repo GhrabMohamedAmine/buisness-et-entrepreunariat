@@ -121,11 +121,6 @@ public class MainController {
     @FXML
     public void initialize() {
         instance = this;
-//
-
-
-        // ✅ Your CSS after theme
-
         staticContentArea = contentArea;
         User currentUser = currentUserService.getCurrentUser();
         if (currentUserNameLabel != null) {
@@ -134,6 +129,20 @@ public class MainController {
         if (currentUserRoleLabel != null) {
             currentUserRoleLabel.setText(formatRole(currentUser.getRole()));
         }
+        System.out.println("Current user: " + currentuser);
+        setUserinfo();
+
+        Platform.runLater(() -> {
+            Scene scene = mainView.getScene();
+            if (scene == null) return;
+
+            scene.setOnKeyPressed(event -> {
+                if (event.getCode() == KeyCode.F11) {
+                    toggleFullScreen();
+                    event.consume();
+                }
+            });
+        });
     }
 
     private String formatRole(String role) {
@@ -150,22 +159,6 @@ public class MainController {
             formatted.append(Character.toUpperCase(part.charAt(0))).append(part.substring(1));
         }
         return formatted.toString();
-        //currentuser = service.getCurrentUser();
-        System.out.println("Current user: " + currentuser.toString());
-        setUserinfo();
-
-        Platform.runLater(() -> {
-            Scene scene = mainView.getScene();
-            if (scene == null) return;
-
-            scene.setOnKeyPressed(event -> {
-                if (event.getCode() == KeyCode.F11) {
-                    toggleFullScreen();
-                    event.consume();
-                }
-            });
-        });
-
     }
     public void Reclamations(){
         setView("/UserReclamations/UserReclamations.fxml");

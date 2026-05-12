@@ -35,8 +35,10 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.stream.Collectors;
 
 
 public class HelloController {
@@ -59,7 +61,6 @@ public class HelloController {
     @FXML Label Username;
 
     @FXML private Label welcomeLabel;
-    @FXML private Button newProjectButton;
 
     private final ProjectService projectService = new ProjectService();
     private final TaskService taskService = new TaskService();
@@ -91,10 +92,10 @@ public class HelloController {
         if (welcomeLabel != null) {
             welcomeLabel.setText("Welcome back, " + currentUser.getFullName());
         }
-        setNodeVisibleManaged(newProjectButton, currentUser.isManager());
-        User user = UserService.getCurrentUser();
         loadData();
-        Username.setText(user.getFullName());
+        if (Username != null) {
+            Username.setText(currentUser.getFullName());
+        }
         boolean manager = isCurrentUserManager();
         addButton.setVisible(manager);
         addButton.setManaged(manager);
@@ -298,11 +299,7 @@ public class HelloController {
             return;
         }
         tasksListContainer.getChildren().clear();
-        int currentUserId = resolveCurrentUserId();
-        List<Task> tasks = taskService.getTasksByAssignedUser(currentUserId);
-        List<Task> tasks = currentUserService.isCurrentUserManager()
-                ? taskService.getTasksAssignedToUserOrUnassigned(currentUserService.getCurrentUserId())
-                : taskService.getTasksByAssignedUser(currentUserService.getCurrentUserId());
+        List<Task> tasks = getDashboardTasksForCurrentUser();
         if (tasks.isEmpty()) {
             Label emptyLabel = new Label("No tasks assigned.");
             emptyLabel.getStyleClass().add("task-time");
@@ -313,6 +310,31 @@ public class HelloController {
         for (Task task : tasks) {
             tasksListContainer.getChildren().add(buildTaskRow(task));
         }
+    }
+
+    private List<Task> getDashboardTasksForCurrentUser() {
+        User currentUser = currentUserService.getCurrentUser();
+        if (currentUser == null) {
+            return List.of();
+        }
+
+        int currentUserId = currentUser.getId();
+        String role = currentUser.getRole() == null ? "" : currentUser.getRole().trim().toUpperCase(Locale.ROOT);
+
+        if ("EMPLOYEE".equals(role)) {
+            Set<Integer> visibleProjectIds = projectService.getProjectsForUser(currentUserId).stream()
+                    .map(Project::getId)
+                    .collect(Collectors.toSet());
+            return taskService.getTasksByAssignedUser(currentUserId).stream()
+                    .filter(task -> visibleProjectIds.contains(task.getProjectId()))
+                    .toList();
+        }
+
+        if (currentUser.isManager()) {
+            return taskService.getTasksAssignedToUserOrUnassigned(currentUserId);
+        }
+
+        return taskService.getTasksByAssignedUser(currentUserId);
     }
 
     private HBox buildTaskRow(Task task) {
@@ -379,14 +401,6 @@ public class HelloController {
 
         row.getChildren().addAll(statusCheck, inProgressIcon, titleLabel, priority, status);
         return row;
-    }
-
-    private boolean canCurrentUserModifyTaskStatus(Task task) {
-        if (task == null) {
-            return false;
-        }
-        int assigneeId = task.getAssignedTo();
-        return assigneeId > 0 && assigneeId == currentUserService.getCurrentUserId();
     }
 
     private void updateInProgressIconStyle(FontIcon inProgressIcon, String normalizedStatus) {

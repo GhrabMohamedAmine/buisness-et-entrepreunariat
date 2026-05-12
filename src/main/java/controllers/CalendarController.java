@@ -2,6 +2,7 @@ package controllers;
 
 import entities.Project;
 import entities.Task;
+import entities.User;
 import javafx.fxml.FXML;
 import javafx.geometry.Insets;
 import javafx.scene.control.Label;
@@ -9,6 +10,7 @@ import javafx.scene.layout.ColumnConstraints;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
+import services.CurrentUserService;
 import services.ProjectService;
 import services.TaskService;
 
@@ -37,6 +39,7 @@ public class CalendarController {
 
     private final ProjectService projectService = new ProjectService();
     private final TaskService taskService = new TaskService();
+    private final CurrentUserService currentUserService = new CurrentUserService();
     private final HttpClient httpClient = HttpClient.newBuilder().build();
     private final Map<Integer, List<HolidayEntry>> holidaysByYear = new HashMap<>(); // to avoid repeated api callsw
 
@@ -151,7 +154,7 @@ public class CalendarController {
     private Map<LocalDate, List<CalendarEntry>> loadEntriesForMonth(YearMonth month) {
         Map<LocalDate, List<CalendarEntry>> entries = new HashMap<>();
 
-        List<Project> projects = projectService.getAllProjects();
+        List<Project> projects = getAvailableProjectsForCurrentUser();
         for (Project project : projects) {
             addEntry(entries, parseIsoDate(project.getStartDate()), "Project start: " + project.getName(), "#4f46e5");
             addEntry(entries, parseIsoDate(project.getEndDate()), "Project due: " + project.getName(), "#7c3aed");
@@ -232,6 +235,20 @@ public class CalendarController {
             }
         }
         return result;
+    }
+
+    private List<Project> getAvailableProjectsForCurrentUser() {
+        User currentUser = currentUserService.getCurrentUser();
+        if (currentUser == null || currentUser.getRole() == null) {
+            return projectService.getAllProjects();
+        }
+
+        String role = currentUser.getRole().trim().toUpperCase(Locale.ROOT);
+        if ("EMPLOYEE".equals(role)) {
+            return projectService.getProjectsForUser(currentUser.getId());
+        }
+
+        return projectService.getAllProjects();
     }
 
     private String extractJsonField(String object, String key) {

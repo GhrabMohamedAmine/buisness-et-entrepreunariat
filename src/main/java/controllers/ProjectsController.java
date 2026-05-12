@@ -22,6 +22,7 @@ import services.ProjectService;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class ProjectsController {
@@ -58,7 +59,7 @@ public class ProjectsController {
     private void loadData(String query) {
         projectsGrid.getChildren().clear();
 
-        List<Project> projectList = projectService.getAllProjects();
+        List<Project> projectList = getVisibleProjectsForCurrentUser();
         Map<Integer, List<User>> assigneesByProject = projectService.getProjectAssigneesMap();
         String normalizedQuery = query == null ? "" : query.trim().toLowerCase();
         if (!normalizedQuery.isEmpty()) {
@@ -89,6 +90,20 @@ public class ProjectsController {
                 e.printStackTrace();
             }
         }
+    }
+
+    private List<Project> getVisibleProjectsForCurrentUser() {
+        User currentUser = currentUserService.getCurrentUser();
+        if (currentUser == null || currentUser.getRole() == null) {
+            return projectService.getAllProjects();
+        }
+
+        String role = currentUser.getRole().trim().toUpperCase(Locale.ROOT);
+        if ("EMPLOYEE".equals(role)) {
+            return projectService.getProjectsForUser(currentUser.getId());
+        }
+
+        return projectService.getAllProjects();
     }
 
     @FXML

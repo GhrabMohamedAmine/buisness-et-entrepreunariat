@@ -405,7 +405,9 @@ public class ProjectDetailsController {
                 TaskRowController controller = loader.getController();
                 controller.setTaskData(t);
                 boolean canModifyStatus = canCurrentUserModifyTaskStatus(t);
+                boolean canModifyTaskActions = canCurrentUserModifyTaskActions(t);
                 controller.setStatusEditingAllowed(canModifyStatus);
+                controller.setTaskActionsAllowed(canModifyTaskActions);
                 controller.setOnStatusToggle(selected -> {
                     if (!canModifyStatus) {
                         return false;
@@ -556,7 +558,9 @@ public class ProjectDetailsController {
                 controller.setTaskData(task);
                 controller.setKanbanMode(true);
                 boolean canModifyStatus = canCurrentUserModifyTaskStatus(task);
+                boolean canModifyTaskActions = canCurrentUserModifyTaskActions(task);
                 controller.setStatusEditingAllowed(canModifyStatus);
+                controller.setTaskActionsAllowed(canModifyTaskActions);
                 controller.setOnStatusToggle(selected -> {
                     if (!canModifyStatus) {
                         return false;
@@ -1096,6 +1100,16 @@ public class ProjectDetailsController {
         }
         int assigneeId = task.getAssignedTo();
         return assigneeId > 0 && assigneeId == currentUserService.getCurrentUserId();
+    }
+
+    private boolean canCurrentUserModifyTaskActions(Task task) {
+        if (task == null) {
+            return false;
+        }
+        if (currentUserService.isCurrentUserManager()) {
+            return true;
+        }
+        return task.getCreatedby() == currentUserService.getCurrentUserId();
     }
 
     private void setNodeVisibleManaged(Node node, boolean visible) {
