@@ -36,7 +36,7 @@
                         <Button fx:id="overviewTab" onAction="#onOverviewTabClicked" styleClass="tab-active" text="Overview" />
                         <Button fx:id="tasksBtn" onAction="#onTasksTabClicked" styleClass="tab-inactive" text="Tasks" />
                         <Button fx:id="kanbanTab" onAction="#onKanbanTabClicked" styleClass="tab-inactive" text="Kanban" />
-                        <Button styleClass="tab-inactive" text="Discussion" />
+                        <Button fx:id="filesTab" onAction="#onFilesTabClicked" styleClass="tab-inactive" text="Files" />
                     </HBox>
                     <VBox alignment="CENTER_RIGHT" spacing="5">
                         <HBox alignment="BOTTOM_RIGHT" spacing="10">
@@ -139,6 +139,34 @@
                             </ScrollPane>
                         </VBox>
                     </HBox>
+                </VBox>
+
+                <VBox fx:id="filesContainer" managed="false" spacing="22" visible="false">
+                    <HBox alignment="CENTER_LEFT" spacing="20" styleClass="nexum-card-sub">
+                        <VBox spacing="8" HBox.hgrow="ALWAYS">
+                            <Label styleClass="header-title" text="Project Files" />
+                            <Label styleClass="text-muted" text="Uploaded files related to this project will appear here." />
+                            <Label styleClass="text-muted" text="Maximum upload size: 2M." />
+                            <Label fx:id="filesStatusLabel" styleClass="text-muted" text="" />
+                        </VBox>
+                        <HBox alignment="CENTER" spacing="12" style="-fx-background-color: white; -fx-border-color: #dbe3ef; -fx-border-radius: 14; -fx-background-radius: 14; -fx-padding: 12 18;">
+                            <Button onAction="#handleChooseProjectFile" style="-fx-background-color: #eef2ff; -fx-text-fill: #4338ca; -fx-font-weight: bold; -fx-background-radius: 999; -fx-padding: 12 18;" text="Choose file">
+                                <graphic>
+                                    <FontIcon iconLiteral="mdi2f-folder-open-outline" iconSize="16" />
+                                </graphic>
+                            </Button>
+                            <Label fx:id="selectedFileNameLabel" style="-fx-font-weight: bold; -fx-text-fill: #4b5563;" text="No file selected" />
+                        </HBox>
+                        <Button onAction="#handleUploadProjectFile" styleClass="btn-primary" text="Upload File">
+                            <graphic>
+                                <FontIcon iconLiteral="mdi2u-upload" iconSize="16" styleClass="white-icon" />
+                            </graphic>
+                        </Button>
+                    </HBox>
+
+                    <VBox spacing="14" styleClass="nexum-card-sub">
+                        <VBox fx:id="filesListContainer" spacing="12" />
+                    </VBox>
                 </VBox>
 
             </StackPane>

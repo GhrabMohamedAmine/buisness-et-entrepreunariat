@@ -29,9 +29,11 @@ import javafx.stage.StageStyle;
 import javafx.stage.Window;
 import javafx.util.Duration;
 import entities.Project;
+import entities.ProjectFile;
 import entities.Task;
 import entities.User;
 import services.ActivityService;
+import services.CloudinaryFileUploadService;
 import services.CurrentUserService;
 import services.ProjectHealthService;
 import services.ProjectService;
@@ -42,8 +44,10 @@ import javafx.scene.paint.Color;
 import org.kordamp.ikonli.javafx.FontIcon;
 
 import javafx.scene.control.Button;
+import java.awt.Desktop;
 import java.io.IOException;
 import java.io.File;
+import java.net.URI;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -78,20 +82,26 @@ public class ProjectDetailsController {
     @FXML private Label todoCountLabel;
     @FXML private Label inProgressCountLabel;
     @FXML private Label doneCountLabel;
+    @FXML private VBox filesContainer;
+    @FXML private VBox filesListContainer;
+    @FXML private Label selectedFileNameLabel;
+    @FXML private Label filesStatusLabel;
     @FXML private VBox teamContainer;
     @FXML private VBox recentActivityContainer;
     @FXML private Project currentProject;
-    @FXML private Button tasksBtn, overviewTab, kanbanTab;
+    @FXML private Button tasksBtn, overviewTab, kanbanTab, filesTab;
     @FXML private FontIcon editProjectIcon, deleteProjectIcon;
 
     private final ProjectService projectService = new ProjectService();
     private final TaskService taskService = new TaskService();
     private final UserService userService = new UserService();
+    private final CloudinaryFileUploadService cloudinaryFileUploadService = new CloudinaryFileUploadService();
     private final CurrentUserService currentUserService = new CurrentUserService();
     private final ActivityService activityService = new ActivityService();
     private final ProjectHealthService projectHealthService = new ProjectHealthService();
     private final ProjectReportService projectReportService = new ProjectReportService();
     private final Map<Integer, Task> kanbanTaskById = new java.util.HashMap<>();
+    private File selectedUploadFile;
 
     private static class ActivityItem {
         private final long sortKey;
@@ -440,6 +450,7 @@ public class ProjectDetailsController {
         overviewTab.getStyleClass().setAll("tab-inactive");
         tasksBtn.getStyleClass().setAll("tab-active");
         kanbanTab.getStyleClass().setAll("tab-inactive");
+        filesTab.getStyleClass().setAll("tab-inactive");
 
         // 2. Hide Overview
         overviewContainer.setVisible(false);
@@ -450,6 +461,8 @@ public class ProjectDetailsController {
         tasksScrollPane.setManaged(true);
         kanbanContainer.setVisible(false);
         kanbanContainer.setManaged(false);
+        filesContainer.setVisible(false);
+        filesContainer.setManaged(false);
 
         // Refresh your task list logic here
         showTasksTab();
@@ -460,6 +473,7 @@ public class ProjectDetailsController {
         overviewTab.getStyleClass().setAll("tab-active");
         tasksBtn.getStyleClass().setAll("tab-inactive");
         kanbanTab.getStyleClass().setAll("tab-inactive");
+        filesTab.getStyleClass().setAll("tab-inactive");
 
         // 2. Show Overview
         overviewContainer.setVisible(true);
@@ -470,6 +484,8 @@ public class ProjectDetailsController {
         tasksScrollPane.setManaged(false);
         kanbanContainer.setVisible(false);
         kanbanContainer.setManaged(false);
+        filesContainer.setVisible(false);
+        filesContainer.setManaged(false);
     }
 
     @FXML
@@ -481,6 +497,7 @@ public class ProjectDetailsController {
         overviewTab.getStyleClass().setAll("tab-inactive");
         tasksBtn.getStyleClass().setAll("tab-inactive");
         kanbanTab.getStyleClass().setAll("tab-active");
+        filesTab.getStyleClass().setAll("tab-inactive");
 
         overviewContainer.setVisible(false);
         overviewContainer.setManaged(false);
@@ -488,9 +505,34 @@ public class ProjectDetailsController {
         tasksScrollPane.setManaged(false);
         kanbanContainer.setVisible(true);
         kanbanContainer.setManaged(true);
+        filesContainer.setVisible(false);
+        filesContainer.setManaged(false);
 
         loadKanbanColumns();
         animateKanbanContainerReveal();
+    }
+
+    @FXML
+    private void onFilesTabClicked() {
+        if (currentProject == null) {
+            return;
+        }
+
+        overviewTab.getStyleClass().setAll("tab-inactive");
+        tasksBtn.getStyleClass().setAll("tab-inactive");
+        kanbanTab.getStyleClass().setAll("tab-inactive");
+        filesTab.getStyleClass().setAll("tab-active");
+
+        overviewContainer.setVisible(false);
+        overviewContainer.setManaged(false);
+        tasksScrollPane.setVisible(false);
+        tasksScrollPane.setManaged(false);
+        kanbanContainer.setVisible(false);
+        kanbanContainer.setManaged(false);
+        filesContainer.setVisible(true);
+        filesContainer.setManaged(true);
+
+        renderProjectFiles();
     }
 
     private void loadKanbanColumns() {
@@ -621,6 +663,112 @@ public class ProjectDetailsController {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    @FXML
+    private void handleChooseProjectFile() {
+        if (currentProject == null || filesContainer == null || filesContainer.getScene() == null) {
+            return;
+        }
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Choose project file");
+        File file = chooser.showOpenDialog(filesContainer.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+        selectedUploadFile = file;
+        selectedFileNameLabel.setText(file.getName());
+        filesStatusLabel.setText("");
+    }
+
+    @FXML
+    private void handleUploadProjectFile() {
+        if (currentProject == null) {
+            return;
+        }
+        if (selectedUploadFile == null) {
+            filesStatusLabel.setText("Choose a file first.");
+            return;
+        }
+        try {
+            filesStatusLabel.setText("Uploading...");
+            cloudinaryFileUploadService.uploadProjectFile(
+                    selectedUploadFile.toPath(),
+                    currentProject.getId(),
+                    currentUserService.getCurrentUserId()
+            );
+            selectedUploadFile = null;
+            selectedFileNameLabel.setText("No file selected");
+            filesStatusLabel.setText("File uploaded successfully.");
+            renderProjectFiles();
+        } catch (Exception e) {
+            filesStatusLabel.setText(e.getMessage());
+            showAlert(Alert.AlertType.ERROR, "Upload file", e.getMessage());
+        }
+    }
+
+    private void renderProjectFiles() {
+        if (filesListContainer == null || currentProject == null) {
+            return;
+        }
+        filesListContainer.getChildren().clear();
+        List<ProjectFile> uploadedFiles = cloudinaryFileUploadService.getProjectFiles(currentProject.getId());
+        if (uploadedFiles.isEmpty()) {
+            Label emptyLabel = new Label("No files uploaded yet.");
+            emptyLabel.getStyleClass().add("text-muted");
+            filesListContainer.getChildren().add(emptyLabel);
+            return;
+        }
+        for (ProjectFile file : uploadedFiles) {
+            filesListContainer.getChildren().add(buildProjectFileRow(file));
+        }
+    }
+
+    private HBox buildProjectFileRow(ProjectFile file) {
+        HBox row = new HBox(18);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setStyle("-fx-background-color: #ffffff; -fx-border-color: #dbe3ef; -fx-border-width: 1; -fx-border-radius: 12; -fx-background-radius: 12; -fx-padding: 18;");
+
+        Label icon = new Label("FILE");
+        icon.setStyle("-fx-background-color: #eef2ff; -fx-text-fill: #4338ca; -fx-font-weight: bold; -fx-padding: 18 14; -fx-background-radius: 12;");
+
+        VBox info = new VBox(6);
+        Label name = new Label(file.getFileName());
+        name.setStyle("-fx-font-size: 16; -fx-font-weight: bold; -fx-text-fill: #111827;");
+        Label meta = new Label(formatBytes(file.getBytes()) + "  •  " + file.getUploadedAt());
+        meta.getStyleClass().add("text-muted");
+        info.getChildren().addAll(name, meta);
+        HBox.setHgrow(info, Priority.ALWAYS);
+
+        Button openButton = new Button("Open");
+        openButton.getStyleClass().add("btn-secondary");
+        openButton.setOnAction(event -> openUploadedFile(file.getSecureUrl()));
+
+        row.getChildren().addAll(icon, info, openButton);
+        return row;
+    }
+
+    private void openUploadedFile(String url) {
+        if (url == null || url.isBlank()) {
+            return;
+        }
+        try {
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().browse(URI.create(url));
+            }
+        } catch (Exception e) {
+            showAlert(Alert.AlertType.ERROR, "Open file", "Unable to open file:\n" + e.getMessage());
+        }
+    }
+
+    private String formatBytes(long bytes) {
+        if (bytes < 1024) {
+            return bytes + " B";
+        }
+        if (bytes < 1024 * 1024) {
+            return Math.round(bytes / 1024.0) + " KB";
+        }
+        return String.format(Locale.ENGLISH, "%.1f MB", bytes / (1024.0 * 1024.0));
     }
 
     @FXML
