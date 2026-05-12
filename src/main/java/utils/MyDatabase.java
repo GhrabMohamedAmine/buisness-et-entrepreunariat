@@ -7,7 +7,8 @@ import java.sql.SQLException;
 
 public class MyDatabase {
 
-    private static final String URL ="jdbc:mysql://localhost:3306/nexum";
+    //private static final String URL ="jdbc:mysql://localhost:3306/nexum";
+    private static final String URL ="jjdbc:mysql://localhost:8889/nexum3?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
     private static final String USERNAME ="root";
     private static final String PWD ="";
 
