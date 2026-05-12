@@ -8,9 +8,11 @@ import com.google.gson.JsonParser;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -20,8 +22,8 @@ import java.util.List;
 import static controllers.TaskValueMapper.normalizePriority;
 
 public class AiTaskGeneratorService {
-    private static final String API_URL = "https://api.groq.com/openai/v1/chat/completions";
-    private static final String MODEL = "llama-3.3-70b-versatile";
+    private static final String API_URL_TEMPLATE = "https://generativelanguage.googleapis.com/v1beta/models/%s:generateContent?key=%s";
+    private static final String MODEL = "gemini-2.5-flash";
     private static final Gson GSON = new Gson();
 
     private final HttpClient client = HttpClient.newHttpClient();
@@ -30,74 +32,76 @@ public class AiTaskGeneratorService {
             throws IOException, InterruptedException {
         String apiKey = resolveApiKey();
         if (apiKey == null || apiKey.isBlank()) {
-            throw new IllegalStateException("GROQ_API_KEY missing. Set env var, JVM -DGROQ_API_KEY, or .env file.");
+            throw new IllegalStateException("GEMINI_API_KEY missing. Set env var, JVM -DGEMINI_API_KEY, or .env file.");
         }
 
         String userPrompt = """
-                Project name: %s      
+                Project name: %s
                 Project description: %s
-                Start date: %s
-                Due date: %s
+                Project start date: %s
+                Project end date: %s
 
-                Generate %d practical project tasks.
-                Return ONLY a valid JSON array.
-                Each item must contain:
-                - title (string, short and actionable)
-                - description (string, one sentence)
-                - priority (LOW, MEDIUM, or HIGH)
+                Suggest %d starter tasks for this project.
                 """.formatted(
                 nullSafe(projectName),
-                nullSafe(projectDescription),
+                projectDescription == null || projectDescription.isBlank() ? "No description provided." : projectDescription.trim(),
                 startDate == null ? "" : startDate,
                 dueDate == null ? "" : dueDate,
                 maxTasks
         );
 
         JsonObject requestPayload = new JsonObject();
-        requestPayload.addProperty("model", MODEL);
 
-        JsonArray messages = new JsonArray();
-        JsonObject systemMessage = new JsonObject();
-        systemMessage.addProperty("role", "system");
-        systemMessage.addProperty("content", "You are a project planning assistant. Respond with strict JSON only.");
-        messages.add(systemMessage);
+        JsonObject systemInstruction = new JsonObject();
+        JsonArray systemParts = new JsonArray();
+        JsonObject systemText = new JsonObject();
+        systemText.addProperty("text", """
+                You are a project planning assistant.
+                Return practical task suggestions for a newly created project.
+                Focus on realistic execution steps, not vague goals.
+                Keep titles concise and descriptions short.
+                Use only priorities HIGH, MEDIUM, or LOW.
+                Do not include any text outside the JSON response.
+                """);
+        systemParts.add(systemText);
+        systemInstruction.add("parts", systemParts);
+        requestPayload.add("systemInstruction", systemInstruction);
 
-        JsonObject userMessage = new JsonObject();
-        userMessage.addProperty("role", "user");
-        userMessage.addProperty("content", userPrompt);
-        messages.add(userMessage);
-        requestPayload.add("messages", messages);
-        requestPayload.addProperty("temperature", 0.3); // reduces randomness
+        JsonObject requestContent = new JsonObject();
+        JsonArray parts = new JsonArray();
+        JsonObject userText = new JsonObject();
+        userText.addProperty("text", userPrompt);
+        parts.add(userText);
+        requestContent.add("parts", parts);
+
+        JsonArray contents = new JsonArray();
+        contents.add(requestContent);
+        requestPayload.add("contents", contents);
+
+        JsonObject generationConfig = new JsonObject();
+        generationConfig.addProperty("temperature", 0.2);
+        generationConfig.addProperty("responseMimeType", "application/json");
+        generationConfig.add("responseJsonSchema", createResponseSchema(Math.max(1, maxTasks)));
+        requestPayload.add("generationConfig", generationConfig);
 
         HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(API_URL))
-                .header("Authorization", "Bearer " + apiKey)
+                .uri(URI.create(buildApiUrl(apiKey)))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(GSON.toJson(requestPayload)))
                 .build();
 
         HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() >= 400) {
-            throw new IOException("Groq API error " + response.statusCode() + ": " + response.body());
+            throw new IOException("Gemini API error " + response.statusCode() + ": " + extractErrorMessage(response.body()));
         }
 
         JsonObject root = GSON.fromJson(response.body(), JsonObject.class);
-        JsonArray choices = root.getAsJsonArray("choices");
-        if (choices == null || choices.isEmpty()) {
-            return List.of();
-        }
-
-        JsonObject firstChoice = choices.get(0).getAsJsonObject();
-        JsonObject message = firstChoice.getAsJsonObject("message");
-        if (message == null || !message.has("content")) {
-            return List.of();
-        }
-
-        String content = message.get("content").getAsString();
+        String content = extractGeminiContent(root);
         JsonArray taskArray = parseTaskArray(content);
         if (taskArray == null || taskArray.isEmpty()) {
             return List.of();
         }
+
         List<GeneratedTask> tasks = new ArrayList<>();
 
         for (JsonElement element : taskArray) {
@@ -112,9 +116,106 @@ public class AiTaskGeneratorService {
             String description = getString(obj, "description");
             String priority = normalizePriority(getString(obj, "priority"));
             tasks.add(new GeneratedTask(title, description, priority));
+            if (tasks.size() >= maxTasks) {
+                break;
+            }
         }
 
         return tasks;
+    }
+
+    private static String buildApiUrl(String apiKey) {
+        return API_URL_TEMPLATE.formatted(
+                URLEncoder.encode(MODEL, StandardCharsets.UTF_8),
+                URLEncoder.encode(apiKey, StandardCharsets.UTF_8)
+        );
+    }
+
+    private static JsonObject createResponseSchema(int maxTasks) {
+        JsonObject schema = new JsonObject();
+        schema.addProperty("type", "object");
+        schema.addProperty("additionalProperties", false);
+
+        JsonObject properties = new JsonObject();
+        JsonObject tasks = new JsonObject();
+        tasks.addProperty("type", "array");
+        tasks.addProperty("minItems", maxTasks);
+        tasks.addProperty("maxItems", maxTasks);
+
+        JsonObject item = new JsonObject();
+        item.addProperty("type", "object");
+        item.addProperty("additionalProperties", false);
+
+        JsonObject itemProperties = new JsonObject();
+        itemProperties.add("title", stringSchema("Short task title."));
+        itemProperties.add("description", stringSchema("Short explanation of the task."));
+
+        JsonObject priority = new JsonObject();
+        priority.addProperty("type", "string");
+        JsonArray priorityValues = new JsonArray();
+        priorityValues.add("HIGH");
+        priorityValues.add("MEDIUM");
+        priorityValues.add("LOW");
+        priority.add("enum", priorityValues);
+        itemProperties.add("priority", priority);
+
+        item.add("properties", itemProperties);
+        JsonArray itemRequired = new JsonArray();
+        itemRequired.add("title");
+        itemRequired.add("description");
+        itemRequired.add("priority");
+        item.add("required", itemRequired);
+
+        tasks.add("items", item);
+        properties.add("tasks", tasks);
+        schema.add("properties", properties);
+
+        JsonArray required = new JsonArray();
+        required.add("tasks");
+        schema.add("required", required);
+        return schema;
+    }
+
+    private static JsonObject stringSchema(String description) {
+        JsonObject schema = new JsonObject();
+        schema.addProperty("type", "string");
+        schema.addProperty("description", description);
+        return schema;
+    }
+
+    private static String extractGeminiContent(JsonObject root) {
+        if (root == null || !root.has("candidates") || !root.get("candidates").isJsonArray()) {
+            return "";
+        }
+
+        JsonArray candidates = root.getAsJsonArray("candidates");
+        if (candidates.isEmpty() || !candidates.get(0).isJsonObject()) {
+            return "";
+        }
+
+        JsonObject candidate = candidates.get(0).getAsJsonObject();
+        JsonObject content = candidate.getAsJsonObject("content");
+        if (content == null || !content.has("parts") || !content.get("parts").isJsonArray()) {
+            return "";
+        }
+
+        JsonArray parts = content.getAsJsonArray("parts");
+        if (parts.isEmpty() || !parts.get(0).isJsonObject()) {
+            return "";
+        }
+
+        return getString(parts.get(0).getAsJsonObject(), "text");
+    }
+
+    private static String extractErrorMessage(String responseBody) {
+        try {
+            JsonObject root = GSON.fromJson(responseBody, JsonObject.class);
+            JsonObject error = root == null ? null : root.getAsJsonObject("error");
+            String message = getString(error, "message");
+            return message.isBlank() ? responseBody : message;
+        } catch (Exception ignored) {
+            return responseBody;
+        }
     }
 
     private static String extractJsonArray(String text) {
@@ -180,12 +281,12 @@ public class AiTaskGeneratorService {
     }
 
     private static String resolveApiKey() {
-        String fromEnv = System.getenv("GROQ_API_KEY");
+        String fromEnv = System.getenv("GEMINI_API_KEY");
         if (fromEnv != null && !fromEnv.isBlank()) {
             return fromEnv.trim();
         }
 
-        String fromProperty = System.getProperty("GROQ_API_KEY");
+        String fromProperty = System.getProperty("GEMINI_API_KEY");
         if (fromProperty != null && !fromProperty.isBlank()) {
             return fromProperty.trim();
         }
@@ -202,10 +303,21 @@ public class AiTaskGeneratorService {
 
             for (String line : Files.readAllLines(envPath)) {
                 String trimmed = line == null ? "" : line.trim();
-                if (trimmed.isBlank() || trimmed.startsWith("#") || !trimmed.startsWith("GROQ_API_KEY=")) {
+                if (trimmed.isBlank() || trimmed.startsWith("#")) {
                     continue;
                 }
-                String value = trimmed.substring("GROQ_API_KEY=".length()).trim();
+
+                int separatorIndex = trimmed.indexOf('=');
+                if (separatorIndex < 0) {
+                    continue;
+                }
+
+                String key = trimmed.substring(0, separatorIndex).trim();
+                if (!"GEMINI_API_KEY".equals(key)) {
+                    continue;
+                }
+
+                String value = trimmed.substring(separatorIndex + 1).trim();
                 if (value.startsWith("\"") && value.endsWith("\"") && value.length() >= 2) {
                     value = value.substring(1, value.length() - 1);
                 }
