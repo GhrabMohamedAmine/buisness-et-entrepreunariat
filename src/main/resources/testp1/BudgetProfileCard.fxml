@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
+
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+<fx:root maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="210.0" prefWidth="350.0" styleClass="project-budget-card" type="javafx.scene.layout.AnchorPane" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1">
+    <stylesheets>
+        <URL value="@../styles/nexum.css" />
+    </stylesheets>
+
+    <VBox spacing="2" AnchorPane.leftAnchor="24.0" AnchorPane.topAnchor="24.0">
+        <Label fx:id="yearLabel" styleClass="nexum-label-primary" text="2026" />
+        <Label fx:id="currencyLabel" styleClass="nexum-label-secondary" text="Base: USD" />
+    </VBox>
+
+    <StackPane fx:id="statusContainer" styleClass="status-badge-OT" AnchorPane.rightAnchor="24.0" AnchorPane.topAnchor="24.0">
+        <Label fx:id="statusLabel" styleClass="stat-badge" text="ACTIVE" />
+    </StackPane>
+
+    <HBox spacing="35" AnchorPane.leftAnchor="24.0" AnchorPane.topAnchor="85.0">
+        <VBox spacing="4">
+            <Label styleClass="nexum-label-secondary" text="TOTAL BUDGET" />
+            <Label fx:id="totalBudgetLabel" styleClass="nexum-currency-value" text="\$50,000" />
+        </VBox>
+
+        <VBox spacing="4">
+            <Label styleClass="nexum-label-secondary" text="ACTUAL SPEND" />
+            <Label fx:id="actualSpendLabel" styleClass="nexum-currency-value" text="\$37,500" />
+        </VBox>
+
+        <VBox spacing="4">
+            <Label styleClass="nexum-label-secondary" text="REMAINING" />
+            <Label fx:id="remainingLabel" styleClass="nexum-currency-remaining" text="\$12,500" />
+        </VBox>
+    </HBox>
+
+    <HBox alignment="CENTER_LEFT" layoutX="26.0" prefHeight="32.0" prefWidth="200.0" AnchorPane.bottomAnchor="25.0" AnchorPane.leftAnchor="25.0" AnchorPane.rightAnchor="125.0">
+        <VBox spacing="2">
+            <Label styleClass="nexum-label-secondary" text="PERIOD" />
+            <Label fx:id="periodLabel" styleClass="nexum-label-primary" text="Jan 01 - Dec 31" />
+        </VBox>
+    </HBox>
+   <HBox fx:id="hoverActions" styleClass="quick-action-badge" opacity="0.0" alignment="CENTER" layoutX="136.0" layoutY="147.0" prefHeight="38.0" prefWidth="188.0" spacing="20">
+      <children>
+         <Label alignment="CENTER" text="Manage" styleClass="quick-action-text" fx:id="toggleLabel"/>
+         <FontIcon iconLiteral="mdi2a-archive" fx:id="toggleIcon" onMouseClicked="#handleToggle"/>
+         <FontIcon iconLiteral="mdi2d-delete" styleClass="action-icon" fx:id="deleteIcon" iconColor="#DC2626" onMouseClicked="#handleDelete"/>
+      </children>
+   </HBox>
+</fx:root>

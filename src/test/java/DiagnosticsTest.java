@@ -28,7 +28,7 @@ public class DiagnosticsTest {
             }
 
             // Using budget_disposable as the maximum allowed company limit
-            double totalCompanyBudget = globalProfile.getBudgetDisposable();
+            double totalCompanyBudget = globalProfile.getBudgetDisposable().toBigInteger().doubleValue();
             System.out.println("Global Company Budget Limit: $" + totalCompanyBudget);
             System.out.println("Currently Spent (Synced): $" + globalProfile.getTotalExpense());
 

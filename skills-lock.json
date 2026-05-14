@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "skills": {
+    "java-architect": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "skillPath": "skills/java-architect/SKILL.md",
+      "computedHash": "7f202287a1ad819b41a9235b8bb570eed217a431e4e60d7196fd9330d52001c2"
+    },
+    "java-maven": {
+      "source": "pluginagentmarketplace/custom-plugin-java",
+      "sourceType": "github",
+      "skillPath": "skills/java-maven/SKILL.md",
+      "computedHash": "7128cd4b59cc52c661a6a209af74063e1fc6523b70abaf19f28c885ed085c01b"
+    }
+  }
+}

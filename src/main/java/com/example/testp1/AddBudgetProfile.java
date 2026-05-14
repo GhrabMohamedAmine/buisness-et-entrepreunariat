@@ -228,13 +228,18 @@ public class AddBudgetProfile extends StackPane {
         if (isValid) {
             try {
                 Year year = Year.of(Integer.parseInt(yearField.getText()));
-                double disposable = Double.parseDouble(totalBudgetField.getText());
+                java.math.BigDecimal disposable = new java.math.BigDecimal(totalBudgetField.getText());
                 ServiceBudgetProfil service = new ServiceBudgetProfil();
+                
+                java.time.LocalDate defaultStart = java.time.LocalDate.of(year.getValue(), 1, 1);
+                java.time.LocalDate defaultEnd = java.time.LocalDate.of(year.getValue(), 12, 31);
+                String defaultCurrency = "USD";
+                String defaultStatus = "ACTIVE";
 
                 if (currentProfileId == 0) {
-                    service.add(new BudgetProfil(year, disposable, 0.0, 0.0f));
+                    service.add(new BudgetProfil(year, disposable, java.math.BigDecimal.ZERO, 0.0, defaultCurrency, defaultStart, defaultEnd, defaultStatus));
                 } else {
-                    BudgetProfil updated = new BudgetProfil(currentProfileId, year, disposable, 0.0, 0.0f);
+                    BudgetProfil updated = new BudgetProfil(currentProfileId, year, disposable, java.math.BigDecimal.ZERO, 0.0, defaultCurrency, defaultStart, defaultEnd, defaultStatus);
                     service.update(updated);
                 }
 

@@ -17,19 +17,25 @@ public class ServiceBudgetProfil implements IService<BudgetProfil> {
 
     @Override
     public void add(BudgetProfil p) throws SQLException {
-        // Business Rule: Check if a profile already exists before adding
-        BudgetProfil existing = profilDAO.getActiveProfile();
-        if (existing == null) {
-            profilDAO.add(p);
-        } else {
-            throw new SQLException("A Budget Profile already exists. Only one record is allowed in the budgetprofile table.");
+        // Business Rule: Check if a profile already exists before adding as ACTIVE
+        if ("ACTIVE".equalsIgnoreCase(p.getStatus())) {
+            BudgetProfil existing = profilDAO.getActiveProfile();
+            if (existing != null) {
+                throw new SQLException("An ACTIVE Budget Profile already exists.");
+            }
         }
+        profilDAO.add(p);
     }
 
     @Override
     public void update(BudgetProfil p) throws SQLException {
-
         if (p.getId() > 0) {
+            if ("ACTIVE".equalsIgnoreCase(p.getStatus())) {
+                BudgetProfil existing = profilDAO.getActiveProfile();
+                if (existing != null && existing.getId() != p.getId()) {
+                    throw new SQLException("Another ACTIVE Budget Profile already exists.");
+                }
+            }
             profilDAO.update(p);
         } else {
             throw new SQLException("Cannot update: Invalid Profile ID.");
@@ -38,7 +44,6 @@ public class ServiceBudgetProfil implements IService<BudgetProfil> {
 
     @Override
     public void delete(BudgetProfil p) throws SQLException {
-
         if (p.getId() > 0) {
             profilDAO.delete(p.getId());
         } else {
@@ -48,18 +53,14 @@ public class ServiceBudgetProfil implements IService<BudgetProfil> {
 
     @Override
     public List<BudgetProfil> getAll() throws SQLException {
-
-        return Collections.singletonList(profilDAO.getActiveProfile());
+        return profilDAO.getAllProfiles();
     }
+
     public void syncdata() throws SQLException {
         profilDAO.syncProfileTotalExpense();
     }
 
-
-
-
     public BudgetProfil getActiveProfile() throws SQLException {
-        List<BudgetProfil> profiles = getAll();
-        return profiles.isEmpty() ? null : profiles.get(0);
+        return profilDAO.getActiveProfile();
     }
 }

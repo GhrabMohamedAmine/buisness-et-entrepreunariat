@@ -216,8 +216,8 @@ public class OverviewController {
                 cardUtil.setStatData("Utilization", "N/A", "", "mdi2p-percent-outline", "gray");
             } else {
                 // CASE: Data exists - Calculating values from BudgetProfil entity
-                double limit = profil.getBudgetDisposable();
-                double spent = profil.getTotalExpense();
+                double limit = profil.getBudgetDisposable() != null ? profil.getBudgetDisposable().doubleValue() : 0.0;
+                double spent = profil.getTotalExpense() != null ? profil.getTotalExpense().doubleValue() : 0.0;
                 double remaining = limit - spent;
                 double util = (limit > 0) ? (spent / limit) * 100 : 0;
 

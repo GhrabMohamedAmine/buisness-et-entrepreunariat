@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.net.URL?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import org.kordamp.ikonli.javafx.FontIcon?>
+
+<StackPane fx:id="rootPane" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.controllers.BudgetProfileSelectionController">
+    <AnchorPane fx:id="mainPageWrapper" prefHeight="886" prefWidth="1213" style="-fx-background-color: #F5F5F4">
+        <stylesheets>
+            <URL value="@../styles/nexum.css" />
+        </stylesheets>
+
+        <HBox alignment="CENTER_LEFT" prefHeight="26.0" prefWidth="1086.0" spacing="8" AnchorPane.leftAnchor="64.0" AnchorPane.topAnchor="30.0" AnchorPane.rightAnchor="64.0">
+            <Label onMouseClicked="#handleBack" styleClass="splash-body-label" text="Financial Overview" style="-fx-cursor: hand;" />
+            <FontIcon iconColor="#78716C" iconLiteral="mdi2c-chevron-right" iconSize="16" />
+            <Label styleClass="section-title" text="Budget Profiles" />
+            <Region HBox.hgrow="ALWAYS" />
+            <Button mnemonicParsing="false" text="Return to Dashboard" onAction="#handleBack" styleClass="primary-button" />
+        </HBox>
+
+        <ScrollPane fitToWidth="true" style="-fx-background-color: transparent;" AnchorPane.bottomAnchor="30.0" AnchorPane.leftAnchor="64.0" AnchorPane.rightAnchor="64.0" AnchorPane.topAnchor="85.0">
+            <content>
+                <FlowPane fx:id="profilesFlowPane" hgap="25" vgap="25" style="-fx-padding: 10;" />
+            </content>
+        </ScrollPane>
+    </AnchorPane>
+</StackPane>

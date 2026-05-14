@@ -56,7 +56,7 @@ public class FinancialHealthController {
                 return;
             }
 
-            double totalCompanyBudget = globalProfile.getBudgetDisposable();
+            double totalCompanyBudget = globalProfile.getBudgetDisposable() != null ? globalProfile.getBudgetDisposable().doubleValue() : 0.0;
 
             // Pass the FULL list of project objects to the new engine
             List<ProjectBudget> allProjects = projectBudgetDAO.getAll();
