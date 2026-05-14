@@ -11,11 +11,13 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
+import io.github.cdimascio.dotenv.Dotenv;
 
 public class CompreFaceService {
 
-    private static final String API_KEY = "889efb90-fc0b-4e4b-a9e8-da6af873b283";
-    private static final String BASE_URL = "http://localhost:8000/api/v1/recognition";
+    private static final Dotenv dotenv = Dotenv.load();
+    private static final String API_KEY = dotenv.get("COMPREFACE_API_KEY", "889efb90-fc0b-4e4b-a9e8-da6af873b283");
+    private static final String BASE_URL = dotenv.get("COMPREFACE_BASE_URL", "http://localhost:8000/api/v1/recognition");
     private final HttpClient httpClient = HttpClient.newHttpClient();
     private final ObjectMapper objectMapper = new ObjectMapper();
 
