@@ -7,7 +7,7 @@
 <VBox fx:id="loadingContainer" alignment="CENTER"
       prefHeight="400.0" prefWidth="950.0"
       maxHeight="Infinity" maxWidth="Infinity"
-      spacing="25.0" style="-fx-background-color: #F5F5F4;"
+      spacing="25.0" style="-fx-background-color: #F9FAFB;"
       stylesheets="@../styles/nexum.css"
       xmlns="http://javafx.com/javafx/17.0.12"
       xmlns:fx="http://javafx.com/fxml/1"

@@ -7,7 +7,7 @@
 <?import com.example.testp1.AddBudgetProfile?>
 
 <StackPane fx:id="rootPane" xmlns="http://javafx.com/javafx/21" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.controllers.BudgetProfileSelectionController">
-    <AnchorPane fx:id="mainPageWrapper" prefHeight="886" prefWidth="1213" style="-fx-background-color: #F5F5F4">
+    <AnchorPane fx:id="mainPageWrapper" prefHeight="886" prefWidth="1213" style="-fx-background-color: #F9FAFB">
         <stylesheets>
             <URL value="@../styles/nexum.css" />
         </stylesheets>

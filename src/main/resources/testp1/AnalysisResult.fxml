@@ -7,7 +7,7 @@
 <?import org.kordamp.ikonli.javafx.*?>
 
 <?import javafx.scene.Group?>
-<VBox fx:id="resultsContainer" prefHeight="400.0" prefWidth="950.0" maxHeight="Infinity" maxWidth="Infinity" spacing="15.0" style="-fx-padding: 20 40 20 40; -fx-background-color: #F5F5F4;" stylesheets="@../styles/nexum.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.controllers.AnalysisResultController">
+<VBox fx:id="resultsContainer" prefHeight="400.0" prefWidth="950.0" maxHeight="Infinity" maxWidth="Infinity" spacing="15.0" style="-fx-padding: 20 40 20 40; -fx-background-color: #F9FAFB;" stylesheets="@../styles/nexum.css" xmlns="http://javafx.com/javafx/17.0.12" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.example.testp1.controllers.AnalysisResultController">
 
     <HBox alignment="CENTER_LEFT">
         <VBox spacing="2.0">
