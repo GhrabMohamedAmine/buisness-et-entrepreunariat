@@ -17,6 +17,10 @@ public class ServiceBudgetProfil implements IService<BudgetProfil> {
 
     @Override
     public void add(BudgetProfil p) throws SQLException {
+        if (profilDAO.existsByYear(p.getFiscalYear().getValue(), 0)) {
+            throw new SQLException("A Budget Profile for this Fiscal Year already exists.");
+        }
+        
         // Business Rule: Check if a profile already exists before adding as ACTIVE
         if ("ACTIVE".equalsIgnoreCase(p.getStatus())) {
             BudgetProfil existing = profilDAO.getActiveProfile();
@@ -30,6 +34,10 @@ public class ServiceBudgetProfil implements IService<BudgetProfil> {
     @Override
     public void update(BudgetProfil p) throws SQLException {
         if (p.getId() > 0) {
+            if (profilDAO.existsByYear(p.getFiscalYear().getValue(), p.getId())) {
+                throw new SQLException("A Budget Profile for this Fiscal Year already exists.");
+            }
+            
             if ("ACTIVE".equalsIgnoreCase(p.getStatus())) {
                 BudgetProfil existing = profilDAO.getActiveProfile();
                 if (existing != null && existing.getId() != p.getId()) {

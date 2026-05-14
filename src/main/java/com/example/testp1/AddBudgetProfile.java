@@ -274,9 +274,17 @@ public class AddBudgetProfile extends StackPane {
         if (end == null) {
             setError(endDateErrorLabel, "End date is required.");
             isValid = false;
-        } else if (start != null && end.isBefore(start)) {
-            setError(endDateErrorLabel, "End date must be after start date.");
-            isValid = false;
+        } else if (start != null) {
+            if (end.isBefore(start)) {
+                setError(endDateErrorLabel, "End date must be after start date.");
+                isValid = false;
+            } else {
+                LocalDate expectedEnd = start.plusYears(1).minusDays(1);
+                if (!end.equals(expectedEnd)) {
+                    setError(endDateErrorLabel, "Duration must be exactly one full fiscal year.");
+                    isValid = false;
+                }
+            }
         }
 
         // 3. Process Save if valid

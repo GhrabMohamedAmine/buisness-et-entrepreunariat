@@ -35,6 +35,22 @@ public class BudgetProfilDAO {
         }
     }
 
+    public boolean existsByYear(int year, int excludeId) {
+        String req = "SELECT COUNT(*) FROM budget_profile WHERE fiscal_year = ? AND id != ?";
+        try (PreparedStatement ps = connection.prepareStatement(req)) {
+            ps.setInt(1, year);
+            ps.setInt(2, excludeId);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL Error (existsByYear): " + e.getMessage());
+        }
+        return false;
+    }
+
 
     public BudgetProfil getById(int id) {
         String req = "SELECT * FROM budget_profile WHERE id = ?";
