@@ -65,6 +65,11 @@ public class OverviewController {
     private Tab miscTab;
 
     @FXML
+    public void handleBackToProfiles() {
+        FinanceController.getInstance().loadView("BudgetProfileSelectionView.fxml");
+    }
+
+    @FXML
     public void initialize() {
 
         if (sidebarTabPane != null) {

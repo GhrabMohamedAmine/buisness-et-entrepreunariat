@@ -4,6 +4,8 @@
 <?import javafx.scene.layout.*?>
 
 <?import java.net.URL?>
+<?import javafx.collections.FXCollections?>
+<?import java.lang.String?>
 <fx:root type="javafx.scene.layout.StackPane" xmlns="http://javafx.com/javafx/17.0.12"
          xmlns:fx="http://javafx.com/fxml/1" prefHeight="886.0" prefWidth="1213.0">
 
@@ -13,7 +15,7 @@
 
     <Region fx:id="dimOverlay" styleClass="modal-overlay" onMouseClicked="#hide"/>
 
-    <VBox fx:id="popupCard" maxWidth="450.0" maxHeight="400.0" spacing="25" styleClass="popup-card"
+    <VBox fx:id="popupCard" maxWidth="500.0" maxHeight="600.0" spacing="25" styleClass="popup-card"
           StackPane.alignment="CENTER">
 
         <HBox alignment="CENTER_LEFT">
@@ -26,16 +28,51 @@
         </HBox>
 
         <VBox spacing="15">
-            <VBox spacing="8">
-                <Label text="Fiscal Year *" styleClass="input-label" />
-                <TextField fx:id="yearField" promptText="e.g., 2026" styleClass="nexum-input" />
-                <Label fx:id="yearErrorLabel" managed="false" textFill="#dc2626" visible="false" />
-            </VBox>
+            <HBox spacing="15">
+                <VBox spacing="8" HBox.hgrow="ALWAYS">
+                    <Label text="Fiscal Year *" styleClass="input-label" />
+                    <TextField fx:id="yearField" promptText="e.g., 2026" styleClass="nexum-input" />
+                    <Label fx:id="yearErrorLabel" managed="false" textFill="#dc2626" visible="false" />
+                </VBox>
+
+                <VBox spacing="8" HBox.hgrow="ALWAYS">
+                    <Label text="Base Currency *" styleClass="input-label" />
+                    <ComboBox fx:id="baseCurrencyComboBox" styleClass="nexum-input" maxWidth="Infinity" />
+                    <Label fx:id="currencyErrorLabel" managed="false" textFill="#dc2626" visible="false" />
+                </VBox>
+            </HBox>
 
             <VBox spacing="8">
                 <Label text="Total Annual Budget Limit *" styleClass="input-label" />
                 <TextField fx:id="totalBudgetField" promptText="0.00" styleClass="nexum-input" />
                 <Label fx:id="totalErrorLabel" managed="false" textFill="#dc2626" visible="false" />
+            </VBox>
+
+            <HBox spacing="15">
+                <VBox spacing="8" HBox.hgrow="ALWAYS">
+                    <Label text="Start Date *" styleClass="input-label" />
+                    <DatePicker fx:id="startDatePicker" styleClass="nexum-input" maxWidth="Infinity" />
+                    <Label fx:id="startDateErrorLabel" managed="false" textFill="#dc2626" visible="false" />
+                </VBox>
+
+                <VBox spacing="8" HBox.hgrow="ALWAYS">
+                    <Label text="End Date *" styleClass="input-label" />
+                    <DatePicker fx:id="endDatePicker" styleClass="nexum-input" maxWidth="Infinity" />
+                    <Label fx:id="endDateErrorLabel" managed="false" textFill="#dc2626" visible="false" />
+                </VBox>
+            </HBox>
+
+            <VBox spacing="8">
+                <Label text="Status *" styleClass="input-label" />
+                <ComboBox fx:id="statusComboBox" styleClass="nexum-input" maxWidth="Infinity">
+                    <items>
+                        <FXCollections fx:factory="observableArrayList">
+                            <String fx:value="ACTIVE" />
+                            <String fx:value="DRAFT" />
+                            <String fx:value="ARCHIVED" />
+                        </FXCollections>
+                    </items>
+                </ComboBox>
             </VBox>
         </VBox>
 

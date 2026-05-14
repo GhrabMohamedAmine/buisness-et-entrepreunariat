@@ -2,11 +2,14 @@ package com.example.testp1;
 
 import com.example.testp1.entities.BudgetProfil;
 import com.example.testp1.services.ServiceBudgetProfil;
+import com.example.utils.CurrencyDetails;
 import javafx.animation.*;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Node;
 import javafx.scene.control.Button;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.effect.BoxBlur;
@@ -16,16 +19,25 @@ import javafx.util.Duration;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.time.Year;
+import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AddBudgetProfile extends StackPane {
 
     @FXML private VBox popupCard;
     @FXML private Region dimOverlay;
     @FXML private TextField yearField, totalBudgetField;
+    @FXML private ComboBox<String> baseCurrencyComboBox;
+    @FXML private DatePicker startDatePicker, endDatePicker;
+    @FXML private ComboBox<String> statusComboBox;
     @FXML private Label titleLabel;
     @FXML private Button saveButton;
     @FXML private Label yearErrorLabel;
     @FXML private Label totalErrorLabel;
+    @FXML private Label currencyErrorLabel;
+    @FXML private Label startDateErrorLabel;
+    @FXML private Label endDateErrorLabel;
 
     private Runnable onSaveSuccess;
     private int currentProfileId;
@@ -46,10 +58,26 @@ public class AddBudgetProfile extends StackPane {
         }
     }
 
+    @FXML
+    public void initialize() {
+        if (baseCurrencyComboBox != null) {
+            List<String> allCurrencies = new ArrayList<>();
+            allCurrencies.addAll(CurrencyDetails.getMajorCodes());
+            allCurrencies.addAll(CurrencyDetails.getRegionalCodes());
+            baseCurrencyComboBox.getItems().setAll(allCurrencies);
+            baseCurrencyComboBox.setValue("USD"); // default
+        }
+    }
+
     public void show(Node backgroundToBlur) {
         // 1. Clear fields ONLY if this is a fresh "Add"
         yearField.clear();
         totalBudgetField.clear();
+        if (baseCurrencyComboBox != null) baseCurrencyComboBox.setValue("USD");
+        if (startDatePicker != null) startDatePicker.setValue(LocalDate.now());
+        if (endDatePicker != null) endDatePicker.setValue(LocalDate.now().plusYears(1));
+        if (statusComboBox != null) statusComboBox.setValue("DRAFT");
+        
         this.currentProfileId = 0; // Reset ID for safety
         titleLabel.setText("Set Global Budget");
         saveButton.setText("Initialize Profile");
@@ -65,7 +93,11 @@ public class AddBudgetProfile extends StackPane {
 
         // 1. Fill the fields
         yearField.setText(String.valueOf(p.getFiscalYear().getValue()));
-        totalBudgetField.setText(String.valueOf(p.getBudgetDisposable()));
+        totalBudgetField.setText(p.getBudgetDisposable() != null ? String.valueOf(p.getBudgetDisposable()) : "0");
+        if (baseCurrencyComboBox != null) baseCurrencyComboBox.setValue(p.getBaseCurrency() != null ? p.getBaseCurrency() : "USD");
+        if (startDatePicker != null) startDatePicker.setValue(p.getStartDate());
+        if (endDatePicker != null) endDatePicker.setValue(p.getEndDate());
+        if (statusComboBox != null) statusComboBox.setValue(p.getStatus() != null ? p.getStatus() : "ACTIVE");
 
         // 2. Run ONLY the visibility and animation logic (Don't call show()!)
         triggerOpenSequenceV2(background);
@@ -199,7 +231,6 @@ public class AddBudgetProfile extends StackPane {
             isValid = false;
         } else {
             int yearValue = Integer.parseInt(yearText);
-            int currentYear = Year.now().getValue();
             if (yearValue < 2000 || yearValue > 2100) {
                 setError(yearErrorLabel, "Please enter a valid year (2000-2100).");
                 isValid = false;
@@ -214,14 +245,38 @@ public class AddBudgetProfile extends StackPane {
         } else {
             try {
                 double disposable = Double.parseDouble(totalText);
-                if (disposable <= 0) {
-                    setError(totalErrorLabel, "Budget must be greater than 0.");
+                if (disposable < 0) {
+                    setError(totalErrorLabel, "Budget must be greater than or equal to 0.");
                     isValid = false;
                 }
             } catch (NumberFormatException e) {
                 setError(totalErrorLabel, "Invalid number format.");
                 isValid = false;
             }
+        }
+        
+        String currency = "USD";
+        if (baseCurrencyComboBox != null && baseCurrencyComboBox.getValue() != null) {
+            currency = baseCurrencyComboBox.getValue();
+        }
+
+        LocalDate start = null;
+        if (startDatePicker != null) start = startDatePicker.getValue();
+        
+        if (start == null) {
+            setError(startDateErrorLabel, "Start date is required.");
+            isValid = false;
+        }
+
+        LocalDate end = null;
+        if (endDatePicker != null) end = endDatePicker.getValue();
+        
+        if (end == null) {
+            setError(endDateErrorLabel, "End date is required.");
+            isValid = false;
+        } else if (start != null && end.isBefore(start)) {
+            setError(endDateErrorLabel, "End date must be after start date.");
+            isValid = false;
         }
 
         // 3. Process Save if valid
@@ -231,15 +286,15 @@ public class AddBudgetProfile extends StackPane {
                 java.math.BigDecimal disposable = new java.math.BigDecimal(totalBudgetField.getText());
                 ServiceBudgetProfil service = new ServiceBudgetProfil();
                 
-                java.time.LocalDate defaultStart = java.time.LocalDate.of(year.getValue(), 1, 1);
-                java.time.LocalDate defaultEnd = java.time.LocalDate.of(year.getValue(), 12, 31);
-                String defaultCurrency = "USD";
-                String defaultStatus = "ACTIVE";
+                String status = "ACTIVE";
+                if (statusComboBox != null && statusComboBox.getValue() != null) {
+                    status = statusComboBox.getValue();
+                }
 
                 if (currentProfileId == 0) {
-                    service.add(new BudgetProfil(year, disposable, java.math.BigDecimal.ZERO, 0.0, defaultCurrency, defaultStart, defaultEnd, defaultStatus));
+                    service.add(new BudgetProfil(year, disposable, java.math.BigDecimal.ZERO, 0.0, currency, start, end, status));
                 } else {
-                    BudgetProfil updated = new BudgetProfil(currentProfileId, year, disposable, java.math.BigDecimal.ZERO, 0.0, defaultCurrency, defaultStart, defaultEnd, defaultStatus);
+                    BudgetProfil updated = new BudgetProfil(currentProfileId, year, disposable, java.math.BigDecimal.ZERO, 0.0, currency, start, end, status);
                     service.update(updated);
                 }
 
@@ -260,15 +315,20 @@ public class AddBudgetProfile extends StackPane {
     private void clearErrors() {
         hideError(yearErrorLabel);
         hideError(totalErrorLabel);
+        if (currencyErrorLabel != null) hideError(currencyErrorLabel);
+        if (startDateErrorLabel != null) hideError(startDateErrorLabel);
+        if (endDateErrorLabel != null) hideError(endDateErrorLabel);
     }
 
     private void setError(Label label, String message) {
+        if (label == null) return;
         label.setText(message);
         label.setVisible(true);
         label.setManaged(true);
     }
 
     private void hideError(Label label) {
+        if (label == null) return;
         label.setText("");
         label.setVisible(false);
         label.setManaged(false);

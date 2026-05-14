@@ -14,10 +14,11 @@
               <URL value="@../styles/nexum.css" />
           </stylesheets>
 
-          <VBox spacing="5" AnchorPane.leftAnchor="64.0" AnchorPane.topAnchor="45.0">
-              <Label styleClass="splash-title-label" text="Financial Overview" />
-              <Label styleClass="splash-body-label" text="Track budgets and expenses across all projects" />
-          </VBox>
+          <HBox alignment="CENTER_LEFT" spacing="8" AnchorPane.leftAnchor="64.0" AnchorPane.topAnchor="45.0">
+              <Label onMouseClicked="#handleBackToProfiles" styleClass="splash-body-label" text="Budget Profiles" style="-fx-cursor: hand;" />
+              <FontIcon iconColor="#78716C" iconLiteral="mdi2c-chevron-right" iconSize="16" />
+              <Label styleClass="section-title" text="Financial Overview" />
+          </HBox>
 
           <HBox spacing="15" AnchorPane.rightAnchor="64.0" AnchorPane.topAnchor="59.0">
 <!--              <Button  onAction="#handleDeleteProfile" styleClass="white-button" text="Reset Profil" />-->
