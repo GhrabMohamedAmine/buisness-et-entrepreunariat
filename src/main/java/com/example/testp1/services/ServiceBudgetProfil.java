@@ -63,4 +63,8 @@ public class ServiceBudgetProfil implements IService<BudgetProfil> {
     public BudgetProfil getActiveProfile() throws SQLException {
         return profilDAO.getActiveProfile();
     }
+
+    public BudgetProfil getById(int id) throws SQLException {
+        return profilDAO.getById(id);
+    }
 }

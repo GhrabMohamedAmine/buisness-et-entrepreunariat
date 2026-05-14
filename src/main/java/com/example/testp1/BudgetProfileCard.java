@@ -12,7 +12,6 @@ import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.util.Duration;
-import org.kordamp.ikonli.javafx.FontIcon;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -26,14 +25,12 @@ public class BudgetProfileCard extends AnchorPane {
     @FXML private Label totalBudgetLabel, actualSpendLabel, remainingLabel, periodLabel;
     @FXML private StackPane statusContainer;
     @FXML private HBox hoverActions;
-    @FXML private FontIcon toggleIcon, deleteIcon;
 
-    private Consumer<BudgetProfil> onToggle;
-    private Consumer<BudgetProfil> onDelete;
+    private Consumer<BudgetProfil> onViewDashboard;
 
     @FXML
     public void initialize() {
-        if (hoverActions != null && toggleIcon != null) {
+        if (hoverActions != null) {
             this.setOnMouseEntered(e -> runHoverEffect(true));
             this.setOnMouseExited(e -> runHoverEffect(false));
         }
@@ -51,10 +48,9 @@ public class BudgetProfileCard extends AnchorPane {
         }
     }
 
-    public void setProfileData(BudgetProfil profile, Consumer<BudgetProfil> onToggle, Consumer<BudgetProfil> onDelete) {
+    public void setProfileData(BudgetProfil profile, Consumer<BudgetProfil> onViewDashboard) {
         this.budgetProfile = profile;
-        this.onToggle = onToggle;
-        this.onDelete = onDelete;
+        this.onViewDashboard = onViewDashboard;
 
         yearLabel.setText("Fiscal Year " + profile.getFiscalYear().getValue());
         currencyLabel.setText("Base: " + profile.getBaseCurrency());
@@ -77,13 +73,10 @@ public class BudgetProfileCard extends AnchorPane {
         statusContainer.getStyleClass().removeAll("status-badge-OT", "status-badge-AR", "status-badge-OB");
         if ("ACTIVE".equalsIgnoreCase(profile.getStatus())) {
             statusContainer.getStyleClass().add("status-badge-OT"); // Green
-            toggleIcon.setIconLiteral("mdi2a-archive");
         } else if ("DRAFT".equalsIgnoreCase(profile.getStatus())) {
             statusContainer.getStyleClass().add("status-badge-AR"); // Amber
-            toggleIcon.setIconLiteral("mdi2c-check-circle");
         } else {
             statusContainer.getStyleClass().add("status-badge-OB"); // Red/Archived
-            toggleIcon.setIconLiteral("mdi2c-check-circle");
         }
     }
 
@@ -98,24 +91,14 @@ public class BudgetProfileCard extends AnchorPane {
         slide.setFromX(isActive ? 15.0 : 0.0);
         slide.setToX(isActive ? 0.0 : 15.0);
 
-        RotateTransition rotate = new RotateTransition(duration, toggleIcon);
-        rotate.setToAngle(isActive ? 90 : 0);
-
-        ParallelTransition anim = new ParallelTransition(fade, slide, rotate);
+        ParallelTransition anim = new ParallelTransition(fade, slide);
         anim.play();
     }
 
     @FXML
-    public void handleToggle() {
-        if (onToggle != null && budgetProfile != null) {
-            onToggle.accept(budgetProfile);
-        }
-    }
-
-    @FXML
-    public void handleDelete() {
-        if (onDelete != null && budgetProfile != null) {
-            onDelete.accept(budgetProfile);
+    public void handleViewDashboard() {
+        if (onViewDashboard != null && budgetProfile != null) {
+            onViewDashboard.accept(budgetProfile);
         }
     }
 }

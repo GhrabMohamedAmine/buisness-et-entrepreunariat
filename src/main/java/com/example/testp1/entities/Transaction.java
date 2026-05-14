@@ -10,12 +10,12 @@ public class Transaction {
 
     private String expenseCategory;
     private int projectBudgetId;
-    private int description;
+    private String description;
 
     public Transaction() {}
 
 
-    public Transaction(String  reference,double cost, LocalDate dateStamp, String expenseCategory, int projectBudgetId, int description) {
+    public Transaction(String  reference,double cost, LocalDate dateStamp, String expenseCategory, int projectBudgetId, String description) {
         this.cost = cost;
         this.reference = reference;
         this.dateStamp = dateStamp;
@@ -32,7 +32,7 @@ public class Transaction {
         this.reference = reference;
     }
 
-    public Transaction(int id, String reference ,double cost, LocalDate dateStamp, String expenseCategory, int projectBudgetId, int description) {
+    public Transaction(int id, String reference ,double cost, LocalDate dateStamp, String expenseCategory, int projectBudgetId, String description) {
         this(reference,cost , dateStamp, expenseCategory, projectBudgetId, description);
         this.id = id;
     }
@@ -47,12 +47,12 @@ public class Transaction {
     public void setExpenseCategory(String expenseCategory) { this.expenseCategory = expenseCategory; }
     public int getProjectBudgetId() { return projectBudgetId; }
     public void setProjectBudgetId(int projectBudgetId) { this.projectBudgetId = projectBudgetId; }
-    public int getDescription() { return description; }
-    public void setDescription(int description) { this.description = description; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
 
     @Override
     public String toString() {
-        return String.format("ID: %d | Ref: %s | Cost: %.2f | Category: %s | BudgetID: %d | Desc: %d",
+        return String.format("ID: %d | Ref: %s | Cost: %.2f | Category: %s | BudgetID: %d | Desc: %s",
                 id, reference, cost, expenseCategory, projectBudgetId, description);
     }
 }

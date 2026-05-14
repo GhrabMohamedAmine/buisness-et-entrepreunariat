@@ -45,11 +45,10 @@
             <Label fx:id="periodLabel" styleClass="nexum-label-primary" text="Jan 01 - Dec 31" />
         </VBox>
     </HBox>
-   <HBox fx:id="hoverActions" styleClass="quick-action-badge" opacity="0.0" alignment="CENTER" layoutX="136.0" layoutY="147.0" prefHeight="38.0" prefWidth="188.0" spacing="20">
+   <HBox fx:id="hoverActions" styleClass="quick-action-badge" opacity="0.0" alignment="CENTER" layoutX="136.0" layoutY="147.0" prefHeight="38.0" prefWidth="188.0" spacing="10" onMouseClicked="#handleViewDashboard" style="-fx-cursor: hand;">
       <children>
-         <Label alignment="CENTER" text="Manage" styleClass="quick-action-text" fx:id="toggleLabel"/>
-         <FontIcon iconLiteral="mdi2a-archive" fx:id="toggleIcon" onMouseClicked="#handleToggle"/>
-         <FontIcon iconLiteral="mdi2d-delete" styleClass="action-icon" fx:id="deleteIcon" iconColor="#DC2626" onMouseClicked="#handleDelete"/>
+         <Label alignment="CENTER" text="View Dashboard" styleClass="quick-action-text" />
+         <FontIcon iconLiteral="mdi2c-chart-arc" styleClass="action-icon" />
       </children>
    </HBox>
 </fx:root>

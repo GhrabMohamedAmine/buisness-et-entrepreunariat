@@ -293,7 +293,7 @@ public class AddTransaction extends StackPane {
                 t.setExpenseCategory(cat);
                 t.setDateStamp(txDate);
                 t.setProjectBudgetId(currentBudgetId);
-                t.setDescription(0);
+                t.setDescription("");
 
                 service.add(t);
                 if (onSaveSuccess != null) onSaveSuccess.run();

@@ -18,8 +18,18 @@ public class FinanceController {
     // 2. Variable to hold the ID for the PBpage to "pick up"
     private static int currentBudgetId;
 
+    private static Integer currentProfileId = null;
+
     public static FinanceController getInstance() {
         return instance;
+    }
+
+    public static Integer getCurrentProfileId() {
+        return currentProfileId;
+    }
+
+    public static void setCurrentProfileId(Integer profileId) {
+        currentProfileId = profileId;
     }
 
     // 3. Getter for PBpageController to retrieve the ID
@@ -30,8 +40,9 @@ public class FinanceController {
     @FXML
     public void initialize() {
         instance = this;
-        // Load the dashboard on startup
-        loadView("Overviewpage.fxml");
+        currentProfileId = null; // Reset on init
+        // Load the profile selection on startup
+        loadView("BudgetProfileSelectionView.fxml");
     }
 
     /**

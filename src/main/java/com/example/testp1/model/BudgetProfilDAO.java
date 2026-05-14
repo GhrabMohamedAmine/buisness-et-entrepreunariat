@@ -36,6 +36,21 @@ public class BudgetProfilDAO {
     }
 
 
+    public BudgetProfil getById(int id) {
+        String req = "SELECT * FROM budget_profile WHERE id = ?";
+        try (PreparedStatement ps = connection.prepareStatement(req)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return mapResultSetToBudgetProfil(rs);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("SQL Error (GetById): " + e.getMessage());
+        }
+        return null;
+    }
+
     public BudgetProfil getActiveProfile() {
         String req = "SELECT * FROM budget_profile WHERE status = 'ACTIVE' LIMIT 1";
         try (Statement st = connection.createStatement();

@@ -206,7 +206,13 @@ public class OverviewController {
     private void updateDashboardHeader() {
         try {
             ServiceBudgetProfil profilService = new ServiceBudgetProfil();
-            BudgetProfil profil = profilService.getActiveProfile();
+            BudgetProfil profil = null;
+            if (FinanceController.getCurrentProfileId() != null) {
+                profil = profilService.getById(FinanceController.getCurrentProfileId());
+            }
+            if (profil == null) {
+                profil = profilService.getActiveProfile();
+            }
 
             if (profil == null) {
                 // CASE: N/A - No profile exists in the database yet
@@ -352,8 +358,31 @@ public class OverviewController {
 
     private void loadProjectBudgets() {
         try {
+            // Determine active/selected profile
+            ServiceBudgetProfil profilService = new ServiceBudgetProfil();
+            BudgetProfil currentProfile = null;
+            if (FinanceController.getCurrentProfileId() != null) {
+                currentProfile = profilService.getById(FinanceController.getCurrentProfileId());
+            }
+            if (currentProfile == null) {
+                currentProfile = profilService.getActiveProfile();
+            }
+
             // Fetch the data
-            List<ProjectBudget> budgets = budgetService.getAll();
+            List<ProjectBudget> allBudgets = budgetService.getAll();
+            List<ProjectBudget> budgets = new ArrayList<>();
+
+            if (currentProfile != null && currentProfile.getStartDate() != null && currentProfile.getEndDate() != null) {
+                for (ProjectBudget b : allBudgets) {
+                    if (b.getDueDate() != null &&
+                        !b.getDueDate().isBefore(currentProfile.getStartDate()) &&
+                        !b.getDueDate().isAfter(currentProfile.getEndDate())) {
+                        budgets.add(b);
+                    }
+                }
+            } else {
+                budgets = allBudgets; // fallback to all
+            }
 
             // Clear to avoid overlaps on refresh
             budgetGrid.getChildren().clear();

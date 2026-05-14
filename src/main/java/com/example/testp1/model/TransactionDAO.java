@@ -31,7 +31,7 @@ public class TransactionDAO {
                 ps.setDate(3, Date.valueOf(t.getDateStamp()));
                 ps.setString(4, t.getExpenseCategory());
                 ps.setInt(5, t.getProjectBudgetId());
-                ps.setInt(6, t.getDescription());
+                ps.setString(6, t.getDescription());
                 ps.executeUpdate();
             }
 
@@ -69,7 +69,7 @@ public class TransactionDAO {
                         rs.getDate("date_stamp").toLocalDate(),
                         rs.getString("expense_category"),
                         rs.getInt("project_budget_id"),
-                        rs.getInt("description")
+                        rs.getString("description")
                 ));
             }
         } catch (SQLException e) {
@@ -95,7 +95,7 @@ public class TransactionDAO {
                             rs.getDate("date_stamp").toLocalDate(),
                             rs.getString("expense_category"),
                             rs.getInt("project_budget_id"),
-                            rs.getInt("description")
+                            rs.getString("description")
                     ));
                 }
             }
@@ -125,7 +125,7 @@ public class TransactionDAO {
                 ps.setDate(3, java.sql.Date.valueOf(newTransaction.getDateStamp()));
                 ps.setString(4, newTransaction.getExpenseCategory());
                 ps.setInt(5, newTransaction.getProjectBudgetId());
-                ps.setInt(6, newTransaction.getDescription());
+                ps.setString(6, newTransaction.getDescription());
                 ps.setInt(7, newTransaction.getId());
                 ps.executeUpdate();
             }
@@ -202,7 +202,7 @@ public class TransactionDAO {
                             rs.getDate("date_stamp").toLocalDate(),
                             rs.getString("expense_category"),
                             rs.getInt("project_budget_id"),
-                            rs.getInt("description")
+                            rs.getString("description")
                     );
                 }
             }
