@@ -12,8 +12,6 @@
           maxWidth="40" prefHeight="40">
 
         <HBox fx:id="iconTray" spacing="18" opacity="0.0" alignment="CENTER" visible="false">
-            <FontIcon fx:id="addIcon" iconLiteral="mdi2c-cash-plus" iconSize="22"
-                       styleClass="action-icon" onMouseClicked="#onAdd"/>
 
             <FontIcon fx:id="editIcon" iconLiteral="mdi2p-pencil" iconSize="20"
                        styleClass="action-icon" onMouseClicked="#onEdit"/>

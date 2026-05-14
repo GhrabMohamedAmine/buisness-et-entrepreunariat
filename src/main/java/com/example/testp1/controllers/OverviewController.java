@@ -123,15 +123,26 @@ public class OverviewController {
             e.printStackTrace();
         }
     }
+    private BudgetProfil getCurrentOrActiveProfile(ServiceBudgetProfil service) throws SQLException {
+        BudgetProfil profil = null;
+        if (FinanceController.getCurrentProfileId() != null) {
+            profil = service.getById(FinanceController.getCurrentProfileId());
+        }
+        if (profil == null) {
+            profil = service.getActiveProfile();
+        }
+        return profil;
+    }
+
     @FXML
     public void handleUpdateProfileClick() {
         try {
             ServiceBudgetProfil service = new ServiceBudgetProfil();
-            BudgetProfil active = service.getActiveProfile();
+            BudgetProfil current = getCurrentOrActiveProfile(service);
 
-            if (active != null) {
+            if (current != null) {
                 // Open it with data pre-filled
-                addBudgetProfile.showForUpdate(active, ovContent);
+                addBudgetProfile.showForUpdate(current, ovContent);
             } else {
                 System.out.println("No profile found to update. Use 'Set New' instead.");
             }
@@ -146,15 +157,20 @@ public class OverviewController {
         deleteConfirmOverlay.show(ovContent, () -> {
             try {
                 ServiceBudgetProfil service = new ServiceBudgetProfil();
-                BudgetProfil active = service.getActiveProfile();
+                BudgetProfil current = getCurrentOrActiveProfile(service);
 
-                if (active != null) {
-                    service.delete(active);
+                if (current != null) {
+                    service.delete(current);
                     System.out.println("Profile Deleted Successfully");
+
+                    // If we just deleted the profile we were viewing, clear the selection
+                    if (FinanceController.getCurrentProfileId() != null && FinanceController.getCurrentProfileId() == current.getId()) {
+                        FinanceController.setCurrentProfileId(null);
+                    }
 
                     // Refresh everything
                     updateDashboardHeader();
-                    // Any other UI refresh logic here
+                    loadProjectBudgets();
                 }
             } catch (SQLException e) {
                 e.printStackTrace();
@@ -251,7 +267,7 @@ public class OverviewController {
                         String.format("%.1f%%", util),
                         "", "mdi2p-percent-outline", utilColor);
 
-                RiskKpi riskKpi = calculateCashFlowRiskKpi();
+                RiskKpi riskKpi = calculateCashFlowRiskKpi(profil);
                 cardRisk.setStatData(
                         "Cash-Flow Risk",
                         riskKpi.valueText,
@@ -266,8 +282,21 @@ public class OverviewController {
         }
     }
 
-    private RiskKpi calculateCashFlowRiskKpi() throws SQLException {
-        List<ProjectBudget> budgets = budgetService.getAll();
+    private RiskKpi calculateCashFlowRiskKpi(BudgetProfil profil) throws SQLException {
+        List<ProjectBudget> allBudgets = budgetService.getAll();
+        List<ProjectBudget> budgets = new ArrayList<>();
+        if (profil != null && profil.getStartDate() != null && profil.getEndDate() != null) {
+            for (ProjectBudget b : allBudgets) {
+                if (b.getDueDate() != null &&
+                    !b.getDueDate().isBefore(profil.getStartDate()) &&
+                    !b.getDueDate().isAfter(profil.getEndDate())) {
+                    budgets.add(b);
+                }
+            }
+        } else {
+            budgets = allBudgets;
+        }
+        
         ServiceTransaction transactionService = new ServiceTransaction();
 
         List<Transaction> allTransactions = new ArrayList<>();

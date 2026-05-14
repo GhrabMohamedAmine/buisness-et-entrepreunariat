@@ -19,7 +19,29 @@ public class CashflowAnalyticsService {
     private final ServiceTransaction transactionService = new ServiceTransaction();
 
     public CashflowSnapshot buildSnapshot() throws SQLException {
-        List<ProjectBudget> budgets = budgetService.getAll();
+        List<ProjectBudget> allBudgets = budgetService.getAll();
+        
+        com.example.testp1.services.ServiceBudgetProfil profilService = new com.example.testp1.services.ServiceBudgetProfil();
+        com.example.testp1.entities.BudgetProfil currentProfile = null;
+        if (com.example.testp1.controllers.FinanceController.getCurrentProfileId() != null) {
+            currentProfile = profilService.getById(com.example.testp1.controllers.FinanceController.getCurrentProfileId());
+        }
+        if (currentProfile == null) {
+            currentProfile = profilService.getActiveProfile();
+        }
+
+        List<ProjectBudget> budgets = new ArrayList<>();
+        if (currentProfile != null && currentProfile.getStartDate() != null && currentProfile.getEndDate() != null) {
+            for (ProjectBudget b : allBudgets) {
+                if (b.getDueDate() != null &&
+                    !b.getDueDate().isBefore(currentProfile.getStartDate()) &&
+                    !b.getDueDate().isAfter(currentProfile.getEndDate())) {
+                    budgets.add(b);
+                }
+            }
+        } else {
+            budgets = allBudgets;
+        }
 
         double totalBudget = 0.0;
         double totalSpent = 0.0;

@@ -49,7 +49,15 @@ public class FinancialHealthController {
 
     private void loadDiagnosticData() {
         try {
-            BudgetProfil globalProfile = profileDAO.getActiveProfile();
+            com.example.testp1.services.ServiceBudgetProfil profilService = new com.example.testp1.services.ServiceBudgetProfil();
+            BudgetProfil globalProfile = null;
+            if (FinanceController.getCurrentProfileId() != null) {
+                globalProfile = profilService.getById(FinanceController.getCurrentProfileId());
+            }
+            if (globalProfile == null) {
+                globalProfile = profilService.getActiveProfile();
+            }
+            
             if (globalProfile == null) {
                 insightMessageLabel.setText("System Notice: No active global Budget Profile found.");
                 riskLevelLabel.setText("OFFLINE");
@@ -60,15 +68,28 @@ public class FinancialHealthController {
 
             // Pass the FULL list of project objects to the new engine
             List<ProjectBudget> allProjects = projectBudgetDAO.getAll();
+            List<ProjectBudget> filteredProjects = new ArrayList<>();
 
-            if (allProjects.isEmpty()) {
+            if (globalProfile.getStartDate() != null && globalProfile.getEndDate() != null) {
+                for (ProjectBudget b : allProjects) {
+                    if (b.getDueDate() != null &&
+                        !b.getDueDate().isBefore(globalProfile.getStartDate()) &&
+                        !b.getDueDate().isAfter(globalProfile.getEndDate())) {
+                        filteredProjects.add(b);
+                    }
+                }
+            } else {
+                filteredProjects = allProjects;
+            }
+
+            if (filteredProjects.isEmpty()) {
                 insightMessageLabel.setText("System Notice: No active projects to analyze.");
                 riskLevelLabel.setText("STANDBY");
                 return;
             }
 
             FinancialDiagnosticsEngine.ProfileHealthReport report =
-                    FinancialDiagnosticsEngine.analyzeProfileHealth(totalCompanyBudget, allProjects);
+                    FinancialDiagnosticsEngine.analyzeProfileHealth(totalCompanyBudget, filteredProjects);
 
             // Update standard UI Values
             utilizationBar.setProgress(report.getUtilizationProgressBar());

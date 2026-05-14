@@ -16,13 +16,12 @@ public class ActionTrayController {
     @FXML private Button triggerBtn;
     @FXML private FontIcon triggerIcon;
 
-    @FXML private FontIcon addIcon;
     @FXML private FontIcon editIcon;
     @FXML private FontIcon deleteIcon;
 
     private boolean isExpanded = false;
     private final double COLLAPSED_WIDTH = 45.0;
-    private final double EXPANDED_WIDTH = 220.0;
+    private final double EXPANDED_WIDTH = 180.0;
     @FXML
     private FontIcon marketIcon;
     @FXML FontIcon cashflowIcon;
@@ -30,7 +29,6 @@ public class ActionTrayController {
     @FXML
     public void initialize() {
         // Apply programmatic hover effects to the pure icons
-        setupIconInteraction(addIcon);
         setupIconInteraction(editIcon);
         setupIconInteraction(deleteIcon);
         setupIconInteraction(cashflowIcon);
@@ -116,11 +114,6 @@ public class ActionTrayController {
         this.overviewController = controller;
     }
 
-    @FXML private void onAdd() {
-        if (overviewController != null) {
-        overviewController.handleAddBPClick(); // Triggers "Set Budget Profile"
-        }
-    }
     @FXML private void onEdit() {
         if (overviewController != null) {
         overviewController.handleUpdateProfileClick(); // Triggers "update Profile"
